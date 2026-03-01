@@ -262,19 +262,19 @@ df |>
 
 일치가 실패할 경우 `separate_wider_delim()` 및 `separate_wider_position()`과 마찬가지로 `too_few = "debug"`를 사용하여 무엇이 잘못되었는지 파악할 수 있습니다.
 
-### Exercises
+### 연습문제
 
-1.  What baby name has the most vowels?
-    What name has the highest proportion of vowels?
-    (Hint: what is the denominator?)
+1.  모음이 가장 많은 아기 이름은 무엇인가요?
+    모음의 비율이 가장 높은 이름은 무엇인가요?
+    (힌트: 분모는 무엇일까요?)
 
-2.  Replace all forward slashes in `"a/b/c/d/e"` with backslashes.
-    What happens if you attempt to undo the transformation by replacing all backslashes with forward slashes?
-    (We'll discuss the problem very soon.)
+2.  `"a/b/c/d/e"`의 모든 슬래시를 백슬래시로 바꾸세요.
+    모든 백슬래시를 슬래시로 다시 바꾸어 변환을 원래대로 되돌리려고 시도하면 어떻게 되나요?
+    (이 문제에 대해서는 조만간 논의하겠습니다.)
 
-3.  Implement a simple version of `str_to_lower()` using `str_replace_all()`.
+3.  `str_replace_all()`을 사용하여 `str_to_lower()`의 간단한 버전을 구현해 보세요.
 
-4.  Create a regular expression that will match telephone numbers as commonly written in your country.
+4.  여러분의 나라에서 흔히 쓰이는 짝지어진 전화번호를 찾을 수 있는 정규 표현식을 작성해 보세요.
 
 ## 패턴 상세
 
@@ -578,7 +578,7 @@ str_view(bananas, regex("banana", ignore_case = TRUE))
     x <- "Line 1\nLine 2\nLine 3"
     str_view(x, "^Line")
     str_view(x, regex("^Line", multiline = TRUE))
-```
+    ```
 
 마지막으로 복잡한 정규 표현식을 작성하고 나중에 이해하지 못할까 봐 걱정된다면 `comments = TRUE`를 시도해 보세요.
 패키지가 공백과 줄바꿈은 물론 `#` 뒤의 모든 내용을 무시하도록 패턴 언어를 조정합니다.
