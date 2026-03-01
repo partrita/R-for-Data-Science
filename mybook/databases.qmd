@@ -1,28 +1,28 @@
-# Databases {#sec-import-databases}
+# 데이터베이스 {#sec-import-databases}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-A huge amount of data lives in databases, so it's essential that you know how to access it.
-Sometimes you can ask someone to download a snapshot into a `.csv` for you, but this gets painful quickly: every time you need to make a change you'll have to communicate with another human.
-You want to be able to reach into the database directly to get the data you need, when you need it.
+엄청난 양의 데이터가 데이터베이스에 저장되어 있으므로, 데이터베이스에 접근하는 방법을 아는 것은 필수적입니다.
+때로 누군가에게 `.csv` 파일로 스냅샷을 다운로드해 달라고 부탁할 수도 있지만, 이는 금방 번거로워집니다. 변경사항이 생길 때마다 다른 사람과 소통해야 하기 때문입니다.
+필요할 때 언제든지 데이터베이스에 직접 접속하여 필요한 데이터를 가져올 수 있어야 합니다.
 
-In this chapter, you'll first learn the basics of the DBI package: how to use it to connect to a database and then retrieve data with a SQL[^databases-1] query.
-**SQL**, short for **s**tructured **q**uery **l**anguage, is the lingua franca of databases, and is an important language for all data scientists to learn.
-That said, we're not going to start with SQL, but instead we'll teach you dbplyr, which can translate your dplyr code to the SQL.
-We'll use that as a way to teach you some of the most important features of SQL.
-You won't become a SQL master by the end of the chapter, but you will be able to identify the most important components and understand what they do.
+이 챕터에서는 먼저 DBI 패키지의 기초를 배웁니다. 데이터베이스에 연결하고 SQL[^databases-1] 쿼리로 데이터를 검색하는 방법을 알아봅니다.
+**SQL**(Structured Query Language의 약자)은 데이터베이스의 공용어이며, 모든 데이터 과학자가 배워야 할 중요한 언어입니다.
+그렇다고 해서 바로 SQL부터 시작하지는 않을 것입니다. 대신 dplyr 코드를 SQL로 번역해 주는 dbplyr을 가르쳐 드릴 것입니다.
+이를 통해 SQL의 가장 중요한 기능 중 일부를 배우게 될 것입니다.
+이 챕터를 마친다고 해서 SQL 마스터가 되지는 않겠지만, 가장 중요한 구성 요소들을 식별하고 그것들이 무엇을 하는지 이해할 수 있게 될 것입니다.
 
-[^databases-1]: SQL is either pronounced "s"-"q"-"l" or "sequel".
+[^databases-1]: SQL은 보통 "에스-큐-엘" 또는 "시퀄(sequel)"로 발음합니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-In this chapter, we'll introduce DBI and dbplyr.
-DBI is a low-level interface that connects to databases and executes SQL; dbplyr is a high-level interface that translates your dplyr code to SQL queries then executes them with DBI.
+이 챕터에서는 DBI와 dbplyr을 소개합니다.
+DBI는 데이터베이스에 연결하고 SQL을 실행하는 로우 레벨(low-level) 인터페이스입니다. dbplyr은 dplyr 코드를 SQL 쿼리로 번역한 다음 DBI를 사용하여 실행하는 하이 레벨(high-level) 인터페이스입니다.
 
 ```{r}
 #| label: setup
@@ -32,49 +32,49 @@ library(dbplyr)
 library(tidyverse)
 ```
 
-## Database basics
+## 데이터베이스 기초
 
-At the simplest level, you can think about a database as a collection of data frames, called **tables** in database terminology.
-Like a data frame, a database table is a collection of named columns, where every value in the column is the same type.
-There are three high level differences between data frames and database tables:
+가장 단순하게 생각하면, 데이터베이스를 데이터 프레임들의 모음이라고 볼 수 있으며, 데이터베이스 용어로는 이를 **테이블(tables)** 이라고 부릅니다.
+데이터 프레임과 마찬가지로 데이터베이스 테이블은 이름이 있는 열의 집합이며, 각 열의 모든 값은 동일한 타입입니다.
+데이터 프레임과 데이터베이스 테이블 사이에는 세 가지 큰 차이점이 있습니다:
 
--   Database tables are stored on disk and can be arbitrarily large.
-    Data frames are stored in memory, and are fundamentally limited (although that limit is still plenty large for many problems).
+-   데이터베이스 테이블은 디스크에 저장되며 크기가 매우 커질 수 있습니다.
+    데이터 프레임은 메모리에 저장되므로 기본적으로 제한이 있습니다(물론 그 제한이 많은 문제에 대해 충분히 큽니다).
 
--   Database tables almost always have indexes.
-    Much like the index of a book, a database index makes it possible to quickly find rows of interest without having to look at every single row.
-    Data frames and tibbles don't have indexes, but data.tables do, which is one of the reasons that they're so fast.
+-   데이터베이스 테이블은 거의 항상 인덱스(indices)를 가지고 있습니다.
+    책의 색인처럼 데이터베이스 인덱스는 모든 행을 일일이 살펴보지 않고도 관심 있는 행을 빠르게 찾을 수 있게 해줍니다.
+    데이터 프레임과 티블은 인덱스가 없지만, data.table은 인덱스가 있으며 이것이 data.table이 매우 빠른 이유 중 하나입니다.
 
--   Most classical databases are optimized for rapidly collecting data, not analyzing existing data.
-    These databases are called **row-oriented** because the data is stored row-by-row, rather than column-by-column like R.
-    More recently, there's been much development of **column-oriented** databases that make analyzing the existing data much faster.
+-   대부분의 고전적인 데이터베이스는 데이터를 분석하는 것이 아니라 신속하게 수집하는 것에 최적화되어 있습니다.
+    이러한 데이터베이스는 R처럼 열 단위(column-by-column)가 아니라 행 단위(row-by-row)로 데이터가 저장되기 때문에 **행 지향(row-oriented)** 이라고 불립니다.
+    최근에는 기존 데이터 분석을 훨씬 더 빠르게 만들어 주는 **열 지향(column-oriented)** 데이터베이스가 많이 개발되었습니다.
 
-Databases are run by database management systems (**DBMS**'s for short), which come in three basic forms:
+데이터베이스는 데이터베이스 관리 시스템(줄여서 **DBMS**)에 의해 운영되며, 기본적으로 세 가지 형태가 있습니다:
 
--   **Client-server** DBMS's run on a powerful central server, which you connect to from your computer (the client). They are great for sharing data with multiple people in an organization. Popular client-server DBMS's include PostgreSQL, MariaDB, SQL Server, and Oracle.
--   **Cloud** DBMS's, like Snowflake, Amazon's RedShift, and Google's BigQuery, are similar to client server DBMS's, but they run in the cloud. This means that they can easily handle extremely large datasets and can automatically provide more compute resources as needed.
--   **In-process** DBMS's, like SQLite or duckdb, run entirely on your computer. They're great for working with large datasets where you're the primary user.
+-   **클라이언트-서버(Client-server)** DBMS는 강력한 중앙 서버에서 실행되며, 여러분의 컴퓨터(클라이언트)에서 연결합니다. 조직 내 여러 사람과 데이터를 공유하는 데 적합합니다. 인기 있는 클라이언트-서버 DBMS로는 PostgreSQL, MariaDB, SQL Server, Oracle 등이 있습니다.
+-   **클라우드(Cloud)** DBMS는 Snowflake, Amazon의 RedShift, Google의 BigQuery와 같이 클라이언트 서버 DBMS와 비슷하지만 클라우드에서 실행됩니다. 이는 매우 대규모의 데이터셋을 쉽게 처리할 수 있고 필요에 따라 자동으로 더 많은 컴퓨팅 리소스를 제공할 수 있음을 의미합니다.
+-   **인-프로세스(In-process)** DBMS는 SQLite나 duckdb처럼 여러분의 컴퓨터에서 전적으로 실행됩니다. 여러분이 주 사용자이면서 대규모 데이터셋으로 작업할 때 적합합니다.
 
-## Connecting to a database
+## 데이터베이스에 연결하기
 
-To connect to the database from R, you'll use a pair of packages:
+R에서 데이터베이스에 연결하려면 다음 두 패키지를 사용합니다:
 
--   You'll always use DBI (**d**ata**b**ase **i**nterface) because it provides a set of generic functions that connect to the database, upload data, run SQL queries, etc.
+-   항상 DBI(**d**ata**b**ase **i**nterface)를 사용하게 됩니다. 데이터베이스에 연결하고, 데이터를 업로드하며, SQL 쿼리를 실행하는 등의 일반적인 함수들을 제공하기 때문입니다.
 
--   You'll also use a package tailored for the DBMS you're connecting to.
-    This package translates the generic DBI commands into the specifics needed for a given DBMS.
-    There's usually one package for each DBMS, e.g.
-    RPostgres for PostgreSQL and RMariaDB for MySQL.
+-   연결하려는 DBMS에 특화된 패키지도 사용하게 됩니다.
+    이 패키지는 일반적인 DBI 명령을 특정 DBMS에 필요한 구체적인 명령으로 번역합니다.
+    보통 DBMS마다 하나의 패키지가 있습니다. 예를 들어
+    PostgreSQL을 위한 RPostgres, MySQL을 위한 RMariaDB 등이 있습니다.
 
-If you can't find a specific package for your DBMS, you can usually use the odbc package instead.
-This uses the ODBC protocol supported by many DBMS.
-odbc requires a little more setup because you'll also need to install an ODBC driver and tell the odbc package where to find it.
+사용 중인 DBMS에 대한 특정 패키지를 찾을 수 없다면, 대개 odbc 패키지를 대신 사용할 수 있습니다.
+이는 많은 DBMS에서 지원하는 ODBC 프로토콜을 사용합니다.
+odbc는 ODBC 드라이버를 설치하고 odbc 패키지에게 그 위치를 알려주어야 하므로 설정이 조금 더 필요합니다.
 
-Concretely, you create a database connection using `DBI::dbConnect()`.
-The first argument selects the DBMS[^databases-2], then the second and subsequent arguments describe how to connect to it (i.e. where it lives and the credentials that you need to access it).
-The following code shows a couple of typical examples:
+구체적으로 `DBI::dbConnect()`를 사용하여 데이터베이스 연결을 생성합니다.
+첫 번째 인자는 DBMS[^databases-2]를 선택하고, 두 번째 이후의 인자들은 연결 방법(예: 위치 및 접속에 필요한 자격 증명)을 설명합니다.
+다음 코드는 일반적인 몇 가지 예시를 보여줍니다:
 
-[^databases-2]: Typically, this is the only function you'll use from the client package, so we recommend using `::` to pull out that one function, rather than loading the complete package with `library()`.
+[^databases-2]: 일반적으로 클라이언트 패키지에서 사용하는 유일한 함수이므로, `library()`로 전체 패키지를 로드하기보다는 `::`를 사용하여 해당 함수 하나만 가져오는 것을 권장합니다.
 
 ```{r}
 #| eval: false
@@ -89,16 +89,25 @@ con <- DBI::dbConnect(
 )
 ```
 
-The precise details of the connection vary a lot from DBMS to DBMS so unfortunately we can't cover all the details here.
-This means you'll need to do a little research on your own.
-Typically you can ask the other data scientists in your team or talk to your DBA (**d**ata**b**ase **a**dministrator).
-The initial setup will often take a little fiddling (and maybe some googling) to get it right, but you'll generally only need to do it once.
+연결의 구체적인 세부 사항은 DBMS마다 매우 다르므로 아쉽게도 여기서 모든 내용을 다룰 수는 없습니다.
+이는 스스로 조사를 조금 해봐야 함을 의미합니다.
+일반적으로 팀 내 다른 데이터 과학자에게 물어보거나 DBA(**d**ata**b**ase **a**dministrator)와 상담할 수 있습니다.
+초기 설정이 제대로 되기까지 약간의 시행착오(그리고 아마도 구글링)가 필요하겠지만, 보통 한 번만 하면 됩니다.
 
-### In this book
+### 이 책에서
 
-Setting up a client-server or cloud DBMS would be a pain for this book, so we'll instead use an in-process DBMS that lives entirely in an R package: duckdb.
-Thanks to the magic of DBI, the only difference between using duckdb and any other DBMS is how you'll connect to the database.
-This makes it great to teach with because you can easily run this code as well as easily take what you learn and apply it elsewhere.
+이 책을 위해 클라이언트-서버나 클라우드 DBMS를 구축하는 것은 번거로울 것이므로, 대신 R 패키지 내에 전적으로 존재하는 인-프로세스 DBMS인 duckdb를 사용하겠습니다.
+DBI의 마법 덕분에 duckdb를 사용하는 것과 다른 DBMS를 사용하는 것 사이의 유일한 차이점은 데이터베이스 연결 방법뿐입니다.
+이 덕분에 가르치기에 아주 좋은데, 이 코드를 쉽게 실행할 수 있을 뿐만 아니라 배운 내용을 가져가서 다른 곳에도 쉽게 적용할 수 있기 때문입니다.
+
+duckdb 연결은 특히 간단합니다. 기본적으로 R을 종료할 때 삭제되는 임시 데이터베이스를 생성하기 때문입니다.
+이는 R을 다시 시작할 때마다 항상 깨끗한 상태에서 시작하게 해주므로 학습하기에 아주 좋습니다:
+
+```{r}
+con <- DBI::dbConnect(duckdb::duckdb())
+```
+
+이 코드를 쉽게 실행할 수 있을 뿐만 아니라 배운 내용을 가져가서 다른 곳에도 쉽게 적용할 수 있기 때문입니다.
 
 Connecting to duckdb is particularly simple because the defaults create a temporary database that is deleted when you quit R.
 That's great for learning because it guarantees that you'll start from a clean slate every time you restart R:
@@ -107,36 +116,36 @@ That's great for learning because it guarantees that you'll start from a clean s
 con <- DBI::dbConnect(duckdb::duckdb())
 ```
 
-duckdb is a high-performance database that's designed very much for the needs of a data scientist.
-We use it here because it's very easy to get started with, but it's also capable of handling gigabytes of data with great speed.
-If you want to use duckdb for a real data analysis project, you'll also need to supply the `dbdir` argument to make a persistent database and tell duckdb where to save it.
-Assuming you're using a project (@sec-workflow-scripts-projects), it's reasonable to store it in the `duckdb` directory of the current project:
+duckdb는 데이터 과학자의 니즈에 맞게 설계된 고성능 데이터베이스입니다.
+여기서는 시작하기가 매우 쉽기 때문에 사용하지만, 기가바이트 단위의 데이터도 매우 빠르게 처리할 수 있습니다.
+실제 데이터 분석 프로젝트에서 duckdb를 사용하려면, `dbdir` 인자를 제공하여 영구적인 데이터베이스를 만들고 저장할 위치를 지정해야 합니다.
+프로젝트(@sec-workflow-scripts-projects)를 사용 중이라면, 현재 프로젝트의 `duckdb` 디렉터리에 저장하는 것이 합리적입니다:
 
 ```{r}
 #| eval: false
 con <- DBI::dbConnect(duckdb::duckdb(), dbdir = "duckdb")
 ```
 
-### Load some data {#sec-load-data}
+### 데이터 불러오기 {#sec-load-data}
 
-Since this is a new database, we need to start by adding some data.
-Here we'll add `mpg` and `diamonds` datasets from ggplot2 using `DBI::dbWriteTable()`.
-The simplest usage of `dbWriteTable()` needs three arguments: a database connection, the name of the table to create in the database, and a data frame of data.
+새로운 데이터베이스이므로 먼저 데이터를 추가해야 합니다.
+여기서는 `DBI::dbWriteTable()`을 사용하여 ggplot2 패키지의 `mpg`와 `diamonds` 데이터셋을 추가하겠습니다.
+`dbWriteTable()`의 가장 간단한 사용법은 세 가지 인자를 필요로 합니다. 데이터베이스 연결, 데이터베이스에 생성할 테이블 이름, 그리고 데이터 프레임입니다.
 
 ```{r}
 dbWriteTable(con, "mpg", ggplot2::mpg)
 dbWriteTable(con, "diamonds", ggplot2::diamonds)
 ```
 
-If you're using duckdb in a real project, we highly recommend learning about `duckdb_read_csv()` and `duckdb_register_arrow()`.
-These give you powerful and performant ways to quickly load data directly into duckdb, without having to first load it into R.
-We'll also show off a useful technique for loading multiple files into a database in @sec-save-database.
+실제 프로젝트에서 duckdb를 사용 중이라면, `duckdb_read_csv()`와 `duckdb_register_arrow()`에 대해 알아보는 것을 강력히 추천합니다.
+이들은 데이터를 먼저 R로 불러올 필요 없이 duckdb로 직접 신속하게 로드할 수 있는 강력하고 효율적인 방법을 제공합니다.
+또한 @sec-save-database에서 여러 파일을 데이터베이스에 로드하는 유용한 기술도 보여드리겠습니다.
 
-### DBI basics
+### DBI 기초
 
-You can check that the data is loaded correctly by using a couple of other DBI functions: `dbListTables()` lists all tables in the database[^databases-3] and `dbReadTable()` retrieves the contents of a table.
+다른 DBI 함수들을 사용하여 데이터가 올바르게 로드되었는지 확인할 수 있습니다. `dbListTables()`는 데이터베이스의 모든 테이블을 나열하고[^databases-3], `dbReadTable()`은 테이블의 내용을 검색합니다.
 
-[^databases-3]: At least, all the tables that you have permission to see.
+[^databases-3]: 최소한 여러분이 볼 수 있는 권한이 있는 모든 테이블을 나열합니다.
 
 ```{r}
 dbListTables(con)
@@ -146,9 +155,9 @@ con |>
   as_tibble()
 ```
 
-`dbReadTable()` returns a `data.frame` so we use `as_tibble()` to convert it into a tibble so that it prints nicely.
+`dbReadTable()`은 `data.frame`을 반환하므로, 보기 좋게 출력되도록 `as_tibble()`을 사용하여 티블로 변환합니다.
 
-If you already know SQL, you can use `dbGetQuery()` to get the results of running a query on the database:
+이미 SQL을 알고 있다면, `dbGetQuery()`를 사용하여 데이터베이스에서 쿼리를 실행한 결과를 가져올 수 있습니다:
 
 ```{r}
 sql <- "
@@ -159,17 +168,17 @@ sql <- "
 as_tibble(dbGetQuery(con, sql))
 ```
 
-If you've never seen SQL before, don't worry!
-You'll learn more about it shortly.
-But if you read it carefully, you might guess that it selects five columns of the diamonds dataset and all the rows where `price` is greater than 15,000.
+SQL을 보신 적이 없더라도 걱정하지 마세요!
+곧 더 자세히 배우게 될 것입니다.
+하지만 주의 깊게 읽어보시면, `diamonds` 데이터셋에서 5개의 열을 선택하고 `price`가 15,000보다 큰 모든 행을 선택한다는 것을 짐작하실 수 있을 것입니다.
 
-## dbplyr basics
+## dbplyr 기초
 
-Now that we've connected to a database and loaded up some data, we can start to learn about dbplyr.
-dbplyr is a dplyr **backend**, which means that you keep writing dplyr code but the backend executes it differently.
-In this, dbplyr translates to SQL; other backends include [dtplyr](https://dtplyr.tidyverse.org) which translates to [data.table](https://r-datatable.com), and [multidplyr](https://multidplyr.tidyverse.org) which executes your code on multiple cores.
+이제 데이터베이스에 연결하고 몇 가지 데이터를 로드했으므로, dbplyr에 대해 배우기 시작할 수 있습니다.
+dbplyr은 dplyr **백엔드(backend)** 입니다. 이는 여러분은 계속 dplyr 코드를 작성하지만 백엔드가 이를 다르게 실행한다는 것을 의미합니다.
+여기서 dbplyr은 SQL로 번역하며, 다른 백엔드로는 [data.table](https://r-datatable.com)로 번역하는 [dtplyr](https://dtplyr.tidyverse.org)과 코드를 여러 코어에서 실행하는 [multidplyr](https://multidplyr.tidyverse.org) 등이 있습니다.
 
-To use dbplyr, you must first use `tbl()` to create an object that represents a database table:
+dbplyr을 사용하려면 먼저 `tbl()`을 사용하여 데이터베이스 테이블을 나타내는 객체를 만들어야 합니다:
 
 ```{r}
 diamonds_db <- tbl(con, "diamonds")
@@ -177,9 +186,9 @@ diamonds_db
 ```
 
 ::: callout-note
-There are two other common ways to interact with a database.
-First, many corporate databases are very large so you need some hierarchy to keep all the tables organized.
-In that case you might need to supply a schema, or a catalog and a schema, in order to pick the table you're interested in:
+데이터베이스와 상호작용하는 다른 두 가지 일반적인 방법이 있습니다.
+첫째, 많은 기업용 데이터베이스는 매우 커서 모든 테이블을 정리해 두기 위한 계층 구조가 필요합니다.
+그런 경우 관심 있는 테이블을 선택하기 위해 스키마(schema) 또는 카탈로그(catalog)와 스키마를 제공해야 할 수도 있습니다:
 
 ```{r}
 #| eval: false
@@ -187,7 +196,7 @@ diamonds_db <- tbl(con, in_schema("sales", "diamonds"))
 diamonds_db <- tbl(con, in_catalog("north_america", "sales", "diamonds"))
 ```
 
-Other times you might want to use your own SQL query as a starting point:
+다른 경우에는 자신만의 SQL 쿼리를 시작점으로 사용하고 싶을 수도 있습니다:
 
 ```{r}
 #| eval: false
@@ -195,8 +204,8 @@ diamonds_db <- tbl(con, sql("SELECT * FROM diamonds"))
 ```
 :::
 
-This object is **lazy**; when you use dplyr verbs on it, dplyr doesn't do any work: it just records the sequence of operations that you want to perform and only performs them when needed.
-For example, take the following pipeline:
+이 객체는 **게으릅니다(lazy)**. 이 객체에 dplyr 동사를 사용해도 dplyr은 아무 일도 하지 않습니다. 단지 수행하려는 작업 순서를 기록해 두고 필요할 때만 실행합니다.
+예를 들어, 다음 파이프라인을 살펴보세요:
 
 ```{r}
 big_diamonds_db <- diamonds_db |> 
@@ -206,20 +215,20 @@ big_diamonds_db <- diamonds_db |>
 big_diamonds_db
 ```
 
-You can tell this object represents a database query because it prints the DBMS name at the top, and while it tells you the number of columns, it typically doesn't know the number of rows.
-This is because finding the total number of rows usually requires executing the complete query, something we're trying to avoid.
+이 객체가 데이터베이스 쿼리를 나타낸다는 것은 상단에 DBMS 이름이 출력되는 것을 통해 알 수 있습니다. 또한 열의 개수는 알려주지만 행의 개수는 대개 알지 못합니다.
+전체 행의 개수를 파악하려면 보통 전체 쿼리를 실행해야 하는데, 이는 우리가 피하고자 하는 것이기 때문입니다.
 
-You can see the SQL code generated by the dplyr function `show_query()`.
-If you know dplyr, this is a great way to learn SQL!
-Write some dplyr code, get dbplyr to translate it to SQL, and then try to figure out how the two languages match up.
+dplyr 함수인 `show_query()`를 사용하면 생성된 SQL 코드를 볼 수 있습니다.
+dplyr을 알고 계신다면, 이것이 SQL을 배우는 아주 좋은 방법입니다!
+dplyr 코드를 작성하고 dbplyr이 이를 SQL로 번역하게 한 다음, 두 언어가 어떻게 매칭되는지 파악해 보세요.
 
 ```{r}
 big_diamonds_db |>
   show_query()
 ```
 
-To get all the data back into R, you call `collect()`.
-Behind the scenes, this generates the SQL, calls `dbGetQuery()` to get the data, then turns the result into a tibble:
+모든 데이터를 다시 R로 가져오려면 `collect()`를 호출합니다.
+보이지 않는 곳에서 이는 SQL을 생성하고, `dbGetQuery()`를 호출하여 데이터를 가져온 다음, 결과를 티블로 변환합니다:
 
 ```{r}
 big_diamonds <- big_diamonds_db |> 
@@ -227,17 +236,17 @@ big_diamonds <- big_diamonds_db |>
 big_diamonds
 ```
 
-Typically, you'll use dbplyr to select the data you want from the database, performing basic filtering and aggregation using the translations described below.
-Then, once you're ready to analyse the data with functions that are unique to R, you'll `collect()` the data to get an in-memory tibble, and continue your work with pure R code.
+일반적으로, dbplyr을 사용하여 데이터베이스에서 원하는 데이터를 선택하고, 아래에서 설명할 번역 기능을 사용하여 기본적인 필터링과 집계를 수행합니다.
+그런 다음 R만의 고유한 함수를 사용하여 데이터를 분석할 준비가 되면, 데이터를 `collect()` 하여 메모리 상의 티블로 가져오고 순수 R 코드로 작업을 계속합니다.
 
 ## SQL
 
-The rest of the chapter will teach you a little SQL through the lens of dbplyr.
-It's a rather non-traditional introduction to SQL but we hope it will get you quickly up to speed with the basics.
-Luckily, if you understand dplyr you're in a great place to quickly pick up SQL because so many of the concepts are the same.
+챕터의 나머지 부분에서는 dbplyr의 관점에서 SQL을 조금 배워보겠습니다.
+다소 전통적이지 않은 SQL 입문이지만, 이를 통해 기초를 빠르게 익히실 수 있기를 바랍니다.
+다행히 dplyr을 이해하고 있다면 많은 개념이 동일하기 때문에 SQL을 매우 빠르게 습득할 수 있는 좋은 위치에 있는 것입니다.
 
-We'll explore the relationship between dplyr and SQL using a couple of old friends from the nycflights13 package: `flights` and `planes`.
-These datasets are easy to get into our learning database because dbplyr comes with a function that copies the tables from nycflights13 to our database:
+nycflights13 패키지의 옛 친구들인 `flights`와 `planes`를 사용하여 dplyr과 SQL 사이의 관계를 탐구해 보겠습니다.
+dbplyr에는 nycflights13에서 우리 데이터베이스로 테이블을 복사해 주는 함수가 포함되어 있어, 이 데이터셋들을 우리 학습용 데이터베이스에 쉽게 넣을 수 있습니다:
 
 ```{r}
 dbplyr::copy_nycflights13(con)
@@ -250,29 +259,27 @@ planes <- tbl(con, "planes")
 options(dplyr.strict_sql = TRUE)
 ```
 
-### SQL basics
+### SQL 기초
 
-The top-level components of SQL are called **statements**.
-Common statements include `CREATE` for defining new tables, `INSERT` for adding data, and `SELECT` for retrieving data.
-We will focus on `SELECT` statements, also called **queries**, because they are almost exclusively what you'll use as a data scientist.
+SQL의 최상위 구성 요소를 **명령문(statements)** 이라고 부릅니다.
+일반적으로 새로운 테이블을 정의하는 `CREATE`, 데이터를 추가하는 `INSERT`, 데이터를 검색하는 `SELECT` 등이 있습니다.
+우리는 데이터 과학자로서 거의 전적으로 사용하게 될 **쿼리(queries)** 라고도 불리는 `SELECT` 문에 집중할 것입니다.
 
-A query is made up of **clauses**.
-There are five important clauses: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, and `GROUP BY`. Every query must have the `SELECT`[^databases-4] and `FROM`[^databases-5] clauses and the simplest query is `SELECT * FROM table`, which selects all columns from the specified table
-. This is what dbplyr generates for an unadulterated table
-:
+쿼리는 **절(clauses)** 로 구성됩니다.
+중요한 다섯 가지 절이 있습니다: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `GROUP BY`. 모든 쿼리는 `SELECT`[^databases-4]와 `FROM`[^databases-5] 절을 반드시 포함해야 하며, 가장 단순한 쿼리는 지정된 테이블에서 모든 열을 선택하는 `SELECT * FROM table`입니다. 이것이 dbplyr이 수정되지 않은 테이블에 대해 생성하는 것입니다:
 
-[^databases-4]: Confusingly, depending on the context, `SELECT` is either a statement or a clause.
-    To avoid this confusion, we'll generally use `SELECT` query instead of `SELECT` statement.
+[^databases-4]: 혼동스럽게도 문맥에 따라 `SELECT`는 명령문이기도 하고 절이기도 합니다.
+    이러한 혼동을 피하기 위해, 일반적으로 `SELECT` 문 대신 `SELECT` 쿼리라는 용어를 사용하겠습니다.
 
-[^databases-5]: Ok, technically, only the `SELECT` is required, since you can write queries like `SELECT 1+1` to perform basic calculations.
-    But if you want to work with data (as you always do!) you'll also need a `FROM` clause.
+[^databases-5]: 엄밀히 말하면 `SELECT 1+1`과 같이 기본적인 계산을 수행하는 쿼리를 작성할 수 있으므로 `SELECT`만 필요합니다.
+    하지만 (항상 그렇듯이!) 데이터로 작업하려면 `FROM` 절도 필요합니다.
 
 ```{r}
 flights |> show_query()
 planes |> show_query()
 ```
 
-`WHERE` and `ORDER BY` control which rows are included and how they are ordered:
+`WHERE`와 `ORDER BY`는 포함할 행과 행의 정렬 방식을 제어합니다:
 
 ```{r}
 flights |> 
@@ -281,7 +288,7 @@ flights |>
   show_query()
 ```
 
-`GROUP BY` converts the query to a summary, causing aggregation to happen:
+`GROUP BY`는 쿼리를 요약으로 변환하여 집계가 일어나게 합니다:
 
 ```{r}
 flights |> 
@@ -290,25 +297,25 @@ flights |>
   show_query()
 ```
 
-There are two important differences between dplyr verbs and SELECT clauses:
+dplyr 동사와 SELECT 절 사이에는 두 가지 중요한 차이점이 있습니다:
 
--   In SQL, case doesn't matter: you can write `select`, `SELECT`, or even `SeLeCt`. In this book we'll stick with the common convention of writing SQL keywords in uppercase to distinguish them from table or variables names.
--   In SQL, order matters: you must always write the clauses in the order `SELECT`, `FROM`, `WHERE`, `GROUP BY`, `ORDER BY`. Confusingly, this order doesn't match how the clauses are actually evaluated which is first `FROM`, then `WHERE`, `GROUP BY`, `SELECT`, and `ORDER BY`.
+-   SQL에서는 대소문자를 구분하지 않습니다: `select`, `SELECT`, 심지어 `SeLeCt`라고 써도 됩니다. 이 책에서는 SQL 키워드를 테이블 이름이나 변수 이름과 구별하기 위해 대문자로 쓰는 일반적인 관례를 따를 것입니다.
+-   SQL에서는 순서가 중요합니다: 항상 `SELECT`, `FROM`, `WHERE`, `GROUP BY`, `ORDER BY` 순서로 절을 작성해야 합니다. 혼란스럽게도 이 순서는 실제 실행 순서(먼저 `FROM`, 그다음 `WHERE`, `GROUP BY`, `SELECT`, 마지막으로 `ORDER BY`)와 일치하지 않습니다.
 
-The following sections explore each clause in more detail.
+다음 섹션들에서 각 절을 더 자세히 살펴보겠습니다.
 
 ::: callout-note
-Note that while SQL is a standard, it is extremely complex and no database follows it exactly.
-While the main components that we'll focus on in this book are very similar between DBMS's, there are many minor variations.
-Fortunately, dbplyr is designed to handle this problem and generates different translations for different databases.
-It's not perfect, but it's continually improving, and if you hit a problem you can file an issue [on GitHub](https://github.com/tidyverse/dbplyr/issues/) to help us do better.
+SQL은 표준이지만 매우 복잡하며 어떤 데이터베이스도 이를 완벽하게 따르지 않는다는 점에 유의하세요.
+이 책에서 집중할 주요 구성 요소들은 DBMS 간에 매우 유사하지만, 세부적인 변형이 많습니다.
+다행히 dbplyr은 이 문제를 처리하도록 설계되었으며 데이터베이스마다 다른 번역을 생성합니다.
+완벽하지는 않지만 계속 개선되고 있으며, 문제가 발생하면 [GitHub](https://github.com/tidyverse/dbplyr/issues/)에 이슈를 남겨 저희가 더 개선할 수 있도록 도와주세요.
 :::
 
 ### SELECT
 
-The `SELECT` clause is the workhorse of queries and performs the same job as `select()`, `mutate()`, `rename()`, `relocate()`, and, as you'll learn in the next section, `summarize()`.
+`SELECT` 절은 쿼리의 핵심이며 `select()`, `mutate()`, `rename()`, `relocate()`, 그리고 다음 섹션에서 배울 `summarize()`와 같은 역할을 수행합니다.
 
-`select()`, `rename()`, and `relocate()` have very direct translations to `SELECT` as they just affect where a column appears (if at all) along with its name:
+`select()`, `rename()`, `relocate()`는 열의 위치와 이름에만 영향을 미치므로 `SELECT`로 매우 직접적으로 번역됩니다:
 
 ```{r}
 planes |> 
@@ -326,22 +333,22 @@ planes |>
   show_query()
 ```
 
-This example also shows you how SQL does renaming.
-In SQL terminology renaming is called **aliasing** and is done with `AS`.
-Note that unlike `mutate()`, the old name is on the left and the new name is on the right.
+이 예제는 또한 SQL에서 이름을 바꾸는 방법을 보여줍니다.
+SQL 용어로 이름을 바꾸는 것은 **에일리어싱(aliasing)** 이라고 하며 `AS`를 사용하여 수행합니다.
+`mutate()`와 달리 원래 이름이 왼쪽에, 새 이름이 오른쪽에 온다는 점에 유의하세요.
 
 ::: callout-note
-In the examples above note that `"year"` and `"type"` are wrapped in double quotes.
-That's because these are **reserved words** in duckdb, so dbplyr quotes them to avoid any potential confusion between column/table names and SQL operators.
+위의 예제에서 `"year"`와 `"type"`이 큰따옴표로 감싸져 있는 것을 확인하세요.
+이는 duckdb에서 **예약어(reserved words)** 이기 때문이며, dbplyr은 열/테이블 이름과 SQL 연산자 사이의 잠재적인 혼동을 피하기 위해 따옴표를 붙입니다.
 
-When working with other databases you're likely to see every variable name quoted because only a handful of client packages, like duckdb, know what all the reserved words are, so they quote everything to be safe.
+다른 데이터베이스로 작업할 때는 모든 변수 이름에 따옴표가 붙은 것을 볼 가능성이 높습니다. duckdb와 같은 소수의 클라이언트 패키지만이 모든 예약어가 무엇인지 알고 있기 때문에, 안전을 위해 모든 것에 따옴표를 붙이기 때문입니다.
 
 ``` sql
 SELECT "tailnum", "type", "manufacturer", "model", "year"
 FROM "planes"
 ```
 
-Some other database systems use backticks instead of quotes:
+어떤 데이터베이스 시스템은 따옴표 대신 백틱을 사용하기도 합니다:
 
 ``` sql
 SELECT `tailnum`, `type`, `manufacturer`, `model`, `year`
@@ -349,7 +356,7 @@ FROM `planes`
 ```
 :::
 
-The translations for `mutate()` are similarly straightforward: each variable becomes a new expression in `SELECT`:
+`mutate()`의 번역도 마찬가지로 간단합니다: 각 변수는 `SELECT`에서 새로운 표현식이 됩니다:
 
 ```{r}
 flights |> 
@@ -359,19 +366,19 @@ flights |>
   show_query()
 ```
 
-We'll come back to the translation of individual components (like `/`) in @sec-sql-expressions.
+개별 구성 요소(예: `/`)의 번역については @sec-sql-expressions에서 다시 다루겠습니다.
 
 ### FROM
 
-The `FROM` clause defines the data source.
-It's going to be rather uninteresting for a little while, because we're just using single tables.
-You'll see more complex examples once we hit the join functions.
+`FROM` 절은 데이터 소스를 정의합니다.
+지금은 단일 테이블만 사용하고 있으므로 그리 흥미롭지 않을 것입니다.
+조인 함수를 다룰 때 더 복잡한 예제를 보게 될 것입니다.
 
 ### GROUP BY
 
-`group_by()` is translated to the `GROUP BY`[^databases-6] clause and `summarize()` is translated to the `SELECT` clause:
+`group_by()`는 `GROUP BY`[^databases-6] 절로 번역되고 `summarize()`는 `SELECT` 절로 번역됩니다:
 
-[^databases-6]: This is no coincidence: the dplyr function name was inspired by the SQL clause.
+[^databases-6]: 우연이 아닙니다: dplyr 함수 이름은 SQL 절에서 영감을 받았습니다.
 
 ```{r}
 diamonds_db |> 
@@ -383,11 +390,11 @@ diamonds_db |>
   show_query()
 ```
 
-We'll come back to what's happening with the translation of `n()` and `mean()` in @sec-sql-expressions.
+`n()`과 `mean()`의 번역에 대해서는 @sec-sql-expressions에서 다시 다루겠습니다.
 
 ### WHERE
 
-`filter()` is translated to the `WHERE` clause:
+`filter()`는 `WHERE` 절로 번역됩니다:
 
 ```{r}
 flights |> 
@@ -399,13 +406,13 @@ flights |>
   show_query()
 ```
 
-There are a few important details to note here:
+여기서 주의해야 할 몇 가지 중요한 세부 사항이 있습니다:
 
--   `|` becomes `OR` and `&` becomes `AND`.
--   SQL uses `=` for comparison, not `==`. SQL doesn't have assignment, so there's no potential for confusion there.
--   SQL uses only `''` for strings, not `""`. In SQL, `""` is used to identify variables, like R's ``` `` ```.
+-   `|`는 `OR`이 되고 `&`는 `AND`가 됩니다.
+-   SQL은 비교를 위해 `==`이 아닌 `=`을 사용합니다. SQL에는 할당이 없으므로 혼동될 우려가 없습니다.
+-   SQL은 문자열에 `""`가 아닌 `''`만 사용합니다. SQL에서 `""`는 R의 ``` `` ```와 같이 변수를 식별하는 데 사용됩니다.
 
-Another useful SQL operator is `IN`, which is very close to R's `%in%`:
+또 다른 유용한 SQL 연산자는 `IN`으로, R의 `%in%`와 매우 유사합니다:
 
 ```{r}
 flights |> 
@@ -413,10 +420,10 @@ flights |>
   show_query()
 ```
 
-SQL uses `NULL` instead of `NA`.
-`NULL`s behave similarly to `NA`s.
-The main difference is that while they're "infectious" in comparisons and arithmetic, they are silently dropped when summarizing.
-dbplyr will remind you about this behavior the first time you hit it:
+SQL은 `NA` 대신 `NULL`을 사용합니다.
+`NULL`은 `NA`와 유사하게 작동합니다.
+주요 차이점은 비교 및 산술 연산에서는 "감염성(infectious)"이 있지만, 요약할 때는 소리 없이 제거된다는 점입니다.
+dbplyr은 여러분이 처음 이 상황에 부딪혔을 때 이러한 동작에 대해 알려줄 것입니다:
 
 ```{r}
 flights |> 
@@ -424,9 +431,9 @@ flights |>
   summarize(delay = mean(arr_delay))
 ```
 
-If you want to learn more about how `NULL`s work, you might enjoy "[The Three-Valued Logic of SQL](https://modern-sql.com/concept/three-valued-logic)" by Markus Winand.
+`NULL`이 작동하는 방식에 대해 더 자세히 배우고 싶다면, Markus Winand의 "[The Three-Valued Logic of SQL](https://modern-sql.com/concept/three-valued-logic)"을 읽어보시면 좋습니다.
 
-In general, you can work with `NULL`s using the functions you'd use for `NA`s in R:
+일반적으로 R에서 `NA`에 사용하는 함수를 사용하여 `NULL`을 다룰 수 있습니다:
 
 ```{r}
 flights |> 
@@ -434,15 +441,15 @@ flights |>
   show_query()
 ```
 
-This SQL query illustrates one of the drawbacks of dbplyr: while the SQL is correct, it isn't as simple as you might write by hand.
-In this case, you could drop the parentheses and use a special operator that's easier to read:
+이 SQL 쿼리는 dbplyr의 단점 중 하나를 잘 보여줍니다. 생성된 SQL이 정확하기는 하지만, 사람이 직접 작성하는 것만큼 간단하지는 않습니다.
+이 경우에는 괄호를 없애고 더 읽기 쉬운 전용 연산자를 사용할 수 있습니다:
 
 ``` sql
 WHERE "dep_delay" IS NOT NULL
 ```
 
-Note that if you `filter()` a variable that you created using a summarize, dbplyr will generate a `HAVING` clause, rather than a `WHERE` clause.
-This is a one of the idiosyncrasies of SQL: `WHERE` is evaluated before `SELECT` and `GROUP BY`, so SQL needs another clause that's evaluated afterwards.
+요약(summarize)을 사용하여 만든 변수를 `filter()` 하는 경우, dbplyr은 `WHERE` 절이 아닌 `HAVING` 절을 생성한다는 점에 유의하세요.
+이는 SQL의 특징 중 하나로, `WHERE`는 `SELECT`와 `GROUP BY` 전에 평가되므로, 그 이후에 평가될 또 다른 절이 필요하기 때문입니다.
 
 ```{r}
 diamonds_db |> 
@@ -454,7 +461,7 @@ diamonds_db |>
 
 ### ORDER BY
 
-Ordering rows involves a straightforward translation from `arrange()` to the `ORDER BY` clause:
+행의 순서를 정하는 것은 `arrange()`에서 `ORDER BY` 절로 매우 직접적으로 번역됩니다:
 
 ```{r}
 flights |> 
@@ -462,16 +469,16 @@ flights |>
   show_query()
 ```
 
-Notice how `desc()` is translated to `DESC`: this is one of the many dplyr functions whose name was directly inspired by SQL.
+`desc()`가 `DESC`로 번역되는 방식에 주목하세요. 이는 SQL에서 직접 영감을 받은 수많은 dplyr 함수 중 하나입니다.
 
-### Subqueries
+### 서브쿼리
 
-Sometimes it's not possible to translate a dplyr pipeline into a single `SELECT` statement and you need to use a subquery.
-A **subquery** is just a query used as a data source in the `FROM` clause, instead of the usual table.
+때때로 dplyr 파이프라인을 단일 `SELECT` 문으로 번역하는 것이 불가능하여 서브쿼리를 사용해야 할 때가 있습니다.
+**서브쿼리(subquery)** 는 일반적인 테이블 대신 `FROM` 절에서 데이터 소스로 사용되는 쿼리입니다.
 
-dbplyr typically uses subqueries to work around limitations of SQL.
-For example, expressions in the `SELECT` clause can't refer to columns that were just created.
-That means that the following (silly) dplyr pipeline needs to happen in two steps: the first (inner) query computes `year1` and then the second (outer) query can compute `year2`.
+dbplyr은 일반적으로 SQL의 한계를 극복하기 위해 서브쿼리를 사용합니다.
+예를 들어, `SELECT` 절의 표현식은 방금 생성된 열을 참조할 수 없습니다.
+즉, 다음과 같은 (다소 억지스러운) dplyr 파이프라인은 두 단계로 진행되어야 합니다. 첫 번째(내부) 쿼리에서 `year1`을 계산하고, 두 번째(외부) 쿼리에서 `year2`를 계산할 수 있습니다.
 
 ```{r}
 flights |> 
@@ -482,8 +489,8 @@ flights |>
   show_query()
 ```
 
-You'll also see this if you attempted to `filter()` a variable that you just created.
-Remember, even though `WHERE` is written after `SELECT`, it's evaluated before it, so we need a subquery in this (silly) example:
+방금 생성한 변수를 `filter()` 하려고 할 때도 이와 같은 현상을 볼 수 있습니다.
+앞서 언급했듯이 `WHERE`는 `SELECT` 뒤에 작성되더라도 그보다 먼저 평가되므로, 이 (억지스러운) 예제에서는 서브쿼리가 필요합니다:
 
 ```{r}
 flights |> 
@@ -492,13 +499,13 @@ flights |>
   show_query()
 ```
 
-Sometimes dbplyr will create a subquery where it's not needed because it doesn't yet know how to optimize that translation.
-As dbplyr improves over time, these cases will get rarer but will probably never go away.
+때때로 dbplyr은 번역을 최적화하는 방법을 아직 알지 못해 필요하지 않은 곳에 서브쿼리를 생성하기도 합니다.
+dbplyr이 개선됨에 따라 이러한 경우는 드물어지겠지만, 아마도 완전히 사라지지는 않을 것입니다.
 
-### Joins
+### 조인
 
-If you're familiar with dplyr's joins, SQL joins are very similar.
-Here's a simple example:
+dplyr의 조인에 익숙하다면 SQL 조인도 매우 유사합니다.
+여기 간단한 예가 있습니다:
 
 ```{r}
 flights |> 
@@ -506,9 +513,9 @@ flights |>
   show_query()
 ```
 
-The main thing to notice here is the syntax: SQL joins use sub-clauses of the `FROM` clause to bring in additional tables, using `ON` to define how the tables are related.
+여기서 주목할 점은 구문입니다. SQL 조인은 `FROM` 절의 하위 절을 사용하여 추가 테이블을 가져오고, `ON`을 사용하여 테이블 간의 연관 관계를 정의합니다.
 
-dplyr's names for these functions are so closely connected to SQL that you can easily guess the equivalent SQL for `inner_join()`, `right_join()`, and `full_join()`:
+이들 함수의 dplyr 이름은 SQL과 매우 밀접하게 연결되어 있어 `inner_join()`, `right_join()`, `full_join()`에 해당하는 SQL을 쉽게 짐작할 수 있습니다:
 
 ``` sql
 SELECT flights.*, "type", manufacturer, model, engines, seats, speed
@@ -524,22 +531,22 @@ FROM flights
 FULL JOIN planes ON (flights.tailnum = planes.tailnum)
 ```
 
-You're likely to need many joins when working with data from a database.
-That's because database tables are often stored in a highly normalized form, where each "fact" is stored in a single place and to keep a complete dataset for analysis you need to navigate a complex network of tables connected by primary and foreign keys.
-If you hit this scenario, the [dm package](https://cynkra.github.io/dm/), by Tobias Schieferdecker, Kirill Müller, and Darko Bergant, is a life saver.
-It can automatically determine the connections between tables using the constraints that DBAs often supply, visualize the connections so you can see what's going on, and generate the joins you need to connect one table to another.
+데이터베이스의 데이터로 작업할 때 많은 조인이 필요할 가능성이 높습니다.
+데이터베이스 테이블은 종종 고도로 정규화된(normalized) 형태로 저장되기 때문입니다. 즉, 각 "사실(fact)"은 단 한 곳에 저장되며, 분석을 위해 완전한 데이터셋을 유지하려면 기본 키(primary keys)와 외래 키(foreign keys)로 연결된 복잡한 테이블 네트워크를 탐색해야 합니다.
+이런 상황에 맞닥뜨린다면, Tobias Schieferdecker, Kirill Müller, Darko Bergant가 만든 [dm 패키지](https://cynkra.github.io/dm/)가 구세주가 될 것입니다.
+이 패키지는 DBA가 제공하는 제약 조건(constraints)을 사용하여 테이블 간의 연결을 자동으로 파악하고, 무슨 일이 일어나고 있는지 볼 수 있도록 시각화하며, 테이블들을 연결하는 데 필요한 조인을 생성할 수 있습니다.
 
-### Other verbs
+### 기타 동사들
 
-dbplyr also translates other verbs like `distinct()`, `slice_*()`, and `intersect()`, and a growing selection of tidyr functions like `pivot_longer()` and `pivot_wider()`.
-The easiest way to see the full set of what's currently available is to visit the dbplyr website: <https://dbplyr.tidyverse.org/reference/>.
+dbplyr은 또한 `distinct()`, `slice_*()`, `intersect()`와 같은 다른 동사들을 번역하며, `pivot_longer()`와 `pivot_wider()`와 같은 tidyr 함수들도 점점 더 많이 지원하고 있습니다.
+현재 사용 가능한 전체 기능을 확인하는 가장 쉬운 방법은 dbplyr 웹사이트를 방문하는 것입니다: <https://dbplyr.tidyverse.org/reference/>.
 
-### Exercises
+### 연습문제
 
-1.  What is `distinct()` translated to?
-    How about `head()`?
+1.  `distinct()`는 무엇으로 번역됩니까?
+    `head()`는 어떻습니까?
 
-2.  Explain what each of the following SQL queries do and try recreate them using dbplyr.
+2.  다음 각 SQL 쿼리가 무엇을 하는지 설명하고, dbplyr을 사용하여 다시 만들어 보세요.
 
     ``` sql
     SELECT * 
@@ -550,13 +557,13 @@ The easiest way to see the full set of what's currently available is to visit th
     FROM flights
     ```
 
-## Function translations {#sec-sql-expressions}
+## 함수 번역 {#sec-sql-expressions}
 
-So far we've focused on the big picture of how dplyr verbs are translated to the clauses of a query.
-Now we're going to zoom in a little and talk about the translation of the R functions that work with individual columns, e.g., what happens when you use `mean(x)` in a `summarize()`?
+지금까지 우리는 dplyr 동사가 쿼리의 절로 어떻게 번역되는지 큰 그림에 집중했습니다.
+이제 조금 더 확대해서 개별 열에 작동하는 R 함수의 번역에 대해 이야기해 보겠습니다. 예를 들어 `summarize()`에서 `mean(x)`를 사용하면 어떤 일이 일어날까요?
 
-To help see what's going on, we'll use a couple of little helper functions that run a `summarize()` or `mutate()` and show the generated SQL.
-That will make it a little easier to explore a few variations and see how summaries and transformations can differ.
+무슨 일이 일어나는지 확인하기 위해 `summarize()` 또는 `mutate()`를 실행하고 생성된 SQL을 보여주는 몇 가지 작은 도우미 함수를 사용하겠습니다.
+이를 통해 몇 가지 변형을 탐구하고 요약(summaries)과 변형(transformations)이 어떻게 다를 수 있는지 더 쉽게 확인할 수 있을 것입니다.
 
 ```{r}
 summarize_query <- function(df, ...) {
@@ -571,9 +578,9 @@ mutate_query <- function(df, ...) {
 }
 ```
 
-Let's dive in with some summaries!
-Looking at the code below you'll notice that some summary functions, like `mean()`, have a relatively simple translation while others, like `median()`, are much more complex.
-The complexity is typically higher for operations that are common in statistics but less common in databases.
+몇 가지 요약부터 살펴보겠습니다!
+아래 코드를 보면 `mean()`과 같은 일부 요약 함수는 비교적 간단하게 번역되는 반면, `median()`과 같은 다른 함수는 훨씬 더 복잡하다는 것을 알 수 있습니다.
+통계에서는 일반적이지만 데이터베이스에서는 덜 일반적인 연산일수록 복잡도가 대개 더 높습니다.
 
 ```{r}
 flights |> 
@@ -584,8 +591,8 @@ flights |>
   )
 ```
 
-The translation of summary functions becomes more complicated when you use them inside a `mutate()` because they have to turn into so-called **window** functions.
-In SQL, you turn an ordinary aggregation function into a window function by adding `OVER` after it:
+요약 함수를 `mutate()` 내부에서 사용하면 소위 **윈도우(window)** 함수로 변해야 하므로 번역이 더 복잡해집니다.
+SQL에서는 일반 집계 함수 뒤에 `OVER`를 추가하여 윈도우 함수로 변환합니다:
 
 ```{r}
 flights |> 
@@ -595,9 +602,9 @@ flights |>
   )
 ```
 
-In SQL, the `GROUP BY` clause is used exclusively for summaries so here you can see that the grouping has moved from the `GROUP BY` clause to `OVER`.
+SQL에서 `GROUP BY` 절은 오직 요약을 위해서만 사용되므로, 여기서는 그룹화가 `GROUP BY` 절에서 `OVER`로 이동한 것을 볼 수 있습니다.
 
-Window functions include all functions that look forward or backwards, like `lead()` and `lag()` which look at the "previous" or "next" value respectively:
+윈도우 함수에는 각각 "이전" 또는 "다음" 값을 검색하는 `lead()` 및 `lag()`와 같이 앞뒤를 살펴보는 모든 함수가 포함됩니다.
 
 ```{r}
 flights |> 
@@ -609,12 +616,12 @@ flights |>
   )
 ```
 
-Here it's important to `arrange()` the data, because SQL tables have no intrinsic order.
-In fact, if you don't use `arrange()` you might get the rows back in a different order every time!
-Notice for window functions, the ordering information is repeated: the `ORDER BY` clause of the main query doesn't automatically apply to window functions.
+여기서는 `arrange()`를 사용하여 데이터를 정렬하는 것이 중요합니다. SQL 테이블에는 본질적인 순서가 없기 때문입니다.
+사실 `arrange()`를 사용하지 않으면 행을 가져올 때마다 순서가 달라질 수 있습니다!
+윈도우 함수의 경우 정렬 정보가 반복된다는 점에 유의하세요. 메인 쿼리의 `ORDER BY` 절이 윈도우 함수에 자동으로 적용되지 않기 때문입니다.
 
-Another important SQL function is `CASE WHEN`. It's used as the translation of `if_else()` and `case_when()`, the dplyr function that it directly inspired.
-Here are a couple of simple examples:
+또 다른 중요한 SQL 함수는 `CASE WHEN`입니다. 이는 `if_else()`와 `case_when()`의 번역으로 사용되는데, dplyr의 `case_when()`이 바로 이 SQL 함수에서 영감을 얻어 만들어졌습니다.
+여기 몇 가지 간단한 예가 있습니다:
 
 ```{r}
 flights |> 
@@ -632,8 +639,8 @@ flights |>
   )
 ```
 
-`CASE WHEN` is also used for some other functions that don't have a direct translation from R to SQL.
-A good example of this is `cut()`:
+`CASE WHEN`은 R에서 SQL로 직접 번역되지 않는 다른 일부 함수들에도 사용됩니다.
+좋은 예가 `cut()`입니다:
 
 ```{r}
 flights |> 
@@ -646,19 +653,19 @@ flights |>
   )
 ```
 
-dbplyr also translates common string and date-time manipulation functions, which you can learn about in `vignette("translation-function", package = "dbplyr")`.
-dbplyr's translations are certainly not perfect, and there are many R functions that aren't translated yet, but dbplyr does a surprisingly good job covering the functions that you'll use most of the time.
+dbplyr은 또한 문자열 및 날짜-시간 조작 함수들도 번역합니다. 이에 대해서는 `vignette("translation-function", package = "dbplyr")`에서 자세히 배울 수 있습니다.
+dbplyr의 번역이 완벽하지는 않고 아직 번역되지 않은 R 함수도 많지만, dbplyr은 여러분이 대부분의 시간 동안 사용하게 될 함수들을 놀라울 정도로 잘 처리합니다.
 
-## Summary
+## 요약
 
-In this chapter you learned how to access data from databases.
-We focused on dbplyr, a dplyr "backend" that allows you to write the dplyr code you're familiar with, and have it be automatically translated to SQL.
-We used that translation to teach you a little SQL; it's important to learn some SQL because it's *the* most commonly used language for working with data and knowing some will make it easier for you to communicate with other data folks who don't use R.
+이 챕터에서는 데이터베이스의 데이터에 접근하는 방법을 배웠습니다.
+우리는 익숙한 dplyr 코드를 작성하면 자동으로 SQL로 번역해 주는 dplyr "백엔드"인 dbplyr에 집중했습니다.
+이 번역 기능을 사용하여 SQL을 조금 배워보았습니다. SQL을 조금이라도 배우는 것이 중요한 이유는 데이터 작업에서 *가장* 흔히 사용되는 언어이기 때문이며, R을 사용하지 않는 다른 데이터 전문가들과 소통하는 데 도움이 되기 때문입니다.
 
-If you've finished this chapter and would like to learn more about SQL, we have two recommendations:
+이 챕터를 마치고 SQL에 대해 더 배우고 싶다면 다음 두 책을 추천합니다:
 
--   [*SQL for Data Scientists*](https://sqlfordatascientists.com) by Renée M. P. Teate is an introduction to SQL designed specifically for the needs of data scientists, and includes examples of the sort of highly interconnected data you're likely to encounter in real organizations.
--   [*Practical SQL*](https://www.practicalsql.com) by Anthony DeBarros is written from the perspective of a data journalist (a data scientist specialized in telling compelling stories) and goes into more detail about getting your data into a database and running your own DBMS.
+-   Renée M. P. Teate의 [*SQL for Data Scientists*](https://sqlfordatascientists.com)는 데이터 과학자의 니즈에 맞게 특별히 설계된 SQL 입문서로, 실제 기업에서 마주칠 법한 고도로 연결된 데이터 예시를 포함하고 있습니다.
+-   Anthony DeBarros의 [*Practical SQL*](https://www.practicalsql.com)은 데이터 저널리스트(설득력 있는 이야기를 들려주는 데 특화된 데이터 과학자)의 관점에서 쓰였으며, 데이터를 데이터베이스로 가져오고 자신만의 DBMS를 운영하는 방법에 대해 더 자세히 다룹니다.
 
-In the next chapter, we'll learn about another dplyr backend for working with large data: arrow.
-Arrow is designed for working with large files on disk, and is a natural complement to databases.
+다음 챕터에서는 대규모 데이터를 다루기 위한 또 다른 dplyr 백엔드인 arrow에 대해 배울 것입니다.
+Arrow는 디스크상의 대용량 파일로 작업하기 위해 설계되었으며, 데이터베이스와 자연스럽게 상호 보완적인 관계에 있습니다.

@@ -1,27 +1,27 @@
-# Joins {#sec-joins}
+# 결합(Joins) {#sec-joins}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-It's rare that a data analysis involves only a single data frame.
-Typically you have many data frames, and you must **join** them together to answer the questions that you're interested in.
-This chapter will introduce you to two important types of joins:
+데이터 분석에서 단 하나의 데이터 프레임만 사용하는 경우는 드뭅니다.
+일반적으로 여러 개의 데이터 프레임을 가지고 있으며, 관심 있는 질문에 답하기 위해 이들을 서로 **결합(join)**해야 합니다.
+이 챕터에서는 두 가지 중요한 결합 유형을 소개합니다:
 
--   Mutating joins, which add new variables to one data frame from matching observations in another.
--   Filtering joins, which filter observations from one data frame based on whether or not they match an observation in another.
+-   **뮤테이팅 조인(mutating joins)**: 한 데이터 프레임의 관측치와 일치하는 다른 데이터 프레임의 관측치를 찾아 새로운 변수를 추가합니다.
+-   **필터링 조인(filtering joins)**: 한 데이터 프레임의 관측치가 다른 데이터 프레임의 관측치와 일치하는지 여부에 따라 해당 관측치를 필터링합니다.
 
-We'll begin by discussing keys, the variables used to connect a pair of data frames in a join.
-We cement the theory with an examination of the keys in the datasets from the nycflights13 package, then use that knowledge to start joining data frames together.
-Next we'll discuss how joins work, focusing on their action on the rows.
-We'll finish up with a discussion of non-equi joins, a family of joins that provide a more flexible way of matching keys than the default equality relationship.
+먼저 결합에서 한 쌍의 데이터 프레임을 연결하는 데 사용되는 변수인 키(keys)에 대해 논의하며 시작하겠습니다.
+nycflights13 패키지에 포함된 데이터셋의 키들을 살펴보며 이론을 공고히 한 다음, 그 지식을 바탕으로 데이터 프레임들을 결합해 보겠습니다.
+그다음 조인이 어떻게 작동하는지, 특히 행에 어떻게 작용하는지에 집중하여 논의할 것입니다.
+마지막으로 기본적으로 제공되는 일치(equality) 관계보다 더 유연하게 키를 매칭하는 방법인 비등가 조인(non-equi joins)에 대해 알아보며 마무리하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-In this chapter, we'll explore the five related datasets from nycflights13 using the join functions from dplyr.
+이 챕터에서는 dplyr의 조인 함수들을 사용하여 nycflights13 패키지의 다섯 가지 관련 데이터셋을 탐구할 것입니다.
 
 ```{r}
 #| label: setup
@@ -30,27 +30,27 @@ library(tidyverse)
 library(nycflights13)
 ```
 
-## Keys
+## 키(Keys)
 
-To understand joins, you need to first understand how two tables can be connected through a pair of keys, within each table.
-In this section, you'll learn about the two types of key and see examples of both in the datasets of the nycflights13 package.
-You'll also learn how to check that your keys are valid, and what to do if your table lacks a key.
+조인을 이해하려면 먼저 각 테이블 내에서 한 쌍의 키를 통해 두 테이블이 어떻게 연결될 수 있는지 이해해야 합니다.
+이 섹션에서는 두 가지 유형의 키에 대해 배우고 nycflights13 패키지의 데이터셋에서 두 유형의 사례를 모두 살펴볼 것입니다.
+또한 키가 유효한지 확인하는 방법과 테이블에 키가 없는 경우 어떻게 해야 하는지도 배울 것입니다.
 
-### Primary and foreign keys
+### 기본 키와 외래 키
 
-Every join involves a pair of keys: a primary key and a foreign key.
-A **primary key** is a variable or set of variables that uniquely identifies each observation.
-When more than one variable is needed, the key is called a **compound key.** For example, in nycflights13:
+모든 조인에는 기본 키(primary key)와 외래 키(foreign key)라는 한 쌍의 키가 포함됩니다.
+**기본 키**는 각 관측치를 고유하게 식별하는 변수 또는 변수 세트입니다.
+둘 이상의 변수가 필요한 경우 해당 키를 **복합 키(compound key)**라고 부릅니다. 예를 들어 nycflights13에서:
 
--   `airlines` records two pieces of data about each airline: its carrier code and its full name.
-    You can identify an airline with its two letter carrier code, making `carrier` the primary key.
+-   `airlines`는 각 항공사에 대한 두 가지 데이터, 즉 항공사 코드와 전체 이름을 기록합니다.
+    두 글자 항공사 코드로 항공사를 식별할 수 있으므로 `carrier`가 기본 키가 됩니다.
 
     ```{r}
     airlines
     ```
 
--   `airports` records data about each airport.
-    You can identify each airport by its three letter airport code, making `faa` the primary key.
+-   `airports`는 각 공항에 대한 데이터를 기록합니다.
+    세 글자 공항 코드로 각 공항을 식별할 수 있으므로 `faa`가 기본 키가 됩니다.
 
     ```{r}
     #| R.options:
@@ -58,8 +58,8 @@ When more than one variable is needed, the key is called a **compound key.** For
     airports
     ```
 
--   `planes` records data about each plane.
-    You can identify a plane by its tail number, making `tailnum` the primary key.
+-   `planes`는 각 비행기에 대한 데이터를 기록합니다.
+    꼬리 번호(tail number)로 비행기를 식별할 수 있으므로 `tailnum`이 기본 키가 됩니다.
 
     ```{r}
     #| R.options:
@@ -67,8 +67,8 @@ When more than one variable is needed, the key is called a **compound key.** For
     planes
     ```
 
--   `weather` records data about the weather at the origin airports.
-    You can identify each observation by the combination of location and time, making `origin` and `time_hour` the compound primary key.
+-   `weather`는 출발 공항의 날씨 데이터를 기록합니다.
+    위치와 시간의 조합으로 각 관측치를 식별할 수 있으므로 `origin`과 `time_hour`가 복합 기본 키가 됩니다.
 
     ```{r}
     #| R.options:
@@ -76,47 +76,44 @@ When more than one variable is needed, the key is called a **compound key.** For
     weather
     ```
 
-A **foreign key** is a variable (or set of variables) that corresponds to a primary key in another table.
-For example:
+**외래 키**는 다른 테이블의 기본 키에 대응하는 변수(또는 변수 세트)입니다.
+예를 들어:
 
--   `flights$tailnum` is a foreign key that corresponds to the primary key `planes$tailnum`.
--   `flights$carrier` is a foreign key that corresponds to the primary key `airlines$carrier`.
--   `flights$origin` is a foreign key that corresponds to the primary key `airports$faa`.
--   `flights$dest` is a foreign key that corresponds to the primary key `airports$faa`.
--   `flights$origin`-`flights$time_hour` is a compound foreign key that corresponds to the compound primary key `weather$origin`-`weather$time_hour`.
+-   `flights$tailnum`은 `planes$tailnum` 기본 키에 대응하는 외래 키입니다.
+-   `flights$carrier`는 `airlines$carrier` 기본 키에 대응하는 외래 키입니다.
+-   `flights$origin`은 `airports$faa` 기본 키에 대응하는 외래 키입니다.
+-   `flights$dest`는 `airports$faa` 기본 키에 대응하는 외래 키입니다.
+-   `flights$origin`-`flights$time_hour`는 `weather$origin`-`weather$time_hour`라는 복합 기본 키에 대응하는 복합 외래 키입니다.
 
-These relationships are summarized visually in @fig-flights-relationships.
+이러한 관계들은 그림 @fig-flights-relationships 에서 시각적으로 요약되어 있습니다.
 
 ```{r}
 #| label: fig-flights-relationships
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   Connections between all five data frames in the nycflights13 package.
-#|   Variables making up a primary key are colored grey, and are connected
-#|   to their corresponding foreign keys with arrows.
+#|   nycflights13 패키지의 모든 다섯 가지 데이터 프레임 간의 연결 관계.
+#|   기본 키를 구성하는 변수들은 회색으로 표시되며, 화살표를 통해 해당 외래 키들과 연결되어 있습니다.
 #| fig-alt: |
-#|   The relationships between airports, planes, flights, weather, and
-#|   airlines datasets from the nycflights13 package. airports$faa
-#|   connected to the flights$origin and flights$dest. planes$tailnum
-#|   is connected to the flights$tailnum. weather$time_hour and
-#|   weather$origin are jointly connected to flights$time_hour and 
-#|   flights$origin. airlines$carrier is connected to flights$carrier.
-#|   There are no direct connections between airports, planes, airlines, 
-#|   and weather data frames.
+#|   nycflights13 패키지의 airports, planes, flights, weather, airlines 데이터셋 간의 관계. 
+#|   airports$faa는 flights$origin 및 flights$dest에 연결됩니다. 
+#|   planes$tailnum은 flights$tailnum에 연결됩니다. 
+#|   weather$time_hour 및 weather$origin은 공동으로 flights$time_hour 및 flights$origin에 연결됩니다. 
+#|   airlines$carrier는 flights$carrier에 연결됩니다. 
+#|   airports, planes, airlines, weather 데이터 프레임 간에는 직접적인 연결이 없습니다.
 knitr::include_graphics("diagrams/relational.png", dpi = 270)
 ```
 
-You'll notice a nice feature in the design of these keys: the primary and foreign keys almost always have the same names, which, as you'll see shortly, will make your joining life much easier.
-It's also worth noting the opposite relationship: almost every variable name used in multiple tables has the same meaning in each place.
-There's only one exception: `year` means year of departure in `flights` and year manufactured in `planes`.
-This will become important when we start actually joining tables together.
+이러한 키들의 설계에서 아주 좋은 특징을 발견하셨을 텐데, 바로 기본 키와 외래 키가 거의 항상 동일한 이름을 가진다는 점입니다. 곧 보게 되겠지만, 이는 여러분의 조인 작업 생활을 훨씬 더 편하게 만들어 줄 것입니다.
+반대 관계에 대해서도 주목할 가치가 있는데, 여러 테이블에서 사용되는 거의 모든 변수 이름은 각 위치에서 동일한 의미를 가집니다.
+딱 한 가지 예외가 있는데, `year`는 `flights`에서는 출발 연도를 의미하지만 `planes`에서는 제작 연도를 의미합니다.
+이는 실제로 테이블들을 결합하기 시작할 때 중요해질 것입니다.
 
-### Checking primary keys
+### 기본 키 확인하기
 
-Now that we've identified the primary keys in each table, it's good practice to verify that they do indeed uniquely identify each observation.
-One way to do that is to `count()` the primary keys and look for entries where `n` is greater than one.
-This reveals that `planes` and `weather` both look good:
+이제 각 테이블에서 기본 키를 식별했으므로, 이들이 실제로 각 관측치를 고유하게 식별하는지 확인해 보는 것이 좋은 관행입니다.
+그 방법 중 하나는 기본 키를 `count()`하고 `n`이 1보다 큰 항목을 찾는 것입니다.
+확인 결과 `planes`와 `weather`는 모두 문제가 없어 보입니다:
 
 ```{r}
 planes |> 
@@ -128,7 +125,7 @@ weather |>
   filter(n > 1)
 ```
 
-You should also check for missing values in your primary keys --- if a value is missing then it can't identify an observation!
+또한 기본 키에 결측치가 있는지 확인해야 합니다. 결측치가 있다면 관측치를 식별할 수 없기 때문입니다!
 
 ```{r}
 planes |> 
@@ -138,12 +135,12 @@ weather |>
   filter(is.na(time_hour) | is.na(origin))
 ```
 
-### Surrogate keys
+### 대리 키(Surrogate keys)
 
-So far we haven't talked about the primary key for `flights`.
-It's not super important here, because there are no data frames that use it as a foreign key, but it's still useful to consider because it's easier to work with observations if we have some way to describe them to others.
+지금까지는 `flights`의 기본 키에 대해 이야기하지 않았습니다.
+여기서는 이를 외래 키로 사용하는 데이터 프레임이 없기 때문에 그리 중요하지는 않지만, 관측치를 다른 사람에게 설명할 방법이 있다면 더 작업하기 편하기 때문에 고려해 볼 만한 가치가 있습니다.
 
-After a little thinking and experimentation, we determined that there are three variables that together uniquely identify each flight:
+약간의 생각과 실험 끝에 세 가지 변수를 합치면 각 항공편을 고유하게 식별할 수 있다는 것을 알아냈습니다:
 
 ```{r}
 flights |> 
@@ -151,9 +148,9 @@ flights |>
   filter(n > 1)
 ```
 
-Does the absence of duplicates automatically make `time_hour`-`carrier`-`flight` a primary key?
-It's certainly a good start, but it doesn't guarantee it.
-For example, are altitude and latitude a good primary key for `airports`?
+중복이 없다고 해서 자동으로 `time_hour`-`carrier`-`flight`가 기본 키가 될까요?
+확실히 시작점으로서는 좋지만, 그것이 보장되는 것은 아닙니다.
+예를 들어 고도(altitude)와 위도(latitude)가 `airports` 데이터의 좋은 기본 키가 될 수 있을까요?
 
 ```{r}
 airports |>
@@ -161,10 +158,10 @@ airports |>
   filter(n > 1)
 ```
 
-Identifying an airport by its altitude and latitude is clearly a bad idea, and in general it's not possible to know from the data alone whether or not a combination of variables makes a good a primary key.
-But for flights, the combination of `time_hour`, `carrier`, and `flight` seems reasonable because it would be really confusing for an airline and its customers if there were multiple flights with the same flight number in the air at the same time.
+고도와 위도로 공항을 식별하는 것은 명백히 좋지 않은 아이디어이며, 일반적으로 변수들의 조합이 좋은 기본 키가 될 수 있을지 여부를 데이터만으로 알 수는 없습니다.
+하지만 항공편의 경우 `time_hour`, `carrier`, `flight`의 조합이 합리적으로 보이는데, 같은 비행 번호를 가진 여러 항공편이 동시에 하늘에 떠 있다면 항공사와 고객에게 정말 혼란스러울 것이기 때문입니다.
 
-That said, we might be better off introducing a simple numeric surrogate key using the row number:
+그렇기는 해도 행 번호를 사용하여 간단한 숫자형 **대리 키**를 도입하는 것이 더 나을 수도 있습니다:
 
 ```{r}
 flights2 <- flights |> 
@@ -172,44 +169,44 @@ flights2 <- flights |>
 flights2
 ```
 
-Surrogate keys can be particularly useful when communicating to other humans: it's much easier to tell someone to take a look at flight 2001 than to say look at UA430 which departed 9am 2013-01-03.
+대리 키는 다른 사람들과 소통할 때 특히 유용합니다. 즉, "2013-01-03 오전 9시에 출발한 UA430 항공편을 보라"고 말하는 것보다 "2001번 항공편을 보라"고 하는 것이 훨씬 쉽기 때문입니다.
 
-### Exercises
+### 연습문제
 
-1.  We forgot to draw the relationship between `weather` and `airports` in @fig-flights-relationships.
-    What is the relationship and how should it appear in the diagram?
+1.  그림 @fig-flights-relationships 에서 `weather`와 `airports` 사이의 관계를 그리는 것을 잊었습니다.
+    그 관계는 무엇이며 다이어그램에 어떻게 나타나야 할까요?
 
-2.  `weather` only contains information for the three origin airports in NYC.
-    If it contained weather records for all airports in the USA, what additional connection would it make to `flights`?
+2.  `weather`는 뉴욕 시에 있는 세 개의 출발 공항에 대한 정보만 포함하고 있습니다.
+    만약 미국 내 모든 공항의 날씨 기록이 포함되어 있다면, `flights`와 어떤 추가적인 연결이 만들어질까요?
 
-3.  The `year`, `month`, `day`, `hour`, and `origin` variables almost form a compound key for `weather`, but there's one hour that has duplicate observations.
-    Can you figure out what's special about that hour?
+3.  `year`, `month`, `day`, `hour`, `origin` 변수들은 `weather`의 복합 키를 거의 형성할 뻔했지만, 중복된 관측치가 있는 시간이 한 시간 있습니다.
+    그 시간에 무슨 특별한 점이 있는지 찾아낼 수 있나요?
 
-4.  We know that some days of the year are special and fewer people than usual fly on them (e.g., Christmas eve and Christmas day).
-    How might you represent that data as a data frame?
-    What would be the primary key?
-    How would it connect to the existing data frames?
+4.  일 년 중 어떤 날들은 특별해서 평소보다 비행하는 사람이 적다는 것을 알고 있습니다(예: 크리스마스 이브와 크리스마스 당일).
+    해당 데이터를 데이터 프레임으로 어떻게 표현할 수 있을까요?
+    기본 키는 무엇이 될까요?
+    기존의 데이터 프레임들과 어떻게 연결될까요?
 
-5.  Draw a diagram illustrating the connections between the `Batting`, `People`, and `Salaries` data frames in the Lahman package.
-    Draw another diagram that shows the relationship between `People`, `Managers`, `AwardsManagers`.
-    How would you characterize the relationship between the `Batting`, `Pitching`, and `Fielding` data frames?
+5.  Lahman 패키지의 `Batting`, `People`, `Salaries` 데이터 프레임 간의 연결을 나타내는 다이어그램을 그려보세요.
+    `People`, `Managers`, `AwardsManagers` 간의 관계를 보여주는 또 다른 다이어그램을 그려보세요.
+    `Batting`, `Pitching`, `Fielding` 데이터 프레임 간의 관계를 어떻게 특성화하시겠습니까?
 
-## Basic joins {#sec-mutating-joins}
+## 조인 기초 {#sec-mutating-joins}
 
-Now that you understand how data frames are connected via keys, we can start using joins to better understand the `flights` dataset.
-dplyr provides six join functions: `left_join()`, `inner_join()`, `right_join()`, `full_join()`, `semi_join()`, and `anti_join().` They all have the same interface: they take a pair of data frames (`x` and `y`) and return a data frame.
-The order of the rows and columns in the output is primarily determined by `x`.
+데이터 프레임이 키를 통해 어떻게 연결되는지 이해했으므로, 이제 조인을 사용하여 `flights` 데이터셋을 더 잘 이해해 봅시다.
+dplyr은 여섯 가지 조인 함수를 제공합니다: `left_join()`, `inner_join()`, `right_join()`, `full_join()`, `semi_join()`, `anti_join()`. 이들은 모두 동일한 인터페이스를 갖습니다: 한 쌍의 데이터 프레임(`x`와 `y`)을 받아 데이터 프레임을 반환합니다.
+출력되는 행과 열의 순서는 주로 `x`에 의해 결정됩니다.
 
-In this section, you'll learn how to use one mutating join, `left_join()`, and two filtering joins, `semi_join()` and `anti_join()`.
-In the next section, you'll learn exactly how these functions work, and about the remaining `inner_join()`, `right_join()` and `full_join()`.
+이 섹션에서는 한 가지 뮤테이팅 조인인 `left_join()`과 두 가지 필터링 조인인 `semi_join()` 및 `anti_join()`을 사용하는 방법을 배울 것입니다.
+다음 섹션에서는 이러한 함수들이 정확히 어떻게 작동하는지, 그리고 나머지 `inner_join()`, `right_join()`, `full_join()`에 대해 배울 것입니다.
 
-### Mutating joins
+### 뮤테이팅 조인(Mutating joins)
 
-A **mutating join** allows you to combine variables from two data frames: it first matches observations by their keys, then copies across variables from one data frame to the other.
-Like `mutate()`, the join functions add variables to the right, so if your dataset has many variables, you won't see the new ones.
-For these examples, we'll make it easier to see what's going on by creating a narrower dataset with just six variables[^joins-1]:
+**뮤테이팅 조인**을 사용하면 두 데이터 프레임의 변수들을 결합할 수 있습니다. 먼저 키를 기준으로 관측치를 일치시킨 다음, 한 데이터 프레임에서 다른 데이터 프레임으로 변수들을 복사합니다.
+`mutate()`와 마찬가지로 조인 함수는 오른쪽 끝에 변수를 추가하므로, 데이터셋에 변수가 많을 경우 새로운 변수가 보이지 않을 수도 있습니다.
+이 예제들에서는 여섯 개의 변수만 있는 좁은 데이터셋을 만들어 무슨 일이 일어나고 있는지 더 쉽게 볼 수 있도록 하겠습니다[^joins-1]:
 
-[^joins-1]: Remember that in RStudio you can also use `View()` to avoid this problem.
+[^joins-1]: RStudio에서 이 문제를 피하기 위해 `View()`를 사용할 수도 있음을 기억하세요.
 
 ```{r}
 flights2 <- flights |> 
@@ -217,34 +214,34 @@ flights2 <- flights |>
 flights2
 ```
 
-There are four types of mutating join, but there's one that you'll use almost all of the time: `left_join()`.
-It's special because the output will always have the same rows as `x`, the data frame you're joining to[^joins-2].
-The primary use of `left_join()` is to add in additional metadata.
-For example, we can use `left_join()` to add the full airline name to the `flights2` data:
+네 가지 유형의 뮤테이팅 조인이 있지만, 거의 대부분의 시간에 사용하게 될 조인은 `left_join()`입니다.
+이 조인이 특별한 이유는 출력이 항상 여러분이 결합하려는 데이터 프레임인 `x`와 동일한 행을 갖기 때문입니다[^joins-2].
+`left_join()`의 주된 용도는 추가적인 메타데이터를 추가하는 것입니다.
+예를 들어 `left_join()`을 사용하여 `flights2` 데이터에 전체 항공사 이름을 추가할 수 있습니다:
 
-[^joins-2]: That's not 100% true, but you'll get a warning whenever it isn't.
+[^joins-2]: 100% 사실은 아니지만, 그렇지 않을 때마다 경고가 표시됩니다.
 
 ```{r}
 flights2 |>
   left_join(airlines)
 ```
 
-Or we could find out the temperature and wind speed when each plane departed:
+또는 각 비행기가 출발할 때의 온도와 풍속을 알 수도 있습니다:
 
 ```{r}
 flights2 |> 
   left_join(weather |> select(origin, time_hour, temp, wind_speed))
 ```
 
-Or what size of plane was flying:
+또는 어떤 크기의 비행기가 운항 중이었는지 알 수도 있습니다:
 
 ```{r}
 flights2 |> 
   left_join(planes |> select(tailnum, type, engines, seats))
 ```
 
-When `left_join()` fails to find a match for a row in `x`, it fills in the new variables with missing values.
-For example, there's no information about the plane with tail number `N3ALAA` so the `type`, `engines`, and `seats` will be missing:
+`left_join()`이 `x`의 행에 대해 일치하는 항목을 찾지 못하면 새로운 변수를 결측치로 채웁니다.
+예를 들어 꼬리 번호가 `N3ALAA`인 비행기에 대한 정보는 없으므로 `type`, `engines`, `seats`는 결측치로 나타납니다:
 
 ```{r}
 flights2 |> 
@@ -252,39 +249,39 @@ flights2 |>
   left_join(planes |> select(tailnum, type, engines, seats))
 ```
 
-We'll come back to this problem a few times in the rest of the chapter.
+이 문제에 대해서는 이 챕터의 나머지 부분에서 몇 번 더 다룰 것입니다.
 
-### Specifying join keys
+### 조인 키 지정하기
 
-By default, `left_join()` will use all variables that appear in both data frames as the join key, the so called **natural** join.
-This is a useful heuristic, but it doesn't always work.
-For example, what happens if we try to join `flights2` with the complete `planes` dataset?
+기본적으로 `left_join()`은 두 데이터 프레임에 모두 나타나는 모든 변수를 조인 키로 사용하며, 이를 **자연(natural)** 조인이라고 부릅니다.
+이는 유용한 어림법이지만 항상 작동하는 것은 아닙니다.
+예를 들어 `flights2`를 전체 `planes` 데이터셋과 결합하려고 하면 어떻게 될까요?
 
 ```{r}
 flights2 |> 
   left_join(planes)
 ```
 
-We get a lot of missing matches because our join is trying to use `tailnum` and `year` as a compound key.
-Both `flights` and `planes` have a `year` column but they mean different things: `flights$year` is the year the flight occurred and `planes$year` is the year the plane was built.
-We only want to join on `tailnum` so we need to provide an explicit specification with `join_by()`:
+일치하지 않는 결측치가 많이 발생하는데, 이는 조인이 `tailnum`과 `year`를 복합 키로 사용하려고 하기 때문입니다.
+`flights`와 `planes` 모두 `year` 열을 가지고 있지만 의미가 서로 다릅니다. `flights$year`는 비행이 발생한 연도이고 `planes$year`는 비행기가 제작된 연도입니다.
+우리는 `tailnum`에 대해서만 조인하고 싶으므로 `join_by()`를 사용하여 명시적인 사양을 제공해야 합니다:
 
 ```{r}
 flights2 |> 
   left_join(planes, join_by(tailnum))
 ```
 
-Note that the `year` variables are disambiguated in the output with a suffix (`year.x` and `year.y`), which tells you whether the variable came from the `x` or `y` argument.
-You can override the default suffixes with the `suffix` argument.
+출력에서 `year` 변수는 접미사(`year.x` 및 `year.y`)를 통해 구분되어 변수가 `x` 인자에서 왔는지 `y` 인자에서 왔는지 알려줍니다.
+`suffix` 인자를 사용하여 기본 접미사를 변경할 수도 있습니다.
 
-`join_by(tailnum)` is short for `join_by(tailnum == tailnum)`.
-It's important to know about this fuller form for two reasons.
-Firstly, it describes the relationship between the two tables: the keys must be equal.
-That's why this type of join is often called an **equi join**.
-You'll learn about non-equi joins in @sec-non-equi-joins.
+`join_by(tailnum)`은 `join_by(tailnum == tailnum)`의 줄임말입니다.
+두 가지 이유 때문에 이 명시적인 형식을 아는 것이 중요합니다.
+첫째, 두 테이블 간의 관계를 설명합니다. 즉, 키가 같아야 함을 의미합니다.
+그래서 이런 유형의 조인을 흔히 **등가 조인(equi join)**이라고 부릅니다.
+비등가 조인에 대해서는 @sec-non-equi-joins에서 배울 것입니다.
 
-Secondly, it's how you specify different join keys in each table.
-For example, there are two ways to join the `flight2` and `airports` table: either by `dest` or `origin`:
+둘째, 각 테이블에서 서로 다른 조인 키를 지정하는 방법입니다.
+예를 들어 `flights2`와 `airports` 테이블을 결합하는 방법에는 `dest`(목적지) 또는 `origin`(출발지)에 의한 두 가지 방법이 있습니다:
 
 ```{r}
 flights2 |> 
@@ -294,40 +291,40 @@ flights2 |>
   left_join(airports, join_by(origin == faa))
 ```
 
-In older code you might see a different way of specifying the join keys, using a character vector:
+오래된 코드에서는 문자형 벡터를 사용하여 조인 키를 지정하는 다른 방법을 볼 수도 있습니다:
 
--   `by = "x"` corresponds to `join_by(x)`.
--   `by = c("a" = "x")` corresponds to `join_by(a == x)`.
+-   `by = "x"`는 `join_by(x)`에 대응합니다.
+-   `by = c("a" = "x")`는 `join_by(a == x)`에 대응합니다.
 
-Now that it exists, we prefer `join_by()` since it provides a clearer and more flexible specification.
+이제 `join_by()`가 존재하므로, 더 명확하고 유연한 사양을 제공하는 이 방식을 선호합니다.
 
-`inner_join()`, `right_join()`, `full_join()` have the same interface as `left_join()`.
-The difference is which rows they keep: left join keeps all the rows in `x`, the right join keeps all rows in `y`, the full join keeps all rows in either `x` or `y`, and the inner join only keeps rows that occur in both `x` and `y`.
-We'll come back to these in more detail later.
+`inner_join()`, `right_join()`, `full_join()`은 `left_join()`과 동일한 인터페이스를 가집니다.
+차이점은 어떤 행을 유지하느냐입니다. 왼쪽 조인은 `x`의 모든 행을 유지하고, 오른쪽 조인은 `y`의 모든 행을 유지하며, 전체 조인은 `x` 또는 `y` 중 하나에 있는 모든 행을 유지하고, 내부 조인은 `x`와 `y` 둘 다에 나타나는 행만 유지합니다.
+이에 대해서는 나중에 더 자세히 다룰 것입니다.
 
-### Filtering joins
+### 필터링 조인(Filtering joins)
 
-As you might guess the primary action of a **filtering join** is to filter the rows.
-There are two types: semi-joins and anti-joins.
-**Semi-joins** keep all rows in `x` that have a match in `y`.
-For example, we could use a semi-join to filter the `airports` dataset to show just the origin airports:
+이미 짐작하셨겠지만 **필터링 조인**의 주요 역할은 행을 필터링하는 것입니다.
+여기에는 세미 조인(semi-joins)과 안티 조인(anti-joins) 두 가지 유형이 있습니다.
+**세미 조인**은 `y`에 일치하는 항목이 있는 `x`의 모든 행을 유지합니다.
+예를 들어 세미 조인을 사용하여 `airports` 데이터셋을 필터링하여 출발 공항들만 표시할 수 있습니다:
 
 ```{r}
 airports |> 
   semi_join(flights2, join_by(faa == origin))
 ```
 
-Or just the destinations:
+또는 목적지 공항들만 표시할 수도 있습니다:
 
 ```{r}
 airports |> 
   semi_join(flights2, join_by(faa == dest))
 ```
 
-**Anti-joins** are the opposite: they return all rows in `x` that don't have a match in `y`.
-They're useful for finding missing values that are **implicit** in the data, the topic of @sec-missing-implicit.
-Implicitly missing values don't show up as `NA`s but instead only exist as an absence.
-For example, we can find rows that are missing from `airports` by looking for flights that don't have a matching destination airport:
+**안티 조인**은 반대입니다. `y`에 일치하는 항목이 없는 `x`의 모든 행을 반환합니다.
+이들은 데이터에 **암묵적으로** 결측된 값을 찾는 데 유용하며, 이는 @sec-missing-implicit의 주제이기도 합니다.
+암묵적으로 결측된 값은 `NA`로 나타나지 않고 오직 부재(absence)로서만 존재합니다.
+예를 들어 일치하는 목적지 공항이 없는 항공편을 찾아 `airports`에서 누락된 행을 찾을 수 있습니다:
 
 ```{r}
 flights2 |> 
@@ -335,7 +332,7 @@ flights2 |>
   distinct(dest)
 ```
 
-Or we can find which `tailnum`s are missing from `planes`:
+또는 어떤 `tailnum`(꼬리 번호)이 `planes`에 누락되어 있는지 찾을 수 있습니다:
 
 ```{r}
 flights2 |>
@@ -343,13 +340,13 @@ flights2 |>
   distinct(tailnum)
 ```
 
-### Exercises
+### 연습문제
 
-1.  Find the 48 hours (over the course of the whole year) that have the worst delays.
-    Cross-reference it with the `weather` data.
-    Can you see any patterns?
+1.  일 년 전체 과정에서 가장 심한 지연이 발생한 48시간을 찾으세요.
+    이를 `weather` 데이터와 교차 참조해 보세요.
+    어떤 패턴이 보이나요?
 
-2.  Imagine you've found the top 10 most popular destinations using this code:
+2.  이 코드를 사용하여 가장 인기 있는 상위 10개 목적지를 찾았다고 가정해 봅시다:
 
     ```{r}
     top_dest <- flights2 |>
@@ -357,22 +354,22 @@ flights2 |>
       head(10)
     ```
 
-    How can you find all flights to those destinations?
+    해당 목적지로 향하는 모든 항공편을 어떻게 찾을 수 있을까요?
 
-3.  Does every departing flight have corresponding weather data for that hour?
+3.  모든 출발 항공편에 대해 해당 시간의 날씨 데이터가 있나요?
 
-4.  What do the tail numbers that don't have a matching record in `planes` have in common?
-    (Hint: one variable explains \~90% of the problems.)
+4.  `planes`에 일치하는 기록이 없는 꼬리 번호들은 어떤 공통점이 있나요?
+    (힌트: 하나의 변수가 문제의 약 90%를 설명합니다.)
 
-5.  Add a column to `planes` that lists every `carrier` that has flown that plane.
-    You might expect that there's an implicit relationship between plane and airline, because each plane is flown by a single airline.
-    Confirm or reject this hypothesis using the tools you've learned in previous chapters.
+5.  각 비행기를 운항한 모든 항공사(`carrier`)를 나열하는 열을 `planes`에 추가하세요.
+    각 비행기는 단일 항공사에 의해 운항되기 때문에 비행기와 항공사 사이에 암묵적인 관계가 있을 것이라고 예상할 수 있습니다.
+    이전 챕터들에서 배운 도구들을 사용하여 이 가설을 확인하거나 기각하세요.
 
-6.  Add the latitude and the longitude of the origin *and* destination airport to `flights`.
-    Is it easier to rename the columns before or after the join?
+6.  출발지 **및** 목적지 공항의 위도와 경도를 `flights`에 추가하세요.
+    조인 전과 후 중 언제 열 이름을 바꾸는 것이 더 쉽나요?
 
-7.  Compute the average delay by destination, then join on the `airports` data frame so you can show the spatial distribution of delays.
-    Here's an easy way to draw a map of the United States:
+7.  목적지별 평균 지연 시간을 계산한 다음 `airports` 데이터 프레임과 결합하여 지연 시간의 공간적 분포를 보여주세요.
+    미국 지도를 그리는 쉬운 방법은 다음과 같습니다:
 
     ```{r}
     #| eval: false
@@ -384,10 +381,10 @@ flights2 |>
         coord_quickmap()
     ```
 
-    You might want to use the `size` or `color` of the points to display the average delay for each airport.
+    점의 `size`나 `color`를 사용하여 각 공항의 평균 지연 시간을 표시하고 싶을 수도 있습니다.
 
-8.  What happened on June 13 2013?
-    Draw a map of the delays, and then use Google to cross-reference with the weather.
+8.  2013년 6월 13일에 무슨 일이 일어났나요?
+    지연 시간 지도를 그린 다음 구글을 사용하여 날씨와 교차 참조해 보세요.
 
     ```{r}
     #| eval: false
@@ -404,11 +401,11 @@ flights2 |>
         coord_quickmap()
     ```
 
-## How do joins work?
+## 조인은 어떻게 작동하는가?
 
-Now that you've used joins a few times it's time to learn more about how they work, focusing on how each row in `x` matches rows in `y`.
-We'll begin by introducing a visual representation of joins, using the simple tibbles defined below and shown in @fig-join-setup.
-In these examples we'll use a single key called `key` and a single value column (`val_x` and `val_y`), but the ideas all generalize to multiple keys and multiple values.
+지금까지 조인을 몇 번 사용해 보았으므로, 이제는 `x`의 각 행이 `y`의 행과 어떻게 일치하는지에 집중하여 조인이 어떻게 작동하는지에 대해 더 배워볼 차례입니다.
+먼저 아래에 정의된 간단한 티블(tibble)과 그림 @fig-join-setup 을 사용하여 조인의 시각적 표현을 소개하겠습니다.
+이 예제들에서는 `key`라는 단일 키와 단일 값 열(`val_x` 및 `val_y`)을 사용하겠지만, 이 아이디어는 모두 여러 개의 키와 여러 개의 값으로 일반화됩니다.
 
 ```{r}
 x <- tribble(
@@ -430,209 +427,202 @@ y <- tribble(
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   Graphical representation of two simple tables. The colored `key`
-#|   columns map background color to key value. The grey columns represent
-#|   the "value" columns that are carried along for the ride. 
+#|   두 개의 간단한 테이블의 그래픽 표현. 색이 칠해진 `key` 열은 
+#|   배경색을 키 값에 매핑합니다. 회색 열은 연산 과정에서 함께 이동하는 
+#|   "값(value)" 열을 나타냅니다.
 #| fig-alt: |
-#|   x and y are two data frames with 2 columns and 3 rows, with contents
-#|   as described in the text. The values of the keys are colored:
-#|   1 is green, 2 is purple, 3 is orange, and 4 is yellow.
+#|   x와 y는 텍스트에서 설명한 내용과 같은 2개 열과 3개 행을 가진 
+#|   데이터 프레임입니다. 키의 값은 색상으로 구분됩니다: 
+#|   1은 초록색, 2는 보라색, 3은 주황색, 4는 노란색입니다.
 knitr::include_graphics("diagrams/join/setup.png", dpi = 270)
 ```
 
-@fig-join-setup2 introduces the foundation for our visual representation.
-It shows all potential matches between `x` and `y` as the intersection between lines drawn from each row of `x` and each row of `y`.
-The rows and columns in the output are primarily determined by `x`, so the `x` table is horizontal and lines up with the output.
+그림 @fig-join-setup2 는 시각적 표현을 위한 기초를 소개합니다.
+이는 `x`의 각 행과 `y`의 각 행에서 그려진 선들이 교차하는 지점을 통해 `x`와 `y` 사이의 모든 잠재적 일치 항목을 보여줍니다.
+출력되는 행과 열은 주로 `x`에 의해 결정되므로, `x` 테이블은 가로로 놓이며 출력과 나란히 정렬됩니다.
 
 ```{r}
 #| label: fig-join-setup2
 #| echo: false
 #| out-width: ~
 #| fig-cap: | 
-#|   To understand how joins work, it's useful to think of every possible
-#|   match. Here we show that with a grid of connecting lines.
+#|   조인이 어떻게 작동하는지 이해하려면 가능한 모든 일치 항목을 
+#|   생각해 보는 것이 유용합니다. 여기서는 연결선 그리드로 이를 보여줍니다.
 #| fig-alt: |
-#|   x and y are placed at right-angles, with horizonal lines extending 
-#|   from x and vertical lines extending from y. There are 3 rows in x and 
-#|   3 rows in y, which leads to nine intersections representing nine
-#|   potential matches.
+#|   x와 y는 직각으로 배치되어 있으며, x에서 가로선이 확장되고 
+#|   y에서 세로선이 확장됩니다. x에 3개 행, y에 3개 행이 있으므로 
+#|   9개의 잠재적 일치를 나타내는 9개의 교차점이 생깁니다.
 knitr::include_graphics("diagrams/join/setup2.png", dpi = 270)
 ```
 
-To describe a specific type of join, we indicate matches with dots.
-The matches determine the rows in the output, a new data frame that contains the key, the x values, and the y values.
-For example, @fig-join-inner shows an inner join, where rows are retained if and only if the keys are equal.
+특정 유형의 조인을 설명하기 위해 일치하는 항목을 점으로 나타냅니다.
+일치 항목은 출력 행을 결정하며, 출력은 키, x 값, y 값을 포함하는 새로운 데이터 프레임입니다.
+예를 들어 그림 @fig-join-inner 는 내부 조인(inner join)을 보여주는데, 키가 같을 때만 행이 유지됩니다.
 
 ```{r}
 #| label: fig-join-inner
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   An inner join matches each row in `x` to the row in `y` that has the
-#|   same value of `key`. Each match becomes a row in the output.
+#|   내부 조인은 `x`의 각 행을 `key` 값이 같은 `y`의 행과 일치시킵니다. 
+#|   각 일치 항목은 출력에서 하나의 행이 됩니다.
 #| fig-alt: |
-#|   x and y are placed at right-angles with lines forming a grid of
-#|   potential matches. Keys 1 and 2 appear in both x and y, so we
-#|   get a match, indicated by a dot. Each dot corresponds to a row
-#|   in the output, so the resulting joined data frame has two rows.
+#|   x와 y는 선이 그리드를 형성하는 잠재적 일치의 직각 배치 상태입니다. 
+#|   키 1과 2가 x와 y 모두에 나타나므로 점으로 표시된 일치가 발생합니다. 
+#|   각 점은 출력의 한 행에 해당하므로, 결과로 생성된 조인된 
+#|   데이터 프레임은 두 개의 행을 가집니다.
 knitr::include_graphics("diagrams/join/inner.png", dpi = 270)
 ```
 
-We can apply the same principles to explain the **outer joins**, which keep observations that appear in at least one of the data frames.
-These joins work by adding an additional "virtual" observation to each data frame.
-This observation has a key that matches if no other key matches, and values filled with `NA`.
-There are three types of outer joins:
+동일한 원리를 사용하여 적어도 하나의 데이터 프레임에 나타나는 관측치를 유지하는 **외부 조인(outer joins)**을 설명할 수 있습니다.
+이 조인들은 각 데이터 프레임에 추가적인 "가상" 관측치를 추가하는 방식으로 작동합니다.
+이 관측치는 다른 키가 일치하지 않을 때 일치하는 키를 가지며, 값은 `NA`로 채워집니다.
+외부 조인에는 세 가지 유형이 있습니다:
 
--   A **left join** keeps all observations in `x`, @fig-join-left.
-    Every row of `x` is preserved in the output because it can fall back to matching a row of `NA`s in `y`.
+-   **왼쪽 조인(left join)**은 `x`의 모든 관측치를 유지합니다(그림 @fig-join-left).
+    `y`에서 `NA`인 행과 매칭되는 것으로 대체될 수 있기 때문에 `x`의 모든 행은 출력에서 보존됩니다.
 
     ```{r}
     #| label: fig-join-left
     #| echo: false
     #| out-width: ~
     #| fig-cap: | 
-    #|   A visual representation of the left join where every row in `x`
-    #|   appears in the output.
+    #|   `x`의 모든 행이 출력에 나타나는 왼쪽 조인의 시각적 표현.
     #| fig-alt: |
-    #|   Compared to the previous diagram showing an inner join, the y table
-    #|   gets a new virtual row containing NA that will match any row in x
-    #|   that didn't otherwise match. This means that the output now has
-    #|   three rows. For key = 3, which matches this virtual row, val_y takes
-    #|   value NA.
+    #|   내부 조인을 보여주는 이전 다이어그램과 비교하여, y 테이블에 
+    #|   달리 일치하지 않는 x의 일치하는 행을 위한 NA를 포함하는 
+    #|   새로운 가상 행이 생깁니다. 이는 출력이 이제 세 개의 행을 
+    #|   가짐을 의미합니다. 이 가상 행과 일치하는 key = 3의 경우, 
+    #|   val_y는 NA 값을 가집니다.
     knitr::include_graphics("diagrams/join/left.png", dpi = 270)
     ```
 
--   A **right join** keeps all observations in `y`, @fig-join-right.
-    Every row of `y` is preserved in the output because it can fall back to matching a row of `NA`s in `x`.
-    The output still matches `x` as much as possible; any extra rows from `y` are added to the end.
+-   **오른쪽 조인(right join)**은 `y`의 모든 관측치를 유지합니다(그림 @fig-join-right).
+    `x`에서 `NA`인 행과 매칭되는 것으로 대체될 수 있기 때문에 `y`의 모든 행은 출력에서 보존됩니다.
+    출력은 여전히 가능한 한 `x`와 일치하며, `y`에서 온 추가 행은 끝에 추가됩니다.
 
     ```{r}
     #| label: fig-join-right
     #| echo: false
     #| out-width: ~
     #| fig-cap: | 
-    #|   A visual representation of the right join where every row of `y` 
-    #|   appears in the output. 
+    #|   `y`의 모든 행이 출력에 나타나는 오른쪽 조인의 시각적 표현. 
     #| fig-alt: |
-    #|   Compared to the previous diagram showing an left join, the x table
-    #|   now gains a virtual row so that every row in y gets a match in x.
-    #|   val_x contains NA for the row in y that didn't match x.
+    #|   왼쪽 조인을 보여주는 이전 다이어그램과 비교하여, 이제 x 테이블에 
+    #|   가상 행이 생겨 y의 모든 행이 x에서 일치를 얻게 됩니다. 
+    #|   x와 일치하지 않는 y의 행에 대해 val_x는 NA를 포함합니다.
     knitr::include_graphics("diagrams/join/right.png", dpi = 270)
     ```
 
--   A **full join** keeps all observations that appear in `x` or `y`, @fig-join-full.
-    Every row of `x` and `y` is included in the output because both `x` and `y` have a fall back row of `NA`s.
-    Again, the output starts with all rows from `x`, followed by the remaining unmatched `y` rows.
+-   **전체 조인(full join)**은 `x` 또는 `y`에 나타나는 모든 관측치를 유지합니다(그림 @fig-join-full).
+    `x`와 `y` 모두 `NA`로 된 대체 행이 있기 때문에 `x`와 `y` 의 모든 행이 출력에 포함됩니다.
+    마찬가지로 출력은 `x` 의 모든 행으로 시작하고, 그 뒤에 일치하지 않은 나머지 `y` 행이 따릅니다.
 
     ```{r}
     #| label: fig-join-full
     #| echo: false
     #| out-width: ~
     #| fig-cap: | 
-    #|   A visual representation of the full join where every row in `x`
-    #|   and `y` appears in the output.
+    #|   `x`와 `y` 의 모든 행이 출력에 나타나는 전체 조인의 시각적 표현.
     #| fig-alt: |
-    #|   Now both x and y have a virtual row that always matches.
-    #|   The result has 4 rows: keys 1, 2, 3, and 4 with all values 
-    #|   from val_x and val_y, however key 2, val_y and key 4, val_x are NAs
-    #|   since those keys don't have a match in the other data frames.
+    #|   이제 x와 y 모두 항상 일치하는 가상 행을 가집니다. 
+    #|   결과는 4개의 행을 가집니다: 키 1, 2, 3, 4와 val_x 및 val_y의 
+    #|   모든 값을 가집니다. 하지만 키 3의 경우 val_y가, 키 4의 경우 
+    #|   val_x가 NA가 되는데, 그 이유는 해당 키들이 다른 데이터 프레임에 
+    #|   일치하는 항목이 없기 때문입니다.
     knitr::include_graphics("diagrams/join/full.png", dpi = 270)
     ```
 
-Another way to show how the types of outer join differ is with a Venn diagram, as in @fig-join-venn.
-However, this is not a great representation because while it might jog your memory about which rows are preserved, it fails to illustrate what's happening with the columns.
+외부 조인의 유형이 어떻게 다른지 보여주는 또 다른 방법은 그림 @fig-join-venn 과 같은 벤 다이어그램을 사용하는 것입니다.
+하지만 이는 어떤 행이 보존되는지에 대해서는 기억을 상기시켜줄 수 있지만, 열에 어떤 일이 일어나는지는 설명하지 못하기 때문에 그리 훌륭한 표현 방식은 아닙니다.
 
 ```{r}
 #| label: fig-join-venn
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   Venn diagrams showing the difference between inner, left, right, and
-#|   full joins.
+#|   내부, 왼쪽, 오른쪽, 전체 조인의 차이를 보여주는 벤 다이어그램.
 #| fig-alt: |
-#|   Venn diagrams for inner, full, left, and right joins. Each join
-#|   represented with two intersecting circles representing data frames x
-#|   and y, with x on the right and y on the left. Shading indicates the
-#|   result of the join. 
+#|   내부, 전체, 왼쪽, 오른쪽 조인에 대한 벤 다이어그램. 각 조인은 
+#|   데이터 프레임 x와 y를 나타내는 두 개의 교차하는 원으로 표현되며, 
+#|   x는 오른쪽, y는 왼쪽에 있습니다. 음영은 조인의 결과를 나타냅니다. 
 #|
-#|   Inner join: the intersection is shaded. 
-#|   Full join: Everything is shaded. 
-#|   Left join: All of x is shaded.
-#|   Right join: All of y is shaded.
+#|   내부 조인: 교차 부분만 음영 처리됨. 
+#|   전체 조인: 모든 부분이 음영 처리됨. 
+#|   왼쪽 조인: x 전체가 음영 처리됨.
+#|   오른쪽 조인: y 전체가 음영 처리됨.
 knitr::include_graphics("diagrams/join/venn.png", dpi = 270)
 ```
 
-The joins shown here are the so-called **equi** **joins**, where rows match if the keys are equal.
-Equi joins are the most common type of join, so we'll typically omit the equi prefix, and just say "inner join" rather than "equi inner join".
-We'll come back to non-equi joins in @sec-non-equi-joins.
+여기서 보여준 조인들은 키가 같을 때 행이 일치하는 소위 **등가(equi)** 조인입니다.
+등가 조인은 가장 일반적인 유형의 조인이므로 일반적으로 등가(equi) 접두사를 생략하고 "등가 내부 조인" 대신 그냥 "내부 조인"이라고 말합니다.
+비등가 조인에 대해서는 @sec-non-equi-joins에서 다시 다룰 것입니다.
 
-### Row matching
+### 행 일치(Row matching)
 
-So far we've explored what happens if a row in `x` matches zero or one row in `y`.
-What happens if it matches more than one row?
-To understand what's going on let's first narrow our focus to the `inner_join()` and then draw a picture, @fig-join-match-types.
+지금까지는 `x`의 한 행이 `y`의 0개 또는 1개 행과 일치하는 경우 어떤 일이 일어나는지 살펴보았습니다.
+만약 두 개 이상의 행과 일치하면 어떻게 될까요?
+무슨 일이 일어나는지 이해하기 위해 먼저 `inner_join()`에 집중한 다음 그림 @fig-join-match-types 을 그려보겠습니다.
 
 ```{r}
 #| label: fig-join-match-types
 #| echo: false
 #| out-width: ~
 #| fig-cap: | 
-#|   The three ways a row in `x` can match. `x1` matches
-#|   one row in `y`, `x2` matches two rows in `y`, `x3` matches
-#|   zero rows in y. Note that while there are three rows in
-#|   `x` and three rows in the output, there isn't a direct
-#|   correspondence between the rows.
+#|   `x`의 행이 일치할 수 있는 세 가지 방식. `x1`은 `y`의 한 행과 
+#|   일치하고, `x2`는 `y`의 두 행과 일치하며, `x3`은 `y`의 0개 행과 
+#|   일치합니다. `x`에 3개 행이 있고 출력에도 3개 행이 있지만, 
+#|   행들 사이에 직접적인 대응 관계가 있는 것은 아님에 유의하세요.
 #| fig-alt: |
-#|   A join diagram where x has key values 1, 2, and 3, and y has
-#|   key values 1, 2, 2. The output has three rows because key 1 matches
-#|   one row, key 2 matches two rows, and key 3 matches zero rows.
+#|   x는 키 값 1, 2, 3을 가지고 y는 키 값 1, 2, 2를 가지는 조인 다이어그램. 
+#|   키 1은 한 행과 일치하고, 키 2는 두 행과 일치하며, 키 3은 0개 행과 
+#|   일치하기 때문에 출력은 세 개의 행을 가집니다.
 knitr::include_graphics("diagrams/join/match-types.png", dpi = 270)
 ```
 
-There are three possible outcomes for a row in `x`:
+`x`의 행에 대해 가능한 결과는 세 가지입니다:
 
--   If it doesn't match anything, it's dropped.
--   If it matches 1 row in `y`, it's preserved.
--   If it matches more than 1 row in `y`, it's duplicated once for each match.
+-   일치하는 항목이 없으면 삭제됩니다.
+-   `y`의 1개 행과 일치하면 보존됩니다.
+-   `y`의 1개보다 많은 행과 일치하면 각 일치 항목에 대해 한 번씩 복제됩니다.
 
-In principle, this means that there's no guaranteed correspondence between the rows in the output and the rows in `x`, but in practice, this rarely causes problems.
-There is, however, one particularly dangerous case which can cause a combinatorial explosion of rows.
-Imagine joining the following two tables:
+원칙적으로 이는 출력의 행과 `x`의 행 사이에 보장된 대응 관계가 없음을 의미하지만, 실제로는 이것이 문제를 일으키는 경우는 드뭅니다.
+하지만 행의 조합 폭발을 일으킬 수 있는 특히 위험한 사례가 하나 있습니다.
+다음 두 테이블을 결합한다고 가정해 봅시다:
 
 ```{r}
 df1 <- tibble(key = c(1, 2, 2), val_x = c("x1", "x2", "x3"))
 df2 <- tibble(key = c(1, 2, 2), val_y = c("y1", "y2", "y3"))
 ```
 
-While the first row in `df1` only matches one row in `df2`, the second and third rows both match two rows.
-This is sometimes called a `many-to-many` join, and will cause dplyr to emit a warning:
+`df1`의 첫 번째 행은 `df2`의 한 행과만 일치하지만, 두 번째와 세 번째 행은 모두 두 행과 일치합니다.
+이를 가끔 `다대다(many-to-many)` 조인이라고 부르며, dplyr은 경고를 표시합니다:
 
 ```{r}
 df1 |> 
   inner_join(df2, join_by(key))
 ```
 
-If you are doing this deliberately, you can set `relationship = "many-to-many"`, as the warning suggests.
+의도적으로 이 작업을 수행하는 경우, 경고에서 제안하는 대로 `relationship = "many-to-many"`를 설정할 수 있습니다.
 
-### Filtering joins
+### 필터링 조인(Filtering joins)
 
-The number of matches also determines the behavior of the filtering joins.
-The semi-join keeps rows in `x` that have one or more matches in `y`, as in @fig-join-semi.
-The anti-join keeps rows in `x` that match zero rows in `y`, as in @fig-join-anti.
-In both cases, only the existence of a match is important; it doesn't matter how many times it matches.
-This means that filtering joins never duplicate rows like mutating joins do.
+일치 항목의 수는 필터링 조인의 동작도 결정합니다.
+세미 조인은 그림 @fig-join-semi 처럼 `y`에 하나 이상의 일치 항목이 있는 `x`의 행을 유지합니다.
+안티 조인은 그림 @fig-join-anti 처럼 `y`에 0개의 일치 항목이 있는 `x`의 행을 유지합니다.
+두 경우 모두 일치의 존재 여부만이 중요하며, 몇 번 일치하는지는 중요하지 않습니다.
+이는 필터링 조인이 뮤테이팅 조인처럼 행을 복제하지 않음을 의미합니다.
 
 ```{r}
 #| label: fig-join-semi
 #| echo: false
 #| out-width: null
 #| fig-cap: |
-#|   In a semi-join it only matters that there is a match; otherwise
-#|   values in `y` don't affect the output.
+#|   세미 조인에서는 일치하는 항목이 있다는 것만 중요합니다. 
+#|   그렇지 않으면 `y`의 값은 출력에 영향을 미치지 않습니다.
 #| fig-alt: |
-#|   A join diagram with old friends x and y. In a semi join, only the 
-#|   presence of a match matters so the output contains the same columns
-#|   as x.
+#|   우리의 오랜 친구 x와 y가 있는 조인 다이어그램. 세미 조인에서는 
+#|   일치의 존재만이 중요하므로 출력은 x와 동일한 열을 포함합니다.
 knitr::include_graphics("diagrams/join/semi.png", dpi = 270)
 ```
 
@@ -641,22 +631,22 @@ knitr::include_graphics("diagrams/join/semi.png", dpi = 270)
 #| echo: false
 #| out-width: null
 #| fig-cap: |
-#|   An anti-join is the inverse of a semi-join, dropping rows from `x`
-#|   that have a match in `y`.
+#|   안티 조인은 세미 조인의 역이며, `y`에 일치하는 항목이 있는 
+#|   `x`의 행을 삭제합니다.
 #| fig-alt: |
-#|   An anti-join is the inverse of a semi-join so matches are drawn with
-#|   red lines indicating that they will be dropped from the output.
+#|   안티 조인은 세미 조인의 역이므로, 출력에서 제거될 것임을 나타내는 
+#|   빨간색 선으로 일치 항목이 그려집니다.
 knitr::include_graphics("diagrams/join/anti.png", dpi = 270)
 ```
 
-## Non-equi joins {#sec-non-equi-joins}
+## 비등가 조인(Non-equi joins) {#sec-non-equi-joins}
 
-So far you've only seen equi joins, joins where the rows match if the `x` key equals the `y` key.
-Now we're going to relax that restriction and discuss other ways of determining if a pair of rows match.
+지금까지는 `x`의 키와 `y`의 키가 같을 때 행이 일치하는 등가 조인만 살펴보았습니다.
+이제 그 제한을 풀고 두 행이 일치하는지 결정하는 다른 방법들에 대해 논의해 보겠습니다.
 
-But before we can do that, we need to revisit a simplification we made above.
-In equi joins the `x` keys and `y` are always equal, so we only need to show one in the output.
-We can request that dplyr keep both keys with `keep = TRUE`, leading to the code below and the re-drawn `inner_join()` in @fig-inner-both.
+그렇게 하기 전에 위에서 단순화했던 부분을 다시 살펴보겠습니다.
+등가 조인에서는 `x` 키와 `y` 키가 항상 같으므로 출력에는 하나만 표시하면 됩니다.
+`keep = TRUE`를 사용하여 두 키를 모두 유지하도록 요청할 수 있는데, 이는 아래 코드와 그림 @fig-inner-both 에 다시 그려진 `inner_join()`으로 이어집니다.
 
 ```{r}
 x |> inner_join(y, join_by(key == key), keep = TRUE)
@@ -665,92 +655,89 @@ x |> inner_join(y, join_by(key == key), keep = TRUE)
 ```{r}
 #| label: fig-inner-both
 #| fig-cap: |
-#|   An inner join showing both `x` and `y` keys in the output.
+#|   출력에 `x`와 `y` 키를 모두 보여주는 내부 조인.
 #| fig-alt: |
-#|   A join diagram showing an inner join between x and y. The result
-#|   now includes four columns: key.x, val_x, key.y, and val_y. The
-#|   values of key.x and key.y are identical, which is why we usually
-#|   only show one.
+#|   x와 y 사이의 내부 조인을 보여주는 조인 다이어그램. 결과는 이제 
+#|   key.x, val_x, key.y, val_y의 네 개 열을 포함합니다. key.x와 
+#|   key.y의 값은 동일하며, 이것이 일반적으로 하나만 보여주는 이유입니다.
 #| echo: false
 #| out-width: ~
 knitr::include_graphics("diagrams/join/inner-both.png", dpi = 270)
 ```
 
-When we move away from equi joins we'll always show the keys, because the key values will often be different.
-For example, instead of matching only when the `x$key` and `y$key` are equal, we could match whenever the `x$key` is greater than or equal to the `y$key`, leading to @fig-join-gte.
-dplyr's join functions understand this distinction equi and non-equi joins so will always show both keys when you perform a non-equi join.
+등가 조인에서 벗어나면 키 값이 서로 다른 경우가 많기 때문에 항상 키를 모두 표시할 것입니다.
+예를 들어 `x$key`와 `y$key`가 같을 때만 매칭하는 대신, `x$key`가 `y$key`보다 크거나 같을 때마다 매칭할 수 있으며, 이는 그림 @fig-join-gte 로 이어집니다.
+dplyr의 조인 함수들은 이 등가 조인과 비등가 조인의 차이를 이해하므로, 비등가 조인을 수행할 때는 항상 두 키를 모두 표시합니다.
 
 ```{r}
 #| label: fig-join-gte
 #| echo: false
 #| fig-cap: |
-#|   A non-equi join where the `x` key must be greater than or equal to 
-#|   the `y` key. Many rows generate multiple matches.
+#|   `x` 키가 `y` 키보다 크거나 같아야 하는 비등가 조인. 
+#|   많은 행이 여러 개의 일치 항목을 생성합니다.
 #| fig-alt: |
-#|   A join diagram illustrating join_by(key >= key). The first row
-#|   of x matches one row of y and the second and thirds rows each match
-#|   two rows. This means the output has five rows containing each of the 
-#|   following (key.x, key.y) pairs: (1, 1), (2, 1), (2, 2), (3, 1),
-#|   (3, 2).
+#|   join_by(key >= key)를 설명하는 조인 다이어그램. x의 첫 번째 행은 
+#|   y의 한 행과 일치하고, 두 번째와 세 번째 행은 각각 두 행과 일치합니다. 
+#|   이는 출력이 다음과 같은 (key.x, key.y) 쌍을 포함하는 5개의 행을 
+#|   가짐을 의미합니다: (1, 1), (2, 1), (2, 2), (3, 1), (3, 2).
 knitr::include_graphics("diagrams/join/gte.png", dpi = 270)
 ```
 
-Non-equi join isn't a particularly useful term because it only tells you what the join is not, not what it is. dplyr helps by identifying four particularly useful types of non-equi join:
+비등가 조인은 무엇이 아닌지를 말해줄 뿐 무엇인지를 말해주지 않기 때문에 그리 유용한 용어는 아닙니다. dplyr은 특히 유용한 네 가지 유형의 비등가 조인을 식별하여 도와줍니다:
 
--   **Cross joins** match every pair of rows.
--   **Inequality joins** use `<`, `<=`, `>`, and `>=` instead of `==`.
--   **Rolling joins** are similar to inequality joins but only find the closest match.
--   **Overlap joins** are a special type of inequality join designed to work with ranges.
+-   **교차 조인(Cross joins)**: 모든 행의 쌍을 일치시킵니다.
+-   **부등호 조인(Inequality joins)**: `==` 대신 `<`, `<=`, `>`, `>=`를 사용합니다.
+-   **롤링 조인(Rolling joins)**: 부등호 조인과 비슷하지만 가장 가까운 일치 항목만 찾습니다.
+-   **겹침 조인(Overlap joins)**: 범위(range)와 함께 작동하도록 설계된 특별한 유형의 부등호 조인입니다.
 
-Each of these is described in more detail in the following sections.
+이들 각각은 다음 섹션에서 더 자세히 설명합니다.
 
-### Cross joins
+### 교차 조인(Cross joins)
 
-A cross join matches everything, as in @fig-join-cross, generating the Cartesian product of rows.
-This means the output will have `nrow(x) * nrow(y)` rows.
+교차 조인은 그림 @fig-join-cross 처럼 모든 것을 일치시켜 행의 데카르트 곱(Cartesian product)을 생성합니다.
+이는 출력이 `nrow(x) * nrow(y)`개의 행을 가짐을 의미합니다.
 
 ```{r}
 #| label: fig-join-cross
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   A cross join matches each row in `x` with every row in `y`.
+#|   교차 조인은 `x`의 각 행을 `y`의 모든 행과 일치시킵니다.
 #| fig-alt: |
-#|   A join diagram showing a dot for every combination of x and y.
+#|   x와 y의 모든 조합에 대해 점을 보여주는 조인 다이어그램.
 knitr::include_graphics("diagrams/join/cross.png", dpi = 270)
 ```
 
-Cross joins are useful when generating permutations.
-For example, the code below generates every possible pair of names.
-Since we're joining `df` to itself, this is sometimes called a **self-join**.
-Cross joins use a different join function because there's no distinction between inner/left/right/full when you're matching every row.
+교차 조인은 순열(permutations)을 생성할 때 유용합니다.
+예를 들어 아래 코드는 이름의 모든 가능한 쌍을 생성합니다.
+`df`를 자기 자신에게 조인하고 있으므로, 이를 가끔 **셀프 조인(self-join)**이라고 부릅니다.
+교차 조인은 모든 행을 일치시킬 때 내부/왼쪽/오른쪽/전체 조인 사이의 구분이 없기 때문에 다른 조인 함수를 사용합니다.
 
 ```{r}
 df <- tibble(name = c("John", "Simon", "Tracy", "Max"))
 df |> cross_join(df)
 ```
 
-### Inequality joins
+### 부등호 조인(Inequality joins)
 
-Inequality joins use `<`, `<=`, `>=`, or `>` to restrict the set of possible matches, as in @fig-join-gte and @fig-join-lt.
+부등호 조인은 그림 @fig-join-gte 및 그림 @fig-join-lt 처럼 `<`, `<=`, `>=`, `>`를 사용하여 가능한 일치 항목 세트를 제한합니다.
 
 ```{r}
 #| label: fig-join-lt
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   An inequality join where `x` is joined to `y` on rows where the key 
-#|   of `x` is less than the key of `y`. This makes a triangular
-#|   shape in the top-left corner.
+#|   `x`의 키가 `y`의 키보다 작은 행에서 `x`가 `y`에 조인되는 부등호 조인. 
+#|   이는 왼쪽 상단 모서리에 삼각형 모양을 만듭니다.
 #| fig-alt: |
-#|   A diagram depicting an inequality join where a data frame x is joined by 
-#|   a data frame y where the key of x is less than the key of y, resulting 
-#|   in a triangular shape in the top-left corner.
+#|   데이터 프레임 x의 키가 데이터 프레임 y의 키보다 작은 경우에 
+#|   조인되는 부등호 조인을 묘사한 다이어그램으로, 왼쪽 상단 모서리에 
+#|   삼각형 모양이 만들어집니다.
 knitr::include_graphics("diagrams/join/lt.png", dpi = 270)
 ```
 
-Inequality joins are extremely general, so general that it's hard to come up with meaningful specific use cases.
-One small useful technique is to use them to restrict the cross join so that instead of generating all permutations, we generate all combinations:
+부등호 조인은 매우 일반적이어서 구체적인 사용 사례를 생각해 내기가 어렵습니다.
+한 가지 유용한 기법은 교차 조인을 제한하여 모든 순열을 생성하는 대신 모든 조합(combinations)을 생성하는 데 사용하는 것입니다:
 
 ```{r}
 df <- tibble(id = 1:4, name = c("John", "Simon", "Tracy", "Max"))
@@ -758,32 +745,32 @@ df <- tibble(id = 1:4, name = c("John", "Simon", "Tracy", "Max"))
 df |> inner_join(df, join_by(id < id))
 ```
 
-### Rolling joins
+### 롤링 조인(Rolling joins)
 
-Rolling joins are a special type of inequality join where instead of getting *every* row that satisfies the inequality, you get just the closest row, as in @fig-join-closest.
-You can turn any inequality join into a rolling join by adding `closest()`.
-For example `join_by(closest(x <= y))` matches the smallest `y` that's greater than or equal to x, and `join_by(closest(x > y))` matches the biggest `y` that's less than `x`.
+롤링 조인은 부등호 조인의 특별한 유형으로, 부등호를 만족하는 *모든* 행을 가져오는 대신 그림 @fig-join-closest 처럼 가장 가까운 행만 가져옵니다.
+`closest()`를 추가하여 어떤 부등호 조인이든 롤링 조인으로 바꿀 수 있습니다.
+예를 들어 `join_by(closest(x <= y))`는 x보다 크거나 같은 것 중 가장 작은 `y`를 일치시키고, `join_by(closest(x > y))`는 `x`보다 작은 것 중 가장 큰 `y`를 일치시킵니다.
 
 ```{r}
 #| label: fig-join-closest
 #| echo: false
 #| out-width: ~
 #| fig-cap: |
-#|   A rolling join is similar to a greater-than-or-equal inequality join
-#|   but only matches the first value.
+#|   롤링 조인은 크거나 같음 부등호 조인과 비슷하지만 첫 번째 값만 
+#|   일치시킵니다.
 #| fig-alt: |
-#|   A rolling join is a subset of an inequality join so some matches are
-#|   grayed out indicating that they're not used because they're not the 
-#|   "closest".
+#|   롤링 조인은 부등호 조인의 부분 집합이므로 일부 일치 항목은 
+#|   "가장 가까운" 것이 아니기 때문에 사용되지 않음을 나타내기 위해 
+#|   회색으로 표시됩니다.
 knitr::include_graphics("diagrams/join/closest.png", dpi = 270)
 ```
 
-Rolling joins are particularly useful when you have two tables of dates that don't perfectly line up and you want to find (e.g.) the closest date in table 1 that comes before (or after) some date in table 2.
+롤링 조인은 완전히 일치하지 않는 두 개의 날짜 테이블이 있고, 테이블 1에서 테이블 2의 어떤 날짜 이전(또는 이후)에 오는 가장 가까운 날짜를 찾고 싶을 때 특히 유용합니다.
 
-For example, imagine that you're in charge of the party planning commission for your office.
-Your company is rather cheap so instead of having individual parties, you only have a party once each quarter.
-The rules for determining when a party will be held are a little complex: parties are always on a Monday, you skip the first week of January since a lot of people are on holiday, and the first Monday of Q3 2022 is July 4, so that has to be pushed back a week.
-That leads to the following party days:
+예를 들어 여러분이 사무실의 파티 기획 위원회 책임자라고 가정해 봅시다.
+회사가 너무 인색해서 개별 파티를 여는 대신 매 분기 한 번씩만 파티를 엽니다.
+파티를 여는 시기를 결정하는 규칙이 조금 복잡합니다. 파티는 항상 월요일에 열고, 많은 사람이 휴가 중인 1월 첫째 주를 건너뛰며, 2022년 3분기 첫 번째 월요일은 7월 4일이라서 일주일 뒤로 미뤄야 합니다.
+그 결과 다음과 같은 파티 날짜가 생성됩니다:
 
 ```{r}
 parties <- tibble(
@@ -792,7 +779,7 @@ parties <- tibble(
 )
 ```
 
-Now imagine that you have a table of employee birthdays:
+이제 직원 생일 테이블이 있다고 가정해 봅시다:
 
 ```{r}
 set.seed(123)
@@ -803,34 +790,34 @@ employees <- tibble(
 employees
 ```
 
-And for each employee we want to find the last party date that comes before (or on) their birthday.
-We can express that with a rolling join:
+그리고 각 직원에 대해 그들의 생일 이전(또는 당일)에 오는 마지막 파티 날짜를 찾고 싶습니다.
+롤링 조인을 사용하여 이를 표현할 수 있습니다:
 
 ```{r}
 employees |> 
   left_join(parties, join_by(closest(birthday >= party)))
 ```
 
-There is, however, one problem with this approach: the folks with birthdays before January 10 don't get a party:
+하지만 이 접근 방식에는 한 가지 문제가 있는데, 1월 10일 이전에 생일이 있는 사람들은 파티를 배정받지 못한다는 것입니다:
 
 ```{r}
 employees |> 
   anti_join(parties, join_by(closest(birthday >= party)))
 ```
 
-To resolve that issue we'll need to tackle the problem a different way, with overlap joins.
+이 문제를 해결하려면 겹침 조인(overlap joins)을 사용하여 다른 방식으로 문제에 접근해야 합니다.
 
-### Overlap joins
+### 겹침 조인(Overlap joins)
 
-Overlap joins provide three helpers that use inequality joins to make it easier to work with intervals:
+겹침 조인은 구간(intervals)을 더 쉽게 다룰 수 있도록 부등호 조인을 사용하는 세 가지 헬퍼를 제공합니다:
 
--   `between(x, y_lower, y_upper)` is short for `x >= y_lower, x <= y_upper`.
--   `within(x_lower, x_upper, y_lower, y_upper)` is short for `x_lower >= y_lower, x_upper <= y_upper`.
--   `overlaps(x_lower, x_upper, y_lower, y_upper)` is short for `x_lower <= y_upper, x_upper >= y_lower`.
+-   `between(x, y_lower, y_upper)`는 `x >= y_lower, x <= y_upper`의 줄임말입니다.
+-   `within(x_lower, x_upper, y_lower, y_upper)`는 `x_lower >= y_lower, x_upper <= y_upper`의 줄임말입니다.
+-   `overlaps(x_lower, x_upper, y_lower, y_upper)`는 `x_lower <= y_upper, x_upper >= y_lower`의 줄임말입니다.
 
-Let's continue the birthday example to see how you might use them.
-There's one problem with the strategy we used above: there's no party preceding the birthdays Jan 1-9.
-So it might be better to be explicit about the date ranges that each party spans, and make a special case for those early birthdays:
+생일 예제를 계속 진행하여 이를 어떻게 사용할 수 있는지 살펴보겠습니다.
+위에서 사용한 전략에는 한 가지 문제점이 있었습니다. 즉 1월 1일~9일 사이의 생일보다 앞선 파티가 없다는 것입니다.
+따라서 각 파티가 담당하는 날짜 범위를 명확히 하고, 일찍 태어난 사람들을 위한 특별한 경우를 만드는 것이 더 나을 수 있습니다:
 
 ```{r}
 parties <- tibble(
@@ -842,8 +829,8 @@ parties <- tibble(
 parties
 ```
 
-Hadley is hopelessly bad at data entry so he also wanted to check that the party periods don't overlap.
-One way to do this is by using a self-join to check if any start-end interval overlap with another:
+해들리는 데이터 입력이 절망적일 정도로 서툴기 때문에 파티 기간이 겹치지 않는지도 확인하고 싶어 했습니다.
+이를 확인하는 한 방법은 셀프 조인을 사용하여 시작-종료 구간이 다른 구간과 겹치는지 확인하는 것입니다:
 
 ```{r}
 parties |> 
@@ -851,7 +838,7 @@ parties |>
   select(start.x, end.x, start.y, end.y)
 ```
 
-Ooops, there is an overlap, so let's fix that problem and continue:
+이런, 겹치는 부분이 있네요. 문제를 고치고 계속 진행해 봅시다:
 
 ```{r}
 parties <- tibble(
@@ -862,18 +849,18 @@ parties <- tibble(
 )
 ```
 
-Now we can match each employee to their party.
-This is a good place to use `unmatched = "error"` because we want to quickly find out if any employees didn't get assigned a party.
+이제 각 직원을 해당하는 파티에 매칭시킬 수 있습니다.
+파티에 배정되지 않은 직원이 있는지 빨리 찾아내고 싶기 때문에 `unmatched = "error"`를 사용하기에 좋은 곳입니다.
 
 ```{r}
 employees |> 
   inner_join(parties, join_by(between(birthday, start, end)), unmatched = "error")
 ```
 
-### Exercises
+### 연습문제
 
-1.  Can you explain what's happening with the keys in this equi join?
-    Why are they different?
+1.  이 등가 조인에서 키에 어떤 일이 일어나고 있는지 설명할 수 있나요?
+    왜 서로 다른가요?
 
     ```{r}
     x |> full_join(y, join_by(key == key))
@@ -881,18 +868,18 @@ employees |>
     x |> full_join(y, join_by(key == key), keep = TRUE)
     ```
 
-2.  When finding if any party period overlapped with another party period we used `q < q` in the `join_by()`?
-    Why?
-    What happens if you remove this inequality?
+2.  어떤 파티 기간이 다른 파티 기간과 겹치는지 찾을 때 `join_by()`에서 `q < q`를 사용했습니다.
+    왜 그랬을까요?
+    이 부등호를 제거하면 어떤 일이 일어날까요?
 
-## Summary
+## 요약
 
-In this chapter, you've learned how to use mutating and filtering joins to combine data from a pair of data frames.
-Along the way you learned how to identify keys, and the difference between primary and foreign keys.
-You also understand how joins work and how to figure out how many rows the output will have.
-Finally, you've gained a glimpse into the power of non-equi joins and seen a few interesting use cases.
+이 챕터에서는 뮤테이팅 조인과 필터링 조인을 사용하여 한 쌍의 데이터 프레임에서 데이터를 결합하는 방법을 배웠습니다.
+그 과정에서 키를 식별하는 방법과 기본 키 및 외래 키의 차이점을 배웠습니다.
+또한 조인이 어떻게 작동하는지, 그리고 출력의 행이 몇 개가 될지 파악하는 방법도 이해하게 되었습니다.
+마지막으로 비등가 조인의 강력함을 엿보고 몇 가지 흥미로운 사용 사례를 살펴보았습니다.
 
-This chapter concludes the "Transform" part of the book where the focus was on the tools you could use with individual columns and tibbles.
-You learned about dplyr and base functions for working with logical vectors, numbers, and complete tables, stringr functions for working with strings, lubridate functions for working with date-times, and forcats functions for working with factors.
+이 챕터는 개별 열과 티블로 사용할 수 있는 도구들에 초점을 맞춘 책의 "변형(Transform)" 부분을 마무리합니다.
+여러분은 논리형 벡터, 숫자, 전체 테이블을 다루기 위한 dplyr 및 기본 함수, 문자열을 다루기 위한 stringr 함수, 날짜-시간을 다루기 위한 lubridate 함수, 그리고 범주형 데이터를 다루기 위한 forcats 함수에 대해 배웠습니다.
 
-In the next part of the book, you'll learn more about getting various types of data into R in a tidy form.
+책의 다음 부분에서는 다양한 유형의 데이터를 깔끔한(tidy) 형태로 R에 불러오는 방법에 대해 더 자세히 배울 것입니다.

@@ -1,24 +1,24 @@
-# Hierarchical data {#sec-rectangling}
+# 계층 구조 데이터 {#sec-rectangling}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-In this chapter, you'll learn the art of data **rectangling**: taking data that is fundamentally hierarchical, or tree-like, and converting it into a rectangular data frame made up of rows and columns.
-This is important because hierarchical data is surprisingly common, especially when working with data that comes from the web.
+이 챕터에서는 데이터 **직사각형화(rectangling)** 기술을 배울 것입니다. 본질적으로 계층 구조(hierarchical)이거나 트리 형태인 데이터를 행과 열로 이루어진 직사각형 형태의 데이터 프레임으로 변환하는 것입니다.
+이는 계층 구조 데이터가 웹에서 오는 데이터를 다룰 때 매우 흔하기 때문에 중요합니다.
 
-To learn about rectangling, you'll need to first learn about lists, the data structure that makes hierarchical data possible.
-Then you'll learn about two crucial tidyr functions: `tidyr::unnest_longer()` and `tidyr::unnest_wider()`.
-We'll then show you a few case studies, applying these simple functions again and again to solve real problems.
-We'll finish off by talking about JSON, the most frequent source of hierarchical datasets and a common format for data exchange on the web.
+직사각형화를 배우려면 먼저 계층 구조 데이터를 가능하게 하는 데이터 구조인 리스트(list)에 대해 배워야 합니다.
+그다음 두 가지 핵심적인 tidyr 함수인 `tidyr::unnest_longer()`와 `tidyr::unnest_wider()`에 대해 배우게 될 것입니다.
+그 후에 몇 가지 사례 연구를 통해 이러한 단순한 함수들을 반복해서 적용하여 실제 문제를 해결하는 방법을 보여드리겠습니다.
+마지막으로 계층 구조 데이터셋의 가장 빈번한 소스이자 웹에서 데이터 교환을 위한 일반적인 형식인 JSON에 대해 이야기하며 마무리하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-In this chapter, we'll use many functions from tidyr, a core member of the tidyverse.
-We'll also use repurrrsive to provide some interesting datasets for rectangling practice, and we'll finish by using jsonlite to read JSON files into R lists.
+이 챕터에서는 tidyverse의 핵심 멤버인 tidyr의 많은 함수를 사용할 것입니다.
+또한 직사각형화 연습을 위한 흥미로운 데이터셋을 제공하는 repurrrsive 패키지를 사용할 것이며, JSON 파일을 R 리스트로 읽어 들이기 위해 jsonlite를 사용하는 것으로 마무리하겠습니다.
 
 ```{r}
 #| label: setup
@@ -28,46 +28,46 @@ library(repurrrsive)
 library(jsonlite)
 ```
 
-## Lists
+## 리스트
 
-So far you've worked with data frames that contain simple vectors like integers, numbers, characters, date-times, and factors.
-These vectors are simple because they're homogeneous: every element is of the same data type.
-If you want to store elements of different types in the same vector, you'll need a **list**, which you create with `list()`:
+지금까지 여러분은 정수, 숫자, 문자, 날짜-시간, 팩터와 같은 단순한 벡터를 포함하는 데이터 프레임으로 작업해 왔습니다.
+이러한 벡터들은 동질적(homogeneous)이기 때문에 단순합니다. 즉, 모든 요소가 동일한 데이터 타입입니다.
+서로 다른 타입의 요소들을 동일한 벡터에 저장하고 싶다면, `list()`로 생성하는 **리스트(list)** 가 필요합니다:
 
 ```{r}
 x1 <- list(1:4, "a", TRUE)
 x1
 ```
 
-It's often convenient to name the components, or **children**, of a list, which you can do in the same way as naming the columns of a tibble:
+리스트의 구성 요소, 즉 **자식(children)** 에 이름을 붙이는 것이 편리할 때가 많습니다. 이는 티블의 열에 이름을 붙이는 것과 같은 방식으로 할 수 있습니다:
 
 ```{r}
 x2 <- list(a = 1:2, b = 1:3, c = 1:4)
 x2
 ```
 
-Even for these very simple lists, printing takes up quite a lot of space.
-A useful alternative is `str()`, which generates a compact display of the **str**ucture, de-emphasizing the contents:
+이러한 매우 단순한 리스트조차도 출력하면 상당히 많은 공간을 차지합니다.
+유용한 대안은 `str()`인데, 이는 내용을 덜 강조하면서 **구조(structure)** 를 조밀하게 보여줍니다:
 
 ```{r}
 str(x1)
 str(x2)
 ```
 
-As you can see, `str()` displays each child of the list on its own line.
-It displays the name, if present, then an abbreviation of the type, then the first few values.
+보시는 것처럼 `str()`은 리스트의 각 자식을 별도의 줄에 표시합니다.
+이름이 있으면 이름을 표시하고, 타입의 약어, 그리고 처음 몇 개의 값을 표시합니다.
 
-### Hierarchy
+### 계층 구조
 
-Lists can contain any type of object, including other lists.
-This makes them suitable for representing hierarchical (tree-like) structures:
+리스트는 다른 리스트를 포함하여 어떤 타입의 객체든 포함할 수 있습니다.
+이러한 특징 때문에 리스트는 계층 구조(트리 형태)를 표현하는 데 적합합니다:
 
 ```{r}
 x3 <- list(list(1, 2), list(3, 4))
 str(x3)
 ```
 
-This is notably different to `c()`, which generates a flat vector:
+이는 평평한 벡터를 생성하는 `c()`와는 확연히 다릅니다:
 
 ```{r}
 c(c(1, 2), c(3, 4))
@@ -76,28 +76,28 @@ x4 <- c(list(1, 2), list(3, 4))
 str(x4)
 ```
 
-As lists get more complex, `str()` gets more useful, as it lets you see the hierarchy at a glance:
+리스트가 복잡해질수록 `str()`은 계층 구조를 한눈에 볼 수 있게 해주어 더욱 유용해집니다:
 
 ```{r}
 x5 <- list(1, list(2, list(3, list(4, list(5)))))
 str(x5)
 ```
 
-As lists get even larger and more complex, `str()` eventually starts to fail, and you'll need to switch to `View()`[^rectangling-1].
-@fig-view-collapsed shows the result of calling `View(x5)`. The viewer starts by showing just the top level of the list, but you can interactively expand any of the components to see more, as in @fig-view-expand-1. RStudio will also show you the code you need to access that element, as in @fig-view-expand-2. We'll come back to how this code works in @sec-subset-one.
+리스트가 훨씬 더 커지고 복잡해지면 `str()`도 한계에 부딪히기 시작하며, 이럴 때는 `View()`로 전환해야 합니다[^rectangling-1].
+@fig-view-collapsed는 `View(x5)`를 호출한 결과를 보여줍니다. 뷰어는 리스트의 최상위 레벨만 보여주며 시작하지만, @fig-view-expand-1처럼 대화식으로 구성 요소를 확장하여 더 많은 내용을 볼 수 있습니다. RStudio는 @fig-view-expand-2처럼 해당 요소에 접근하는 데 필요한 코드도 보여줍니다. 이 코드가 어떻게 작동하는지는 @sec-subset-one에서 다시 다루겠습니다.
 
-[^rectangling-1]: This is an RStudio feature.
+[^rectangling-1]: 이는 RStudio의 기능입니다.
 
 ```{r}
 #| label: fig-view-collapsed
 #| fig.cap: >
-#|   The RStudio view lets you interactively explore a complex list.  
-#|   The viewer opens showing only the top level of the list.
+#|   RStudio 뷰를 사용하면 복잡한 리스트를 대화식으로 탐색할 수 있습니다.
+#|   뷰어는 리스트의 최상위 레벨만 보여주며 열립니다.
 #| fig.alt: >
-#|   A screenshot of RStudio showing the list-viewer. It shows the
-#|   two children of x5: the first child is a double vector and the
-#|   second child is a list. A rightward facing triangle indicates that the
-#|   second child itself has children but you can't see them.
+#|   리스트 뷰어를 보여주는 RStudio 스크린샷. x5의 두 자식을 보여주며,
+#|   첫 번째 자식은 double 벡터이고 두 번째 자식은 리스트입니다.
+#|   오른쪽을 향한 삼각형은 두 번째 자식 자체가 자식을 가지고 있지만
+#|   지금은 보이지 않음을 나타냅니다.
 #| echo: false
 #| out-width: NULL
 knitr::include_graphics("screenshots/View-1.png", dpi = 220)
@@ -106,12 +106,11 @@ knitr::include_graphics("screenshots/View-1.png", dpi = 220)
 ```{r}
 #| label: fig-view-expand-1
 #| fig.cap: >
-#|   Clicking on the rightward facing triangle expands that component
-#|   of the list so that you can also see its children.
+#|   오른쪽을 향한 삼각형을 클릭하면 리스트의 해당 구성 요소가 확장되어
+#|   그 자식들도 볼 수 있습니다.
 #| fig.alt: >
-#|   Another screenshot of the list-viewer having expand the second
-#|   child of x5. It also has two children, a double vector and another
-#|   list.
+#|   x5의 두 번째 자식을 확장한 리스트 뷰어의 또 다른 스크린샷.
+#|   이 자식 역시 두 개의 자식(double 벡터와 또 다른 리스트)을 가지고 있습니다.
 #| echo: false
 #| out-width: NULL
 knitr::include_graphics("screenshots/View-2.png", dpi = 220)
@@ -120,25 +119,23 @@ knitr::include_graphics("screenshots/View-2.png", dpi = 220)
 ```{r}
 #| label: fig-view-expand-2
 #| fig.cap: >
-#|   You can repeat this operation as many times as needed to get to the 
-#|   data you're interested in. Note the bottom-left corner: if you click
-#|   an element of the list, RStudio will give you the subsetting code
-#|   needed to access it, in this case `x5[[2]][[2]][[2]]`.
+#|   관심 있는 데이터에 도달할 때까지 이 작업을 필요한 만큼 반복할 수 있습니다.
+#|   왼쪽 하단 모서리를 주목하세요. 리스트의 요소를 클릭하면 RStudio에서
+#|   해당 요소에 접근하는 데 필요한 서브세팅 코드(이 경우 `x5[[2]][[2]][[2]]`)를 알려줍니다.
 #| fig.alt: >
-#|   Another screenshot, having expanded the grandchild of x5 to see its
-#|   two children, again a double vector and a list.
+#|   x5의 손자 요소를 확장하여 두 자식(double 벡터와 리스트)을 보여주는 또 다른 스크린샷.
 #| echo: false
 #| out-width: NULL
 knitr::include_graphics("screenshots/View-3.png", dpi = 220)
 ```
 
-### List-columns
+### 리스트-열
 
-Lists can also live inside a tibble, where we call them list-columns.
-List-columns are useful because they allow you to place objects in a tibble that wouldn't usually belong in there.
-In particular, list-columns are used a lot in the [tidymodels](https://www.tidymodels.org) ecosystem, because they allow you to store things like model outputs or resamples in a data frame.
+리스트는 티블 내부에도 존재할 수 있는데, 이를 리스트-열(list-columns)이라고 부릅니다.
+리스트-열은 보통 티블에 들어갈 수 없는 객체들을 넣을 수 있게 해주기 때문에 유용합니다.
+특히 [tidymodels](https://www.tidymodels.org) 에코시스템에서 리스트-열이 많이 사용되는데, 모델 출력값이나 리샘플 데이터 등을 데이터 프레임에 저장할 수 있게 해주기 때문입니다.
 
-Here's a simple example of a list-column:
+다음은 리스트-열의 간단한 예입니다:
 
 ```{r}
 df <- tibble(
@@ -149,30 +146,30 @@ df <- tibble(
 df
 ```
 
-There's nothing special about lists in a tibble; they behave like any other column:
+티블 안의 리스트라고 해서 특별한 것은 없습니다. 다른 열들과 똑같이 작동합니다:
 
 ```{r}
 df |> 
   filter(x == 1)
 ```
 
-Computing with list-columns is harder, but that's because computing with lists is harder in general; we'll come back to that in @sec-iteration.
-In this chapter, we'll focus on unnesting list-columns out into regular variables so you can use your existing tools on them.
+리스트-열로 계산하는 것은 더 어렵지만, 이는 일반적으로 리스트로 계산하는 것이 더 어렵기 때문입니다. 이에 대해서는 @sec-iteration에서 다시 다루겠습니다.
+이 챕터에서는 리스트-열을 일반적인 변수로 풀어내어(unnesting), 여러분이 이미 알고 있는 도구들을 사용할 수 있게 하는 데 집중하겠습니다.
 
-The default print method just displays a rough summary of the contents.
-The list column could be arbitrarily complex, so there's no good way to print it.
-If you want to see it, you'll need to pull out just the one list-column and apply one of the techniques that you've learned above, like `df |> pull(z) |> str()` or `df |> pull(z) |> View()`.
+기본 출력 방식은 내용의 대략적인 요약만 보여줍니다.
+리스트-열은 임의로 복잡해질 수 있으므로 출력할 좋은 방법이 없기 때문입니다.
+내용을 보고 싶다면 리스트-열 하나만 추출하여 앞서 배운 기술 중 하나를 적용해야 합니다. 예: `df |> pull(z) |> str()` 또는 `df |> pull(z) |> View()`.
 
 ::: callout-note
 ## Base R
 
-It's possible to put a list in a column of a `data.frame`, but it's a lot fiddlier because `data.frame()` treats a list as a list of columns:
+`data.frame`의 열에 리스트를 넣는 것이 가능은 하지만 훨씬 더 까다롭습니다. `data.frame()`이 리스트를 열의 리스트로 취급하기 때문입니다:
 
 ```{r}
 data.frame(x = list(1:3, 3:5))
 ```
 
-You can force `data.frame()` to treat a list as a list of rows by wrapping it in list `I()`, but the result doesn't print particularly well:
+리스트를 `I()`로 감싸서 `data.frame()`이 리스트를 행의 리스트로 취급하도록 강제할 수 있지만, 결과가 그리 좋게 출력되지는 않습니다:
 
 ```{r}
 data.frame(
@@ -181,18 +178,18 @@ data.frame(
 )
 ```
 
-It's easier to use list-columns with tibbles because `tibble()` treats lists like vectors and the print method has been designed with lists in mind.
+티블에서 리스트-열을 사용하는 것이 더 쉬운 이유는 `tibble()`이 리스트를 벡터처럼 취급하고, 출력 방식이 리스트를 염두에 두고 설계되었기 때문입니다.
 :::
 
-## Unnesting
+## 언네스팅
 
-Now that you've learned the basics of lists and list-columns, let's explore how you can turn them back into regular rows and columns.
-Here we'll use very simple sample data so you can get the basic idea; in the next section we'll switch to real data.
+리스트와 리스트-열의 기초를 배웠으므로, 이제 이것들을 다시 일반적인 행과 열로 되돌리는 방법을 알아봅시다.
+여기서는 기본 개념을 잡기 위해 매우 단순한 예제 데이터를 사용할 것입니다. 다음 섹션에서 실제 데이터로 넘어가겠습니다.
 
-List-columns tend to come in two basic forms: named and unnamed.
-When the children are **named**, they tend to have the same names in every row.
-For example, in `df1`, every element of list-column `y` has two elements named `a` and `b`.
-Named list-columns naturally unnest into columns: each named element becomes a new named column.
+리스트-열은 보통 이름이 있는 형태와 이름이 없는 형태, 두 가지 기본 형태로 나타납니다.
+자식들이 **이름이 있는** 경우, 모든 행에서 대개 동일한 이름을 가집니다.
+예를 들어 `df1`에서 리스트-열 `y`의 모든 요소는 `a`와 `b`라는 두 개의 이름을 가진 요소를 가집니다.
+이름이 있는 리스트-열은 자연스럽게 열로 풀립니다(unnest). 각 이름이 붙은 요소가 새로운 이름의 열이 됩니다.
 
 ```{r}
 df1 <- tribble(
@@ -203,9 +200,9 @@ df1 <- tribble(
 )
 ```
 
-When the children are **unnamed**, the number of elements tends to vary from row-to-row.
-For example, in `df2`, the elements of list-column `y` are unnamed and vary in length from one to three.
-Unnamed list-columns naturally unnest into rows: you'll get one row for each child.
+자식들이 **이름이 없는** 경우, 요소의 개수는 행마다 다른 경향이 있습니다.
+예를 들어 `df2`에서 리스트-열 `y`의 요소들은 이름이 없으며 길이는 1에서 3까지 다양합니다.
+이름이 없는 리스트-열은 자연스럽게 행으로 풀립니다. 각 자식에 대해 하나의 행이 생성됩니다.
 
 ```{r}
 df2 <- tribble(
@@ -216,20 +213,20 @@ df2 <- tribble(
 )
 ```
 
-tidyr provides two functions for these two cases: `unnest_wider()` and `unnest_longer()`.
-The following sections explain how they work.
+tidyr은 이 두 가지 경우를 위해 `unnest_wider()`와 `unnest_longer()`라는 두 가지 함수를 제공합니다.
+다음 섹션에서 이 함수들이 어떻게 작동하는지 설명합니다.
 
 ### `unnest_wider()`
 
-When each row has the same number of elements with the same names, like `df1`, it's natural to put each component into its own column with `unnest_wider()`:
+`df1`처럼 각 행이 동일한 이름의 동일한 개수 요소를 가지고 있을 때, `unnest_wider()`를 사용하여 각 구성 요소를 고유한 열에 넣는 것이 자연스럽습니다:
 
 ```{r}
 df1 |> 
   unnest_wider(y)
 ```
 
-By default, the names of the new columns come exclusively from the names of the list elements, but you can use the `names_sep` argument to request that they combine the column name and the element name.
-This is useful for disambiguating repeated names.
+기본적으로 새 열의 이름은 리스트 요소의 이름에서만 가져오지만, `names_sep` 인자를 사용하여 열 이름과 요소 이름을 결합하도록 요청할 수 있습니다.
+이는 반복되는 이름의 모호함을 해소하는 데 유용합니다.
 
 ```{r}
 df1 |> 
@@ -238,15 +235,15 @@ df1 |>
 
 ### `unnest_longer()`
 
-When each row contains an unnamed list, it's most natural to put each element into its own row with `unnest_longer()`:
+각 행에 이름이 없는 리스트가 포함되어 있을 때, `unnest_longer()`를 사용하여 각 요소를 고유한 행에 넣는 것이 가장 자연스럽습니다:
 
 ```{r}
 df2 |> 
   unnest_longer(y)
 ```
 
-Note how `x` is duplicated for each element inside of `y`: we get one row of output for each element inside the list-column.
-But what happens if one of the elements is empty, as in the following example?
+`y` 내부의 각 요소에 대해 `x`가 어떻게 복제되는지 확인하세요. 리스트-열 내부의 각 요소에 대해 하나의 출력 행을 얻습니다.
+하지만 다음 예제처럼 요소 중 하나가 비어 있으면 어떻게 될까요?
 
 ```{r}
 df6 <- tribble(
@@ -258,13 +255,13 @@ df6 <- tribble(
 df6 |> unnest_longer(y)
 ```
 
-We get zero rows in the output, so the row effectively disappears.
-If you want to preserve that row, adding `NA` in `y`, set `keep_empty = TRUE`.
+출력 결과에서 행이 0개가 되어 해당 행이 사실상 사라집니다.
+해당 행을 보존하고 `y`에 `NA`를 추가하고 싶다면 `keep_empty = TRUE`로 설정하세요.
 
-### Inconsistent types
+### 일관성 없는 타입
 
-What happens if you unnest a list-column that contains different types of vector?
-For example, take the following dataset where the list-column `y` contains two numbers, a character, and a logical, which can't normally be mixed in a single column.
+서로 다른 타입의 벡터가 포함된 리스트-열을 언네스트하면 어떻게 될까요?
+예를 들어 리스트-열 `y`에 숫자 두 개, 문자 하나, 논리값 하나가 포함된 다음 데이터셋을 예로 들어 보겠습니다. 이들은 일반적으로 단일 열에 섞일 수 없습니다.
 
 ```{r}
 df4 <- tribble(
@@ -274,46 +271,46 @@ df4 <- tribble(
 )
 ```
 
-`unnest_longer()` always keeps the set of columns unchanged, while changing the number of rows.
-So what happens?
-How does `unnest_longer()` produce five rows while keeping everything in `y`?
+`unnest_longer()`는 행의 개수를 변경하면서 열의 집합은 항상 변경되지 않은 상태로 유지합니다.
+그렇다면 무슨 일이 일어날까요?
+`unnest_longer()`는 `y`에 모든 것을 유지하면서 어떻게 5개의 행을 생성할까요?
 
 ```{r}
 df4 |> 
   unnest_longer(y)
 ```
 
-As you can see, the output contains a list-column, but every element of the list-column contains a single element.
-Because `unnest_longer()` can't find a common type of vector, it keeps the original types in a list-column.
-You might wonder if this breaks the commandment that every element of a column must be the same type.
-It doesn't: every element is a list, even though the contents are of different types.
+보시는 것처럼 출력 결과에는 리스트-열이 포함되어 있지만, 리스트-열의 모든 요소에는 단일 요소가 포함되어 있습니다.
+`unnest_longer()`가 공통된 벡터 타입을 찾을 수 없기 때문에 원래 타입을 리스트-열에 유지하는 것입니다.
+여러분은 이것이 모든 열의 요소가 동일한 타입이어야 한다는 계명을 어기는 것인지 궁금할 수 있습니다.
+그렇지 않습니다. 비록 내용물은 서로 다른 타입일지라도 모든 요소는 리스트입니다.
 
-Dealing with inconsistent types is challenging and the details depend on the precise nature of the problem and your goals, but you'll most likely need tools from @sec-iteration.
+일관성 없는 타입을 다루는 것은 어려운 일이며 세부 사항은 문제의 정확한 성격과 여러분의 목표에 따라 다르지만, 대부분 @sec-iteration의 도구들이 필요할 것입니다.
 
-### Other functions
+### 기타 함수들
 
-tidyr has a few other useful rectangling functions that we're not going to cover in this book:
+tidyr에는 이 책에서 다루지 않을 몇 가지 다른 유용한 직사각형화 함수들이 있습니다:
 
--   `unnest_auto()` automatically picks between `unnest_longer()` and `unnest_wider()` based on the structure of the list-column. It's great for rapid exploration, but ultimately it's a bad idea because it doesn't force you to understand how your data is structured, and makes your code harder to understand.
--   `unnest()` expands both rows and columns. It's useful when you have a list-column that contains a 2d structure like a data frame, which you don't see in this book, but you might encounter if you use the [tidymodels](https://www.tmwr.org/base-r.html#combining-base-r-models-and-the-tidyverse) ecosystem.
+-   `unnest_auto()`는 리스트-열의 구조에 따라 `unnest_longer()`와 `unnest_wider()` 중에서 자동으로 선택합니다. 빠른 탐색에는 좋지만 궁극적으로는 데이터 구조를 이해하도록 강제하지 않고 코드를 이해하기 어렵게 만들기 때문에 좋은 방법은 아닙니다.
+-   `unnest()`는 행과 열을 모두 확장합니다. 이 책에서는 다루지 않지만 [tidymodels](https://www.tmwr.org/base-r.html#combining-base-r-models-and-the-tidyverse) 에코시스템을 사용한다면 접하게 될 데이터 프레임과 같은 2차원 구조가 포함된 리스트-열이 있을 때 유용합니다.
 
-These functions are good to know about as you might encounter them when reading other people's code or tackling rarer rectangling challenges yourself.
+이러한 함수들은 다른 사람의 코드를 읽거나 드문 직사각형화 문제에 직접 직면했을 때 접할 수 있으므로 알아두는 것이 좋습니다.
 
-### Exercises
+### 연습문제
 
-1.  What happens when you use `unnest_wider()` with unnamed list-columns like `df2`?
-    What argument is now necessary?
-    What happens to missing values?
+1.  `df2`와 같이 이름이 없는 리스트-열에 `unnest_wider()`를 사용하면 어떻게 됩니까?
+    이제 어떤 인자가 필요합니까?
+    결측값은 어떻게 됩니까?
 
-2.  What happens when you use `unnest_longer()` with named list-columns like `df1`?
-    What additional information do you get in the output?
-    How can you suppress that extra detail?
+2.  `df1`과 같이 이름이 있는 리스트-열에 `unnest_longer()`를 사용하면 어떻게 됩니까?
+    출력 결과에서 어떤 추가 정보를 얻습니까?
+    그 추가 내용을 어떻게 억제할 수 있습니까?
 
-3.  From time-to-time you encounter data frames with multiple list-columns with aligned values.
-    For example, in the following data frame, the values of `y` and `z` are aligned (i.e. `y` and `z` will always have the same length within a row, and the first value of `y` corresponds to the first value of `z`).
-    What happens if you apply two `unnest_longer()` calls to this data frame?
-    How can you preserve the relationship between `x` and `y`?
-    (Hint: carefully read the docs).
+3.  때때로 값이 정렬된 여러 리스트-열이 있는 데이터 프레임을 만나게 됩니다.
+    예를 들어 다음 데이터 프레임에서 `y`와 `z`의 값은 정렬되어 있습니다(즉, 한 행 내에서 `y`와 `z`는 항상 길이가 같으며 `y`의 첫 번째 값은 `z`의 첫 번째 값에 대응합니다).
+    이 데이터 프레임에 두 번의 `unnest_longer()` 호출을 적용하면 어떻게 됩니까?
+    `x`와 `y` 사이의 관계를 어떻게 보존할 수 있습니까?
+    (힌트: 문서를 주의 깊게 읽어보세요).
 
     ```{r}
     df4 <- tribble(
@@ -323,35 +320,35 @@ These functions are good to know about as you might encounter them when reading 
     )
     ```
 
-## Case studies
+## 사례 연구
 
-The main difference between the simple examples we used above and real data is that real data typically contains multiple levels of nesting that require multiple calls to `unnest_longer()` and/or `unnest_wider()`.
-To show that in action, this section works through three real rectangling challenges using datasets from the repurrrsive package.
+앞서 살펴본 간단한 예제와 실제 데이터의 주요 차이점은, 실제 데이터는 대개 여러 레벨의 계층 구조를 포함하고 있어 `unnest_longer()` 및 또는 `unnest_wider()`를 여러 번 호출해야 한다는 점입니다.
+이를 실제로 보여주기 위해, 이 섹션에서는 repurrrsive 패키지의 데이터셋을 사용하여 세 가지 실제 직사각형화 과제를 수행해 보겠습니다.
 
-### Very wide data
+### 매우 넓은 데이터
 
-We'll start with `gh_repos`.
-This is a list that contains data about a collection of GitHub repositories retrieved using the GitHub API. It's a very deeply nested list so it's difficult to show the structure in this book; we recommend exploring a little on your own with `View(gh_repos)` before we continue.
+`gh_repos`부터 시작하겠습니다.
+이것은 GitHub API를 사용하여 검색된 GitHub 저장소 모음 데이터를 포함하는 리스트입니다. 매우 깊게 중첩된 리스트이므로 이 책에서 구조를 모두 보여주기는 어렵습니다. 계속하기 전에 `View(gh_repos)`를 사용하여 직접 탐색해 보실 것을 권장합니다.
 
-`gh_repos` is a list, but our tools work with list-columns, so we'll begin by putting it into a tibble.
-We call this column `json` for reasons we'll get to later.
+`gh_repos`는 리스트이지만 우리의 도구는 리스트-열에서 작동하므로, 먼저 이를 티블에 넣는 것으로 시작하겠습니다.
+나중에 설명할 이유 때문에 이 열을 `json`이라고 부르겠습니다.
 
 ```{r}
 repos <- tibble(json = gh_repos)
 repos
 ```
 
-This tibble contains 6 rows, one row for each child of `gh_repos`.
-Each row contains an unnamed list with either 26 or 30 rows.
-Since these are unnamed, we'll start with `unnest_longer()` to put each child in its own row:
+이 티블은 6개의 행을 포함하며, `gh_repos`의 각 자식마다 하나의 행이 있습니다.
+각 행에는 26개 또는 30개의 요소를 가진 이름 없는 리스트가 들어 있습니다.
+이들은 이름이 없으므로, 먼저 `unnest_longer()`를 사용하여 각 자식을 고유한 행에 배치하겠습니다.
 
 ```{r}
 repos |> 
   unnest_longer(json)
 ```
 
-At first glance, it might seem like we haven't improved the situation: while we have more rows (176 instead of 6) each element of `json` is still a list.
-However, there's an important difference: now each element is a **named** list so we can use `unnest_wider()` to put each element into its own column:
+어핏 보기에는 상황이 나아지지 않은 것처럼 보일 수 있습니다. 행은 많아졌지만(6개 대신 176개), `json`의 각 요소는 여전히 리스트이기 때문입니다.
+하지만 중요한 차이점이 있습니다. 이제 각 요소는 **이름이 있는** 리스트이므로 `unnest_wider()`를 사용하여 각 요소를 고유한 열에 넣을 수 있습니다.
 
 ```{r}
 repos |> 
@@ -359,8 +356,8 @@ repos |>
   unnest_wider(json) 
 ```
 
-This has worked but the result is a little overwhelming: there are so many columns that tibble doesn't even print all of them!
-We can see them all with `names()`; and here we look at the first 10:
+제대로 작동했지만 결과가 조금 압도적입니다. 열이 너무 많아서 티블이 모든 열을 출력하지도 못할 정도입니다!
+`names()`를 사용하여 모든 열 이름을 볼 수 있습니다. 여기서는 처음 10개만 살펴보겠습니다.
 
 ```{r}
 repos |> 
@@ -370,7 +367,7 @@ repos |>
   head(10)
 ```
 
-Let's pull out a few that look interesting:
+흥미로워 보이는 몇 개를 골라보겠습니다:
 
 ```{r}
 repos |> 
@@ -379,9 +376,9 @@ repos |>
   select(id, full_name, owner, description)
 ```
 
-You can use this to work back to understand how `gh_repos` was structured: each child was a GitHub user containing a list of up to 30 GitHub repositories that they created.
+이를 통해 `gh_repos`가 어떻게 구성되어 있었는지 거꾸로 이해할 수 있습니다. 각 자식은 GitHub 사용자였고, 그들이 생성한 최대 30개의 GitHub 저장소 리스트를 포함하고 있었습니다.
 
-`owner` is another list-column, and since it contains a named list, we can use `unnest_wider()` to get at the values:
+`owner`는 또 다른 리스트-열이며 이름이 있는 리스트를 포함하고 있으므로 `unnest_wider()`를 사용하여 그 값들에 접근할 수 있습니다:
 
 ```{r}
 #| error: true
@@ -392,8 +389,8 @@ repos |>
   unnest_wider(owner)
 ```
 
-Uh oh, this list column also contains an `id` column and we can't have two `id` columns in the same data frame.
-As suggested, lets use `names_sep` to resolve the problem:
+이런, 이 리스트-열에도 `id` 열이 포함되어 있는데 동일한 데이터 프레임에 두 개의 `id` 열을 가질 수는 없습니다.
+제안된 대로 `names_sep`을 사용하여 문제를 해결해 보겠습니다:
 
 ```{r}
 repos |> 
@@ -403,27 +400,27 @@ repos |>
   unnest_wider(owner, names_sep = "_")
 ```
 
-This gives another wide dataset, but you can get the sense that `owner` appears to contain a lot of additional data about the person who "owns" the repository.
+이렇게 하면 또 다른 넓은 데이터셋이 생성되지만, `owner`가 저장소를 "소유한" 사람에 대한 많은 추가 데이터를 포함하고 있음을 알 수 있습니다.
 
-### Relational data
+### 관계형 데이터
 
-Nested data is sometimes used to represent data that we'd usually spread across multiple data frames.
-For example, take `got_chars` which contains data about characters that appear in the Game of Thrones books and TV series.
-Like `gh_repos` it's a list, so we start by turning it into a list-column of a tibble:
+중첩된 데이터는 때때로 우리가 보통 여러 데이터 프레임에 걸쳐 펼쳐놓는 데이터를 표현하는 데 사용됩니다.
+예를 들어 Game of Thrones 도서 및 TV 시리즈에 등장하는 캐릭터 데이터를 포함하는 `got_chars`를 예로 들어 보겠습니다.
+`gh_repos`와 마찬가지로 리스트이므로 티블의 리스트-열로 변환하는 것부터 시작합니다.
 
 ```{r}
 chars <- tibble(json = got_chars)
 chars
 ```
 
-The `json` column contains named elements, so we'll start by widening it:
+`json` 열에는 이름이 있는 요소들이 포함되어 있으므로 먼저 넓게 펴겠습니다(widening):
 
 ```{r}
 chars |> 
   unnest_wider(json)
 ```
 
-And selecting a few columns to make it easier to read:
+읽기 쉽게 몇 개의 열만 선택해 보겠습니다:
 
 ```{r}
 characters <- chars |> 
@@ -432,7 +429,7 @@ characters <- chars |>
 characters
 ```
 
-This dataset contains also many list-columns:
+이 데이터셋에는 많은 리스트-열도 포함되어 있습니다:
 
 ```{r}
 chars |> 
@@ -440,8 +437,8 @@ chars |>
   select(id, where(is.list))
 ```
 
-Let's explore the `titles` column.
-It's an unnamed list-column, so we'll unnest it into rows:
+`titles` 열을 살펴봅시다.
+이름이 없는 리스트-열이므로 행으로 펼치겠습니다:
 
 ```{r}
 chars |> 
@@ -450,8 +447,8 @@ chars |>
   unnest_longer(titles)
 ```
 
-You might expect to see this data in its own table because it would be easy to join to the characters data as needed.
-Let's do that, which requires little cleaning: removing the rows containing empty strings and renaming `titles` to `title` since each row now only contains a single title.
+이 데이터는 필요할 때 캐릭터 데이터와 조인하기 쉬우므로 별도의 테이블에 있는 것이 좋겠다고 생각할 수 있습니다.
+약간의 정제 작업을 거쳐 그렇게 만들어 봅시다. 빈 문자열이 포함된 행을 제거하고, 각 행에는 이제 하나의 칭호만 포함되므로 `titles`를 `title`로 이름을 바꿉니다.
 
 ```{r}
 titles <- chars |> 
@@ -463,27 +460,27 @@ titles <- chars |>
 titles
 ```
 
-You could imagine creating a table like this for each of the list-columns, then using joins to combine them with the character data as you need it.
+각 리스트-열에 대해 이와 같은 테이블을 만든 다음, 필요에 따라 조인을 사용하여 캐릭터 데이터와 결합하는 것을 상상할 수 있습니다.
 
-### Deeply nested
+### 깊게 중첩된 데이터
 
-We'll finish off these case studies with a list-column that's very deeply nested and requires repeated rounds of `unnest_wider()` and `unnest_longer()` to unravel: `gmaps_cities`.
-This is a two column tibble containing five city names and the results of using Google's [geocoding API](https://developers.google.com/maps/documentation/geocoding) to determine their location:
+매우 깊게 중첩되어 있어 풀기 위해 여러 번의 `unnest_wider()`와 `unnest_longer()` 호출이 필요한 리스트-열인 `gmaps_cities`를 살펴보며 이 사례 연구를 마무리하겠습니다.
+이는 5개 도시의 이름과 Google의 [지오코딩 API](https://developers.google.com/maps/documentation/geocoding)를 사용하여 위치를 결정한 결과가 담긴 두 개의 열로 구성된 티블입니다.
 
 ```{r}
 gmaps_cities
 ```
 
-`json` is a list-column with internal names, so we start with an `unnest_wider()`:
+`json`은 내부 이름이 있는 리스트-열이므로 `unnest_wider()`로 시작합니다:
 
 ```{r}
 gmaps_cities |> 
   unnest_wider(json)
 ```
 
-This gives us the `status` and the `results`.
-We'll drop the status column since they're all `OK`; in a real analysis, you'd also want to capture all the rows where `status != "OK"` and figure out what went wrong.
-`results` is an unnamed list, with either one or two elements (we'll see why shortly) so we'll unnest it into rows:
+이렇게 하면 `status`와 `results`를 얻게 됩니다.
+모두 `OK`이므로 status 열은 삭제하겠습니다. 실제 분석에서는 `status != "OK"`인 모든 행을 캡처하여 무엇이 잘못되었는지 파악하고 싶을 것입니다.
+`results`는 하나 또는 두 개의 요소를 가진 이름 없는 리스트이므로(이유는 잠시 후에 나옵니다), 행으로 펼치겠습니다:
 
 ```{r}
 gmaps_cities |> 
@@ -492,7 +489,7 @@ gmaps_cities |>
   unnest_longer(results)
 ```
 
-Now `results` is a named list, so we'll use `unnest_wider()`:
+이제 `results`는 이름이 있는 리스트이므로 `unnest_wider()`를 사용합니다:
 
 ```{r}
 locations <- gmaps_cities |> 
@@ -503,10 +500,10 @@ locations <- gmaps_cities |>
 locations
 ```
 
-Now we can see why two cities got two results: Washington matched both Washington state and Washington, DC, and Arlington matched Arlington, Virginia and Arlington, Texas.
+이제 왜 두 도시에서 두 개의 결과가 나왔는지 알 수 있습니다. Washington은 Washington 주와 Washington, DC 둘 다에 매칭되었고, Arlington은 Arlington, Virginia와 Arlington, Texas에 매칭되었습니다.
 
-There are a few different places we could go from here.
-We might want to determine the exact location of the match, which is stored in the `geometry` list-column:
+여기서부터는 몇 가지 다른 방향으로 나아갈 수 있습니다.
+`geometry` 리스트-열에 저장된 매칭 결과의 정확한 위치를 확인해 보고 싶을 수 있습니다.
 
 ```{r}
 locations |> 
@@ -514,8 +511,8 @@ locations |>
   unnest_wider(geometry)
 ```
 
-That gives us new `bounds` (a rectangular region) and `location` (a point).
-We can unnest `location` to see the latitude (`lat`) and longitude (`lng`):
+이렇게 하면 새로운 `bounds` (직사각형 영역)와 `location` (좌표 점)을 얻게 됩니다.
+`location`을 언네스트하여 위도(`lat`)와 경도(`lng`)를 확인할 수 있습니다:
 
 ```{r}
 locations |> 
@@ -524,18 +521,18 @@ locations |>
   unnest_wider(location)
 ```
 
-Extracting the bounds requires a few more steps:
+경계값(bounds)을 추출하려면 몇 단계를 더 거쳐야 합니다:
 
 ```{r}
 locations |> 
   select(city, formatted_address, geometry) |> 
   unnest_wider(geometry) |> 
-  # focus on the variables of interest
+  # 관심 있는 변수에 집중
   select(!location:viewport) |>
   unnest_wider(bounds)
 ```
 
-We then rename `southwest` and `northeast` (the corners of the rectangle) so we can use `names_sep` to create short but evocative names:
+그런 다음 `southwest`와 `northeast`(직사각형의 모서리)의 이름을 바꾼 후 `names_sep`을 사용하여 짧으면서도 의미가 명확한 이름을 생성합니다:
 
 ```{r}
 locations |> 
@@ -547,9 +544,9 @@ locations |>
   unnest_wider(c(ne, sw), names_sep = "_") 
 ```
 
-Note how we unnest two columns simultaneously by supplying a vector of variable names to `unnest_wider()`.
+`unnest_wider()`에 변수 이름 벡터를 제공하여 두 개의 열을 동시에 언네스트하는 방법을 확인하세요.
 
-Once you've discovered the path to get to the components you're interested in, you can extract them directly using another tidyr function, `hoist()`:
+일단 관심 있는 구성 요소에 도달하는 경로를 발견하면, 또 다른 tidyr 함수인 `hoist()`를 사용하여 직접 추출할 수 있습니다:
 
 ```{r}
 #| results: false
@@ -564,22 +561,22 @@ locations |>
   )
 ```
 
-If these case studies have whetted your appetite for more real-life rectangling, you can see a few more examples in `vignette("rectangling", package = "tidyr")`.
+이 사례 연구들이 여러분의 직사각형화에 대한 흥미를 자극했다면, `vignette("rectangling", package = "tidyr")`에서 더 많은 사례를 확인해 보실 수 있습니다.
 
-### Exercises
+### 연습문제
 
-1.  Roughly estimate when `gh_repos` was created.
-    Why can you only roughly estimate the date?
+1.  `gh_repos`가 대략 언제 생성되었는지 추정해 보세요.
+    왜 생성 날짜를 대략적으로만 추정할 수 있습니까?
 
-2.  The `owner` column of `gh_repos` contains a lot of duplicated information because each owner can have many repos.
-    Can you construct an `owners` data frame that contains one row for each owner?
-    (Hint: does `distinct()` work with `list-cols`?)
+2.  `gh_repos`의 `owner` 열은 각 소유자가 여러 저장소를 가질 수 있기 때문에 중복된 정보를 많이 포함하고 있습니다.
+    각 소유자당 한 행씩 포함하는 `owners` 데이터 프레임을 구성할 수 있습니까?
+    (힌트: `distinct()`가 리스트-열에서도 작동합니까?)
 
-3.  Follow the steps used for `titles` to create similar tables for the aliases, allegiances, books, and TV series for the Game of Thrones characters.
+3.  `titles`에 사용된 단계를 따라 Game of Thrones 캐릭터들의 별명(aliases), 충성 서약(allegiances), 책(books), TV 시리즈에 대한 유사한 테이블을 만드세요.
 
-4.  Explain the following code line-by-line.
-    Why is it interesting?
-    Why does it work for `got_chars` but might not work in general?
+4.  다음 코드를 줄 단위로 설명하세요.
+    왜 이 코드가 흥미롭습니까?
+    왜 `got_chars`에는 작동하지만 일반적으로는 작동하지 않을 수도 있습니까?
 
     ```{r}
     #| results: false
@@ -594,64 +591,64 @@ If these case studies have whetted your appetite for more real-life rectangling,
       unnest_longer(value)
     ```
 
-5.  In `gmaps_cities`, what does `address_components` contain?
-    Why does the length vary between rows?
-    Unnest it appropriately to figure it out.
-    (Hint: `types` always appears to contain two elements. Does `unnest_wider()` make it easier to work with than `unnest_longer()`?)
+5.  `gmaps_cities`에서 `address_components`는 무엇을 포함하고 있습니까?
+    왜 행마다 길이가 다릅니까?
+    이를 알아내기 위해 적절하게 언네스트해 보세요.
+    (힌트: `types`는 항상 두 개의 요소를 포함하는 것 같습니다. `unnest_longer()`보다 `unnest_wider()`를 사용하는 것이 더 작업하기 쉽습니까?)
     .
 
 ## JSON
 
-All of the case studies in the previous section were sourced from wild-caught JSON.
-JSON is short for **j**ava**s**cript **o**bject **n**otation and is the way that most web APIs return data.
-It's important to understand it because while JSON and R's data types are pretty similar, there isn't a perfect 1-to-1 mapping, so it's good to understand a bit about JSON if things go wrong.
+이전 섹션의 모든 사례 연구는 야생에서 수집한 JSON에서 가져온 것입니다.
+JSON은 **J**ava**S**cript **O**bject **N**otation의 약자로, 대부분의 웹 API가 데이터를 반환하는 방식입니다.
+JSON과 R의 데이터 타입은 상당히 유사하지만 1대1로 완벽하게 매칭되지는 않기 때문에, 문제가 발생했을 때를 대비해 JSON에 대해 조금 이해해 두는 것이 중요합니다.
 
-### Data types
+### 데이터 타입
 
-JSON is a simple format designed to be easily read and written by machines, not humans.
-It has six key data types.
-Four of them are scalars:
+JSON은 사람이 아닌 기계가 쉽게 읽고 쓸 수 있도록 설계된 단순한 형식입니다.
+여섯 가지 주요 데이터 타입을 가지고 있습니다.
+그중 네 가지는 스칼라(scalar)입니다:
 
--   The simplest type is a null (`null`) which plays the same role as `NA` in R. It represents the absence of data.
--   A **string** is much like a string in R, but must always use double quotes.
--   A **number** is similar to R's numbers: they can use integer (e.g., 123), decimal (e.g., 123.45), or scientific (e.g., 1.23e3) notation. JSON doesn't support `Inf`, `-Inf`, or `NaN`.
--   A **boolean** is similar to R's `TRUE` and `FALSE`, but uses lowercase `true` and `false`.
+-   가장 단순한 타입은 null(`null`)로, R의 `NA`와 같은 역할을 합니다. 데이터의 부재를 나타냅니다.
+-   **문자열(string)** 은 R의 문자열과 매우 비슷하지만, 항상 큰따옴표를 사용해야 합니다.
+-   **숫자(number)** 는 R의 숫자와 유사합니다. 정수(예: 123), 소수(예: 123.45), 또는 과학적 표기법(예: 1.23e3)을 사용할 수 있습니다. JSON은 `Inf`, `-Inf`, `NaN`을 지원하지 않습니다.
+-   **불리언(boolean)** 은 R의 `TRUE`, `FALSE`와 유사하지만, 소문자 `true`와 `false`를 사용합니다.
 
-JSON's strings, numbers, and booleans are pretty similar to R's character, numeric, and logical vectors.
-The main difference is that JSON's scalars can only represent a single value.
-To represent multiple values you need to use one of the two remaining types: arrays and objects.
+JSON의 문자열, 숫자, 불리언은 R의 문자형, 수치형, 논리형 벡터와 꽤 비슷합니다.
+주요 차이점은 JSON의 스칼라는 단일 값만 나타낼 수 있다는 것입니다.
+여러 값을 표현하려면 남은 두 가지 타입인 배열 또는 객체를 사용해야 합니다.
 
-Both arrays and objects are similar to lists in R; the difference is whether or not they're named.
-An **array** is like an unnamed list, and is written with `[]`.
-For example `[1, 2, 3]` is an array containing 3 numbers, and `[null, 1, "string", false]` is an array that contains a null, a number, a string, and a boolean.
-An **object** is like a named list, and is written with `{}`.
-The names (keys in JSON terminology) are strings, so must be surrounded by quotes.
-For example, `{"x": 1, "y": 2}` is an object that maps `x` to 1 and `y` to 2.
+배열과 객체 모두 R의 리스트와 유사합니다. 차이점은 이름이 있는지 여부입니다.
+**배열(array)** 은 이름이 없는 리스트와 같으며, `[]`로 씁니다.
+예를 들어 `[1, 2, 3]`은 숫자 3개를 포함하는 배열이고, `[null, 1, "string", false]`는 null, 숫자, 문자열, 불리언을 포함하는 배열입니다.
+**객체(object)** 는 이름이 있는 리스트와 같으며, `{}`로 씁니다.
+이름(JSON 용어로는 키(key))은 문자열이므로 반드시 따옴표로 감싸야 합니다.
+예를 들어 `{"x": 1, "y": 2}`는 `x`를 1로, `y`를 2로 매핑하는 객체입니다.
 
-Note that JSON doesn't have any native way to represent dates or date-times, so they're often stored as strings, and you'll need to use `readr::parse_date()` or `readr::parse_datetime()` to turn them into the correct data structure.
-Similarly, JSON's rules for representing floating point numbers in JSON are a little imprecise, so you'll also sometimes find numbers stored in strings.
-Apply `readr::parse_double()` as needed to get the correct variable type.
+JSON에는 날짜나 날짜-시간을 표현하는 기본 방법이 없으므로 대개 문자열로 저장됩니다. 따라서 이를 올바른 데이터 구조로 바꾸려면 `readr::parse_date()` 또는 `readr::parse_datetime()`을 사용해야 합니다.
+마찬가지로 JSON에서 부동 소수점을 표현하는 규칙은 약간 부정확하므로, 때때로 문자열에 숫자가 저장된 것을 발견할 수도 있습니다.
+필요에 따라 `readr::parse_double()`을 적용하여 올바른 변수 타입을 얻으세요.
 
 ### jsonlite
 
-To convert JSON into R data structures, we recommend the jsonlite package, by Jeroen Ooms.
-We'll use only two jsonlite functions: `read_json()` and `parse_json()`.
-In real life, you'll use `read_json()` to read a JSON file from disk.
-For example, the repurrsive package also provides the source for `gh_user` as a JSON file and you can read it with `read_json()`:
+JSON을 R 데이터 구조로 변환하려면 Jeroen Ooms가 만든 jsonlite 패키지를 권장합니다.
+여기서는 `read_json()`과 `parse_json()`이라는 두 가지 jsonlite 함수만 사용하겠습니다.
+실제상황에서는 디스크에서 JSON 파일을 읽기 위해 `read_json()`을 사용하게 될 것입니다.
+예를 들어 repurrsive 패키지는 `gh_user`의 소스를 JSON 파일로도 제공하며, `read_json()`으로 읽을 수 있습니다.
 
 ```{r}
-# A path to a json file inside the package:
+# 패키지 내부의 json 파일 경로:
 gh_users_json()
 
-# Read it with read_json()
+# read_json()으로 읽기
 gh_users2 <- read_json(gh_users_json())
 
-# Check it's the same as the data we were using previously
+# 이전에 사용하던 데이터와 동일한지 확인
 identical(gh_users, gh_users2)
 ```
 
-In this book, we'll also use `parse_json()`, since it takes a string containing JSON, which makes it good for generating simple examples.
-To get started, here are three simple JSON datasets, starting with a number, then putting a few numbers in an array, then putting that array in an object:
+이 책에서는 JSON이 포함된 문자열을 인자로 받아 간단한 예제를 만들기에 좋은 `parse_json()`도 사용하겠습니다.
+시작하기 위해 숫자 하나에서 시작하여 배열에 숫자 몇 개를 넣고, 그 배열을 객체에 넣는 세 가지 간단한 JSON 데이터셋을 살펴보겠습니다:
 
 ```{r}
 str(parse_json('1'))
@@ -659,14 +656,14 @@ str(parse_json('[1, 2, 3]'))
 str(parse_json('{"x": [1, 2, 3]}'))
 ```
 
-jsonlite has another important function called `fromJSON()`.
-We don't use it here because it performs automatic simplification (`simplifyVector = TRUE`).
-This often works well, particularly in simple cases, but we think you're better off doing the rectangling yourself so you know exactly what's happening and can more easily handle the most complicated nested structures.
+jsonlite에는 `fromJSON()`이라는 또 다른 중요한 함수가 있습니다.
+여기서 이 함수를 사용하지 않는 이유는 자동 단순화(`simplifyVector = TRUE`)를 수행하기 때문입니다.
+이는 특히 간단한 경우에 잘 작동하지만, 우리는 여러분이 직접 직사각형화를 수행하여 정확히 어떤 일이 일어나고 있는지 파악하고 가장 복잡한 중첩 구조도 더 쉽게 처리할 수 있기를 바랍니다.
 
-### Starting the rectangling process
+### 직사각형화 프로세스 시작하기
 
-In most cases, JSON files contain a single top-level array, because they're designed to provide data about multiple "things", e.g., multiple pages, or multiple records, or multiple results.
-In this case, you'll start your rectangling with `tibble(json)` so that each element becomes a row:
+대부분의 경우 JSON 파일은 최상위 레벨이 배열 하나로 구성되어 있습니다. 여러 "항목"(예: 여러 페이지, 여러 레코드, 여러 결과)에 대한 데이터를 제공하도록 설계되었기 때문입니다.
+이 경우 `tibble(json)`으로 직사각형화를 시작하여 각 요소가 행이 되도록 합니다:
 
 ```{r}
 json <- '[
@@ -680,8 +677,8 @@ df |>
   unnest_wider(json)
 ```
 
-In rarer cases, the JSON file consists of a single top-level JSON object, representing one "thing".
-In this case, you'll need to kick off the rectangling process by wrapping it in a list, before you put it in a tibble.
+드문 경우지만, JSON 파일이 하나의 "항목"을 나타내는 최상위 레벨의 JSON 객체로 구성될 수도 있습니다.
+이 경우 티블에 넣기 전에 리스트로 감싸서 직사각형화 프로세스를 시작해야 합니다.
 
 ```{r}
 json <- '{
@@ -701,7 +698,7 @@ df |>
   unnest_wider(results)
 ```
 
-Alternatively, you can reach inside the parsed JSON and start with the bit that you actually care about:
+또는 파싱된 JSON 내부로 직접 들어가서 실제로 관심 있는 부분부터 시작할 수도 있습니다:
 
 ```{r}
 df <- tibble(results = parse_json(json)$results)
@@ -709,10 +706,10 @@ df |>
   unnest_wider(results)
 ```
 
-### Exercises
+### 연습문제
 
-1.  Rectangle the `df_col` and `df_row` below.
-    They represent the two ways of encoding a data frame in JSON.
+1.  아래의 `df_col`과 `df_row`를 직사각형화하세요.
+    이들은 JSON에서 데이터 프레임을 인코딩하는 두 가지 방법을 나타냅니다.
 
     ```{r}
     json_col <- parse_json('
@@ -733,12 +730,12 @@ df |>
     df_row <- tibble(json = json_row)
     ```
 
-## Summary
+## 요약
 
-In this chapter, you learned what lists are, how you can generate them from JSON files, and how to turn them into rectangular data frames.
-Surprisingly we only need two new functions: `unnest_longer()` to put list elements into rows and `unnest_wider()` to put list elements into columns.
-It doesn't matter how deeply nested the list-column is; all you need to do is repeatedly call these two functions.
+이 챕터에서는 리스트가 무엇인지, JSON 파일에서 리스트를 생성하는 방법, 그리고 리스트를 직사각형 형태의 데이터 프레임으로 바꾸는 방법을 배웠습니다.
+놀랍게도 리스트 요소를 행으로 넣는 `unnest_longer()`와 리스트 요소를 열로 넣는 `unnest_wider()`, 이 두 가지 새로운 함수만 있으면 되었습니다.
+리스트-열이 얼마나 깊게 중첩되어 있는지는 중요하지 않습니다. 여러분이 해야 할 일은 이 두 함수를 반복해서 호출하는 것뿐입니다.
 
-JSON is the most common data format returned by web APIs.
-What happens if the website doesn't have an API, but you can see data you want on the website?
-That's the topic of the next chapter: web scraping, extracting data from HTML webpages.
+JSON은 웹 API에서 반환하는 가장 일반적인 데이터 형식입니다.
+만약 웹사이트에 API는 없지만 여러분이 원하는 데이터를 웹사이트에서 볼 수 있다면 어떻게 해야 할까요?
+그것이 다음 챕터의 주제인 웹 스크래핑(web scraping), 즉 HTML 웹페이지에서 데이터를 추출하는 기술입니다.

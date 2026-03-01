@@ -1,25 +1,21 @@
-# Factors {#sec-factors}
-
+# 범주형(Factors) {#sec-factors}
+  
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-Factors are used for categorical variables, variables that have a fixed and known set of possible values.
-They are also useful when you want to display character vectors in a non-alphabetical order.
+범주형(Factors)은 미리 정해진 알려진 값들의 집합을 가진 변수인 범주형 변수를 다룰 때 사용됩니다. 또한 문자형 벡터를 알파벳 순서가 아닌 방식으로 표시하고 싶을 때도 유용합니다.
 
-We'll start by motivating why factors are needed for data analysis[^factors-1] and how you can create them with `factor()`. We'll then introduce you to the `gss_cat` dataset which contains a bunch of categorical variables to experiment with.
-You'll then use that dataset to practice modifying the order and values of factors, before we finish up with a discussion of ordered factors.
+먼저 왜 데이터 분석에서 범주형이 필요한지[^factors-1], 그리고 `factor()`를 사용하여 어떻게 범주형을 만들 수 있는지부터 살펴보겠습니다. 그런 다음 다양한 범주형 변수를 포함하고 있어 실험하기 좋은 `gss_cat` 데이터셋을 소개하겠습니다. 이 데이터셋을 사용하여 범주형의 순서와 값을 수정하는 연습을 한 뒤, 순서형 범주형(ordered factors)에 대한 논의로 마무리하겠습니다.
 
-[^factors-1]: They're also really important for modelling.
+[^factors-1]: 범주형은 모델링에서도 매우 중요합니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-Base R provides some basic tools for creating and manipulating factors.
-We'll supplement these with the **forcats** package, which is part of the core tidyverse.
-It provides tools for dealing with **cat**egorical variables (and it's an anagram of factors!) using a wide range of helpers for working with factors.
+Base R은 범주형을 생성하고 조작하기 위한 기본적인 도구들을 제공합니다. 우리는 핵심 tidyverse의 일부인 **forcats** 패키지를 사용하여 이를 보완할 것입니다. 이 패키지는 범주형 변수(**cat**egorical variables)를 다루기 위한 도구들을 제공하며(이름 자체가 factors의 애너그램이기도 합니다!), 범주형 작업을 위한 광범위한 헬퍼 함수들을 포함하고 있습니다.
 
 ```{r}
 #| label: setup
@@ -27,30 +23,29 @@ It provides tools for dealing with **cat**egorical variables (and it's an anagra
 library(tidyverse)
 ```
 
-## Factor basics
+## 범주형 기초
 
-Imagine that you have a variable that records month:
+월(month)을 기록하는 변수가 있다고 가정해 봅시다:
 
 ```{r}
 x1 <- c("Dec", "Apr", "Jan", "Mar")
 ```
 
-Using a string to record this variable has two problems:
+이 변수를 기록하기 위해 문자열을 사용하는 데는 두 가지 문제가 있습니다:
 
-1.  There are only twelve possible months, and there's nothing saving you from typos:
+1.  가능한 월은 12개뿐인데, 오타를 입력하는 것을 막을 방법이 없습니다:
 
     ```{r}
     x2 <- c("Dec", "Apr", "Jam", "Mar")
     ```
 
-2.  It doesn't sort in a useful way:
+2.  유용한 방식으로 정렬되지 않습니다:
 
     ```{r}
     sort(x1)
     ```
 
-You can fix both of these problems with a factor.
-To create a factor you must start by creating a list of the valid **levels**:
+범주형을 사용하면 이 두 가지 문제를 모두 해결할 수 있습니다. 범주형을 만들려면 먼저 유효한 **레벨(levels)** 리스트를 만드는 것부터 시작해야 합니다:
 
 ```{r}
 month_levels <- c(
@@ -59,7 +54,7 @@ month_levels <- c(
 )
 ```
 
-Now you can create a factor:
+이제 범주형을 만들 수 있습니다:
 
 ```{r}
 y1 <- factor(x1, levels = month_levels)
@@ -68,40 +63,39 @@ y1
 sort(y1)
 ```
 
-And any values not in the level will be silently converted to NA:
+그리고 레벨에 없는 값은 자동으로 `NA`로 변환됩니다:
 
 ```{r}
 y2 <- factor(x2, levels = month_levels)
 y2
 ```
 
-This seems risky, so you might want to use `forcats::fct()` instead:
+이는 위험할 수 있으므로, 대신 `forcats::fct()`를 사용할 수도 있습니다:
 
 ```{r}
 #| error: true
 y2 <- fct(x2, levels = month_levels)
 ```
 
-If you omit the levels, they'll be taken from the data in alphabetical order:
+레벨을 생략하면 데이터에서 알파벳 순서로 레벨을 가져옵니다:
 
 ```{r}
 factor(x1)
 ```
 
-Sorting alphabetically is slightly risky because not every computer will sort strings in the same way.
-So `forcats::fct()` orders by first appearance:
+알파벳순 정렬은 모든 컴퓨터가 문자열을 동일한 방식으로 정렬하지 않을 수도 있기 때문에 약간 위험합니다. 따라서 `forcats::fct()`는 처음 나타나는 순서대로 정렬합니다:
 
 ```{r}
 fct(x1)
 ```
 
-If you ever need to access the set of valid levels directly, you can do so with `levels()`:
+만약 유효한 레벨 집합에 직접 접근해야 한다면 `levels()`를 사용하면 됩니다:
 
 ```{r}
-levels(y2)
+levels(y1)
 ```
 
-You can also create a factor when reading your data with readr with `col_factor()`:
+`readr`로 데이터를 읽을 때 `col_factor()`를 사용하여 범주형을 만들 수도 있습니다:
 
 ```{r}
 csv <- "
@@ -114,52 +108,41 @@ df <- read_csv(csv, col_types = cols(month = col_factor(month_levels)))
 df$month
 ```
 
-## General Social Survey
+## 일반 사회 조사(General Social Survey)
 
-For the rest of this chapter, we're going to use `forcats::gss_cat`.
-It's a sample of data from the [General Social Survey](https://gss.norc.org), a long-running US survey conducted by the independent research organization NORC at the University of Chicago.
-The survey has thousands of questions, so in `gss_cat` Hadley selected a handful that will illustrate some common challenges you'll encounter when working with factors.
+이 챕터의 나머지 부분에서는 `forcats::gss_cat`를 사용할 것입니다. 이는 시카고 대학교의 독립 연구 기관인 NORC에서 수행하는 장기 미국 설문 조사인 [일반 사회 조사(General Social Survey)](https://gss.norc.org) 데이터의 표본입니다. 이 설문 조사에는 수천 개의 질문이 있으므로, `gss_cat`에는 해들리가 범주형을 다룰 때 마주하게 될 일반적인 과제들을 잘 보여줄 수 있는 몇 가지 질문들을 선별해 두었습니다.
 
 ```{r}
 gss_cat
 ```
 
-(Remember, since this dataset is provided by a package, you can get more information about the variables with `?gss_cat`.)
+(이 데이터셋은 패키지에서 제공되므로, `?gss_cat`을 통해 변수에 대한 더 자세한 정보를 얻을 수 있다는 것을 기억하세요.)
 
-When factors are stored in a tibble, you can't see their levels so easily.
-One way to view them is with `count()`:
+범주형이 티블(tibble)에 저장되어 있을 때는 레벨을 쉽게 확인하기 어렵습니다. 확인하는 한 가지 방법은 `count()`를 사용하는 것입니다:
 
 ```{r}
 gss_cat |>
   count(race)
 ```
 
-When working with factors, the two most common operations are changing the order of the levels, and changing the values of the levels.
-Those operations are described in the sections below.
+범주형 데이터로 작업할 때 가장 흔한 두 가지 작업은 레벨의 순서를 바꾸는 것과 레벨의 값을 바꾸는 것입니다. 이 작업들은 아래 섹션에서 설명합니다.
 
-### Exercises
+### 연습문제
 
-1.  Explore the distribution of `rincome` (reported income).
-    What makes the default bar chart hard to understand?
-    How could you improve the plot?
+1.  `rincome`(보고된 소득)의 분포를 살펴보세요. 기본 막대 차트를 이해하기 어렵게 만드는 것은 무엇인가요? 플롯을 어떻게 개선할 수 있을까요?
 
-2.  What is the most common `relig` in this survey?
-    What's the most common `partyid`?
+2.  이 설문 조사에서 가장 흔한 `relig`(종교)는 무엇인가요? 가장 흔한 `partyid`(정당 식별)는 무엇인가요?
 
-3.  Which `relig` does `denom` (denomination) apply to?
-    How can you find out with a table?
-    How can you find out with a visualization?
+3.  `denom`(교파)은 어떤 `relig`에 적용되나요? 표를 사용하여 어떻게 알 수 있나요? 시각화를 통해서는 어떻게 알 수 있나요?
 
-## Modifying factor order {#sec-modifying-factor-order}
+## 범주형 순서 수정하기 {#sec-modifying-factor-order}
 
-It's often useful to change the order of the factor levels in a visualization.
-For example, imagine you want to explore the average number of hours spent watching TV per day across religions:
+시각화에서 범주형 레벨의 순서를 바꾸는 것이 유용할 때가 많습니다. 예를 들어, 종교별로 하루 평균 TV 시청 시간을 조사하고 싶다고 가정해 봅시다:
 
 ```{r}
 #| fig-alt: |
-#|   A scatterplot of with tvhours on the x-axis and religion on the y-axis.
-#|   The y-axis is ordered seemingly arbitrarily making it hard to get
-#|   any sense of overall pattern.
+#|   x축에 tvhours, y축에 종교가 있는 산점도. y축이 임의로 순서가 정해진 
+#|   것처럼 보여 전체적인 패턴을 파악하기 어렵습니다.
 relig_summary <- gss_cat |>
   group_by(relig) |>
   summarize(
@@ -171,27 +154,24 @@ ggplot(relig_summary, aes(x = tvhours, y = relig)) +
   geom_point()
 ```
 
-It is hard to read this plot because there's no overall pattern.
-We can improve it by reordering the levels of `relig` using `fct_reorder()`.
-`fct_reorder()` takes three arguments:
+전체적인 패턴이 없어서 이 플롯을 읽기가 어렵습니다. `fct_reorder()`를 사용하여 `relig`의 레벨 순서를 재조정함으로써 이를 개선할 수 있습니다. `fct_reorder()`는 세 개의 인자를 받습니다:
 
--   `.f`, the factor whose levels you want to modify.
--   `.x`, a numeric vector that you want to use to reorder the levels.
--   Optionally, `.fun`, a function that's used if there are multiple values of `.x` for each value of `.f`. The default value is `median`.
+-   `.f`: 레벨을 수정할 범주형.
+-   `.x`: 레벨 순서를 재조정하는 데 사용할 수치형 벡터.
+-   선택적으로 `.fun`: 각 `.f` 값에 대해 `.x` 값이 여러 개일 때 사용되는 함수. 기본값은 `median`입니다.
 
 ```{r}
 #| fig-alt: |
-#|   The same scatterplot as above, but now the religion is displayed in
-#|   increasing order of tvhours. "Other eastern" has the fewest tvhours
-#|   under 2, and "Don't know" has the highest (over 5).
+#|   위와 동일한 산점도이지만, 이제 종교가 tvhours의 오름차순으로 표시됩니다. 
+#|   \"Other eastern\"이 2시간 미만으로 가장 적고, \"Don't know\"가 5시간 이상으로 
+#|   가장 많습니다.
 ggplot(relig_summary, aes(x = tvhours, y = fct_reorder(relig, tvhours))) +
   geom_point()
 ```
 
-Reordering religion makes it much easier to see that people in the "Don't know" category watch much more TV, and Hinduism & Other Eastern religions watch much less.
+종교의 순서를 재조정하면 "모름(Don't know)" 카테고리에 속한 사람들이 훨씬 더 많은 TV를 시청하고, 힌두교와 다른 동양 종교들이 훨씬 적게 시청한다는 것을 훨씬 쉽게 알 수 있습니다.
 
-As you start making more complicated transformations, we recommend moving them out of `aes()` and into a separate `mutate()` step.
-For example, you could rewrite the plot above as:
+더 복잡한 변환을 하기 시작할 때는 이를 `aes()` 내부가 아닌 별도의 `mutate()` 단계로 옮기는 것을 추천합니다. 예를 들어, 위의 플롯을 다음과 같이 다시 작성할 수 있습니다:
 
 ```{r}
 #| eval: false
@@ -203,14 +183,13 @@ relig_summary |>
   geom_point()
 ```
 
-What if we create a similar plot looking at how average age varies across reported income level?
+보고된 소득 수준에 따라 평균 연령이 어떻게 변하는지 보여주는 비슷한 플롯을 만들면 어떨까요?
 
 ```{r}
 #| fig-alt: |
-#|   A scatterplot with age on the x-axis and income on the y-axis. Income
-#|   has been reordered in order of average age which doesn't make much
-#|   sense. One section of the y-axis goes from $6000-6999, then <$1000,
-#|   then $8000-9999.
+#|   x축에 나이, y축에 소득이 있는 산점도. 소득이 평균 나이 순으로 재정렬되었는데 
+#|   이는 큰 의미가 없습니다. y축의 한 섹션이 $6000-6999에서 시작하여 <$1000, 
+#|   그 다음 $8000-9999로 이어집니다.
 rincome_summary <- gss_cat |>
   group_by(rincome) |>
   summarize(
@@ -222,44 +201,34 @@ ggplot(rincome_summary, aes(x = age, y = fct_reorder(rincome, age))) +
   geom_point()
 ```
 
-Here, arbitrarily reordering the levels isn't a good idea!
-That's because `rincome` already has a principled order that we shouldn't mess with.
-Reserve `fct_reorder()` for factors whose levels are arbitrarily ordered.
+이 경우에는 임의로 레벨의 순서를 재조정하는 것이 좋은 생각이 아닙니다! 왜냐하면 `rincome`은 이미 우리가 함부로 건드려서는 안 되는 원칙적인 순서가 있기 때문입니다. `fct_reorder()`는 레벨이 임의의 순서로 되어 있는 범주형을 위해 남겨두세요.
 
-However, it does make sense to pull "Not applicable" to the front with the other special levels.
-You can use `fct_relevel()`.
-It takes a factor, `.f`, and then any number of levels that you want to move to the front of the line.
+하지만 "해당 없음(Not applicable)"을 다른 특수 레벨들과 함께 앞으로 당기는 것은 의미가 있습니다. `fct_relevel()`을 사용할 수 있습니다. 이 함수는 범주형 `.f`와 맨 앞으로 옮기고 싶은 임의의 수의 레벨을 인자로 받습니다.
 
 ```{r}
 #| fig-alt: |
-#|   The same scatterplot but now "Not Applicable" is displayed at the
-#|   bottom of the y-axis. Generally there is a positive association
-#|   between income and age, and the income band with the highest average
-#|   age is "Not applicable".
+#|   동일한 산점도이지만 이제 \"Not Applicable\"이 y축의 맨 아래에 표시됩니다. 
+#|   일반적으로 소득과 나이 사이에 양의 상관관계가 있으며, 평균 나이가 
+#|   가장 높은 소득 구간은 \"Not applicable\"입니다.
 ggplot(rincome_summary, aes(x = age, y = fct_relevel(rincome, "Not applicable"))) +
   geom_point()
 ```
 
-Why do you think the average age for "Not applicable" is so high?
+"해당 없음(Not applicable)"의 평균 나이가 왜 그렇게 높다고 생각하시나요?
 
-Another type of reordering is useful when you are coloring the lines on a plot.
-`fct_reorder2(.f, .x, .y)` reorders the factor `.f` by the `.y` values associated with the largest `.x` values.
-This makes the plot easier to read because the colors of the line at the far right of the plot will line up with the legend.
+또 다른 유형의 순서 재조정은 플롯에서 선의 색상을 지정할 때 유용합니다. `fct_reorder2(.f, .x, .y)`는 가장 큰 `.x` 값과 연관된 `.y` 값에 따라 범주형 `.f`를 재정렬합니다. 이렇게 하면 플롯의 맨 오른쪽에 있는 선의 색상이 범례와 일치하게 되어 플롯을 더 쉽게 읽을 수 있습니다.
 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 3
 #| fig-alt: |
-#|     A line plot with age on the x-axis and proportion on the y-axis.
-#|     There is one line for each category of marital status: no answer,
-#|     never married, separated, divorced, widowed, and married. It is
-#|     a little hard to read the plot because the order of the legend is
-#|     unrelated to the lines on the plot. Rearranging the legend makes
-#|     the plot easier to read because the legend colors now match the
-#|     order of the lines on the far right of the plot. You can see some
-#|     unsurprising patterns: the proportion never married decreases with
-#|     age, married forms an upside down U shape, and widowed starts off
-#|     low but increases steeply after age 60.
+#|     x축에 나이, y축에 비율이 있는 선 플롯. 혼인 상태의 각 카테고리(무응답, 
+#|     미혼, 별거, 이혼, 사별, 기혼)에 대해 하나의 선이 있습니다. 범례의 
+#|     순서가 플롯의 선과 관련이 없어 플롯을 읽기가 약간 어렵습니다. 범례를 
+#|     재배치하면 범례 색상이 이제 플롯의 맨 오른쪽 선의 순서와 일치하기 
+#|     때문에 플롯을 읽기가 더 쉬워집니다. 몇 가지 놀랍지 않은 패턴을 
+#|     볼 수 있습니다: 미혼 비율은 나이가 들수록 감소하고, 기혼은 뒤집힌 U자 
+#|     모양을 형성하며, 사별은 낮게 시작하지만 60세 이후 급격히 증가합니다.
 by_age <- gss_cat |>
   filter(!is.na(age)) |>
   count(age, marital) |>
@@ -278,44 +247,36 @@ ggplot(by_age, aes(x = age, y = prop, color = fct_reorder2(marital, age, prop)))
   labs(color = "marital")
 ```
 
-Finally, for bar plots, you can use `fct_infreq()` to order levels in decreasing frequency: this is the simplest type of reordering because it doesn't need any extra variables.
-Combine it with `fct_rev()` if you want them in increasing frequency so that in the bar plot largest values are on the right, not the left.
+마지막으로, 막대 그래프의 경우 `fct_infreq()`를 사용하여 빈도의 내림차순으로 레벨을 정렬할 수 있습니다. 이는 추가적인 변수가 필요하지 않기 때문에 가장 단순한 형태의 재정렬입니다. 빈도의 오름차순으로 하려면 `fct_rev()`와 결합하여 막대 그래프에서 가장 큰 값이 왼쪽이 아닌 오른쪽에 오게 할 수 있습니다.
 
 ```{r}
 #| fig-alt: |
-#|   A bar chart of marital status ordered from least to most common:
-#|   no answer (~0), separated (~1,000), widowed (~2,000), divorced
-#|   (~3,000), never married (~5,000), married (~10,000).
+#|   빈도가 가장 낮은 것부터 가장 높은 것 순으로 정렬된 혼인 상태 막대 차트: 
+#|   무응답(~0), 별거(~1,000), 사별(~2,000), 이혼(~3,000), 미혼(~5,000), 
+#|   기혼(~10,000).
 gss_cat |>
   mutate(marital = marital |> fct_infreq() |> fct_rev()) |>
   ggplot(aes(x = marital)) +
   geom_bar()
 ```
 
-### Exercises
+### 연습문제
 
-1.  There are some suspiciously high numbers in `tvhours`.
-    Is the mean a good summary?
+1.  `tvhours`에 의심스럽게 높은 숫자 몇 개가 있습니다. 평균이 좋은 요약 통계량일까요?
 
-2.  For each factor in `gss_cat` identify whether the order of the levels is arbitrary or principled.
+2.  `gss_cat`의 각 범주형 변수에 대해 레벨의 순서가 임의적인지 아니면 원칙적인지 파악해 보세요.
 
-3.  Why did moving "Not applicable" to the front of the levels move it to the bottom of the plot?
+3.  왜 "해당 없음(Not applicable)"을 레벨의 맨 앞으로 옮겼는데 플롯의 맨 아래로 이동했을까요?
 
-## Modifying factor levels
+## 범주형 레벨 수정하기
 
-More powerful than changing the orders of the levels is changing their values.
-This allows you to clarify labels for publication, and collapse levels for high-level displays.
-The most general and powerful tool is `fct_recode()`.
-It allows you to recode, or change, the value of each level.
-For example, take the `partyid` variable from the `gss_cat` data frame:
+레벨의 순서를 바꾸는 것보다 더 강력한 작업은 레벨의 값을 바꾸는 것입니다. 이를 통해 발표용 라벨을 명확하게 만들거나 고수준의 표시를 위해 레벨을 합칠 수 있습니다. 가장 일반적이고 강력한 도구는 `fct_recode()`입니다. 각 레벨의 값을 바꾸거나 재코딩할 수 있게 해줍니다. 예를 들어, `gss_cat` 데이터 프레임의 `partyid` 변수를 살펴보겠습니다:
 
 ```{r}
 gss_cat |> count(partyid)
 ```
 
-The levels are terse and inconsistent.
-Let's tweak them to be longer and use a parallel construction.
-Like most rename and recoding functions in the tidyverse, the new values go on the left and the old values go on the right:
+레벨들이 투박하고 일관성이 없습니다. 더 길고 병렬적인 구조를 사용하도록 수정해 봅시다. tidyverse의 대부분의 이름 바꾸기 및 재코딩 함수와 마찬가지로, 새로운 값이 왼쪽에 오고 기존 값이 오른쪽에 옵니다:
 
 ```{r}
 gss_cat |>
@@ -332,9 +293,9 @@ gss_cat |>
   count(partyid)
 ```
 
-`fct_recode()` will leave the levels that aren't explicitly mentioned as is, and will warn you if you accidentally refer to a level that doesn't exist.
+`fct_recode()`는 명시적으로 언급되지 않은 레벨은 그대로 두며, 존재하지 않는 레벨을 실수로 언급하면 경고를 보냅니다.
 
-To combine groups, you can assign multiple old levels to the same new level:
+그룹을 결합하려면 여러 기존 레벨을 동일한 새 레벨에 할당할 수 있습니다:
 
 ```{r}
 #| results: false
@@ -354,10 +315,9 @@ gss_cat |>
   )
 ```
 
-Use this technique with care: if you group together categories that are truly different you will end up with misleading results.
+이 기법을 사용할 때는 주의가 필요합니다. 진정으로 다른 카테고리들을 하나로 그룹화하면 잘못된 결과를 초래할 수 있습니다.
 
-If you want to collapse a lot of levels, `fct_collapse()` is a useful variant of `fct_recode()`.
-For each new variable, you can provide a vector of old levels:
+많은 레벨을 합치고 싶다면 `fct_collapse()`가 `fct_recode()`의 유용한 변형이 될 수 있습니다. 각 새 변수에 대해 기존 레벨의 벡터를 제공할 수 있습니다:
 
 ```{r}
 gss_cat |>
@@ -372,9 +332,7 @@ gss_cat |>
   count(partyid)
 ```
 
-Sometimes you just want to lump together the small groups to make a plot or table simpler.
-That's the job of the `fct_lump_*()` family of functions.
-`fct_lump_lowfreq()` is a simple starting point that progressively lumps the smallest groups categories into "Other", always keeping "Other" as the smallest category.
+때로는 플롯이나 표를 더 단순하게 만들기 위해 작은 그룹들을 묶어주고 싶을 때가 있습니다. 그것이 바로 `fct_lump_*()` 함수군의 역할입니다. `fct_lump_lowfreq()`는 가장 작은 그룹들을 "Other"로 점진적으로 묶어주어 "Other"가 항상 가장 작은 카테고리가 되도록 하는 간단한 시작점입니다.
 
 ```{r}
 gss_cat |>
@@ -382,8 +340,7 @@ gss_cat |>
   count(relig)
 ```
 
-In this case it's not very helpful: it is true that the majority of Americans in this survey are Protestant, but we'd probably like to see some more details!
-Instead, we can use the `fct_lump_n()` to specify that we want exactly 10 groups:
+이 경우 별로 도움이 되지 않습니다. 이 설문 조사에서 미국인의 대다수가 개신교(Protestant)인 것은 사실이지만, 아마도 더 자세한 내용을 보고 싶을 것입니다! 대신 `fct_lump_n()`을 사용하여 정확히 10개의 그룹을 원한다고 지정할 수 있습니다:
 
 ```{r}
 gss_cat |>
@@ -391,48 +348,37 @@ gss_cat |>
   count(relig, sort = TRUE)
 ```
 
-Read the documentation to learn about `fct_lump_min()` and `fct_lump_prop()` which are useful in other cases.
+다른 경우에 유용한 `fct_lump_min()`과 `fct_lump_prop()`에 대해서는 문서를 읽어보세요.
 
-### Exercises
+### 연습문제
 
-1.  How have the proportions of people identifying as Democrat, Republican, and Independent changed over time?
+1.  민주당, 공화당, 무당파로 식별되는 사람들의 비율이 시간이 지남에 따라 어떻게 변해왔나요?
 
-2.  How could you collapse `rincome` into a small set of categories?
+2.  `rincome`을 어떻게 작은 카테고리 세트로 합칠 수 있을까요?
 
-3.  Notice there are 9 groups (excluding other) in the `fct_lump` example above.
-    Why not 10?
-    (Hint: type `?fct_lump`, and find the default for the argument `other_level` is "Other".)
+3.  위의 `fct_lump` 예제에서 (기타를 제외하고) 9개의 그룹이 있는 것을 주목하세요. 왜 10개가 아닐까요? (힌트: `?fct_lump`를 입력하여 `other_level` 인자의 기본값이 "Other"인지 확인해 보세요.)
 
-## Ordered factors {#sec-ordered-factors}
+## 순서형 범주형(Ordered factors) {#sec-ordered-factors}
 
-Before we continue, it's important to briefly mention a special type of factor: ordered factors.
-Created with the `ordered()` function, ordered factors imply a strict ordering between levels, but don't specify anything about the magnitude of the differences between the levels.
-You use ordered factors when you know there the levels are ranked, but there's no precise numerical ranking.
+계속하기 전에 특별한 유형의 범주형인 순서형 범주형(ordered factors)에 대해 간략히 언급하는 것이 중요합니다. `ordered()` 함수로 생성되는 순서형 범주형은 레벨 간의 엄격한 순서를 의미하지만, 레벨 간 차이의 크기에 대해서는 아무것도 지정하지 않습니다. 레벨이 순위가 매겨져 있다는 것은 알지만 정밀한 수치적 순위는 없을 때 순서형 범주형을 사용합니다.
 
-You can identify an ordered factor when it's printed because it uses `<` symbols between the factor levels:
+순서형 범주형이 출력될 때는 범주형 레벨 사이에 `<` 기호가 사용되므로 식별할 수 있습니다:
 
 ```{r}
 ordered(c("a", "b", "c"))
 ```
 
-In both base R and the tidyverse, ordered factors behave very similarly to regular factors.
-There are only two places where you might notice different behavior:
+Base R과 tidyverse 모두에서 순서형 범주형은 일반 범주형과 매우 유사하게 작동합니다. 다른 동작을 눈치챌 수 있는 곳은 두 가지뿐입니다:
 
--   If you map an ordered factor to color or fill in ggplot2, it will default to `scale_color_viridis()`/`scale_fill_viridis()`, a color scale that implies a ranking.
--   If you use an ordered predictor in a linear model, it will use "polynomial contrasts". These are mildly useful, but you are unlikely to have heard of them unless you have a PhD in Statistics, and even then you probably don't routinely interpret them. If you want to learn more, we recommend `vignette("contrasts", package = "faux")` by Lisa DeBruine.
+-   ggplot2에서 순서형 범주형을 color 또는 fill에 매핑하면 순위를 나타내는 색상 스케일인 `scale_color_viridis()`/`scale_fill_viridis()`가 기본값으로 사용됩니다.
+-   선형 모델에서 순서형 예측 변수를 사용하면 "다항식 대비(polynomial contrasts)"를 사용합니다. 이는 어느 정도 유용하지만 통계학 박사 학위가 있지 않은 한 들어보지 못했을 가능성이 크며, 그렇다 하더라도 일상적으로 이를 해석하지는 않을 것입니다. 더 자세히 알고 싶다면 Lisa DeBruine의 `vignette("contrasts", package = "faux")`를 추천합니다.
 
-For the purposes of this book, correctly distinguishing between regular and ordered factors is not particularly important.
-More broadly, however, certain fields (particularly the social sciences) do use ordered factors extensively.
-In these contexts, it's important to correctly identify them so that other analysis packages can offer the appropriate behavior.
+이 책의 목적상 일반 범주형과 순서형 범주형을 정확하게 구분하는 것은 특별히 중요하지 않습니다. 하지만 더 넓게 보면 특정 분야(특히 사회과학)에서는 순서형 범주형을 광범위하게 사용합니다. 이러한 맥락에서는 다른 분석 패키지들이 적절하게 동작할 수 있도록 이를 정확하게 식별하는 것이 중요합니다.
 
-## Summary
+## 요약
 
-This chapter introduced you to the handy forcats package for working with factors, introducing you to the most commonly used functions.
-forcats contains a wide range of other helpers that we didn't have space to discuss here, so whenever you're facing a factor analysis challenge that you haven't encountered before, I highly recommend skimming the [reference index](https://forcats.tidyverse.org/reference/index.html) to see if there's a canned function that can help solve your problem.
+이 챕터에서는 범주형 데이터 작업을 위한 편리한 forcats 패키지와 가장 흔히 사용되는 함수들을 소개했습니다. forcats에는 여기서 다 다루지 못한 다양한 헬퍼 함수들이 포함되어 있으므로, 이전에 겪어보지 못한 범주형 분석 과제에 직면할 때마다 [참조 인덱스](https://forcats.tidyverse.org/reference/index.html)를 훑어보며 문제를 해결하는 데 도움이 될 만한 함수가 있는지 확인해 보기를 강력히 추천합니다.
 
-If you want to learn more about factors after reading this chapter, we recommend reading Amelia McNamara and Nicholas Horton's paper, [*Wrangling categorical data in R*](https://peerj.com/preprints/3163/).
-This paper lays out some of the history discussed in [*stringsAsFactors: An unauthorized biography*](https://simplystatistics.org/posts/2015-07-24-stringsasfactors-an-unauthorized-biography/) and [*stringsAsFactors = \<sigh\>*](https://notstatschat.tumblr.com/post/124987394001/stringsasfactors-sigh), and compares the tidy approaches to categorical data outlined in this book with base R methods.
-An early version of the paper helped motivate and scope the forcats package; thanks Amelia & Nick!
+이 챕터를 읽은 후 범주형에 대해 더 배우고 싶다면 Amelia McNamara와 Nicholas Horton의 논문인 [*Wrangling categorical data in R*](https://peerj.com/preprints/3163/)을 읽어보기를 추천합니다. 이 논문은 [*stringsAsFactors: An unauthorized biography*](https://simplystatistics.org/posts/2015-07-24-stringsasfactors-an-unauthorized-biography/) 및 [*stringsAsFactors = \<sigh\>*](https://notstatschat.tumblr.com/post/124987394001/stringsasfactors-sigh)에서 논의된 역사의 일부를 설명하며, 이 책에서 요약된 범주형 데이터에 대한 tidy 접근법과 base R 메서드를 비교합니다. 이 논문의 초기 버전은 forcats 패키지의 동기와 범위를 정하는 데 도움을 주었습니다. Amelia와 Nick에게 감사를 표합니다!
 
-In the next chapter we'll switch gears to start learning about dates and times in R.
-Dates and times seem deceptively simple, but as you'll soon see, the more you learn about them, the more complex they seem to get!
+다음 챕터에서는 R에서 날짜와 시간을 다루는 방법을 배우기 위해 주제를 전환해 보겠습니다. 날짜와 시간은 겉보기에는 간단해 보이지만, 곧 알게 되겠지만 이에 대해 더 많이 배울수록 더 복잡하게 느껴질 것입니다!

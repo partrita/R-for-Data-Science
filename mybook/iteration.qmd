@@ -1,31 +1,31 @@
-# Iteration {#sec-iteration}
+# 반복 작업 {#sec-iteration}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-In this chapter, you'll learn tools for iteration, repeatedly performing the same action on different objects.
-Iteration in R generally tends to look rather different from other programming languages because so much of it is implicit and we get it for free.
-For example, if you want to double a numeric vector `x` in R, you can just write `2 * x`.
-In most other languages, you'd need to explicitly double each element of `x` using some sort of for loop.
+이 챕터에서는 서로 다른 객체에 대해 동일한 동작을 반복해서 수행하는 반복 작업(iteration)을 위한 도구들을 배웁니다.
+R에서의 반복 작업은 다른 프로그래밍 언어와는 상당히 다른 양상을 띠는 경향이 있는데, 그 이유는 반복 작업의 많은 부분이 암시적이며 이를 별도의 노력 없이 얻을 수 있기 때문입니다.
+예를 들어, R에서 수치형 벡터 `x`의 값을 두 배로 만들고 싶다면 그냥 `2 * x`라고 쓰면 됩니다.
+대부분의 다른 언어에서는 일종의 for 루프를 사용하여 `x`의 각 요소를 명시적으로 두 배로 만들어야 합니다.
 
-This book has already given you a small but powerful number of tools that perform the same action for multiple "things":
+이 책에서는 이미 여러 "항목"에 대해 동일한 동작을 수행하는 소수이지만 강력한 도구들을 소개했습니다:
 
--   `facet_wrap()` and `facet_grid()` draws a plot for each subset.
--   `group_by()` plus `summarize()` computes summary statistics for each subset.
--   `unnest_wider()` and `unnest_longer()` create new rows and columns for each element of a list-column.
+-   `facet_wrap()`과 `facet_grid()`는 각 하위 집합에 대해 그래프를 그립니다.
+-   `group_by()`와 `summarize()`는 각 하위 집합에 대해 요약 통계량을 계산합니다.
+-   `unnest_wider()`와 `unnest_longer()`는 리스트-열의 각 요소에 대해 새로운 행과 열을 생성합니다.
 
-Now it's time to learn some more general tools, often called **functional programming** tools because they are built around functions that take other functions as inputs.
-Learning functional programming can easily veer into the abstract, but in this chapter we'll keep things concrete by focusing on three common tasks: modifying multiple columns, reading multiple files, and saving multiple objects.
+이제 다른 함수를 입력으로 받는 함수를 중심으로 구축된, 종종 **함수형 프로그래밍(functional programming)** 도구라고 불리는 좀 더 일반적인 도구들을 배울 차례입니다.
+함수형 프로그래밍을 배우는 것은 자칫 추상적인 영역으로 흐르기 쉽지만, 이 챕터에서는 여러 열 수정하기, 여러 파일 읽기, 여러 객체 저장하기라는 세 가지 일반적인 작업에 집중하여 내용을 구체적으로 유지하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-In this chapter, we'll focus on tools provided by dplyr and purrr, both core members of the tidyverse.
-You've seen dplyr before, but [purrr](http://purrr.tidyverse.org/) is new.
-We're just going to use a couple of purrr functions in this chapter, but it's a great package to explore as you improve your programming skills.
+이 챕터에서는 tidyverse의 핵심 멤버인 dplyr과 purrr에서 제공하는 도구들에 집중하겠습니다.
+dplyr은 이전에 보셨지만, [purrr](http://purrr.tidyverse.org/)는 처음입니다.
+이 챕터에서는 오직 몇 개의 purrr 함수만 사용할 것이지만, 여러분의 프로그래밍 실력을 향상시키면서 탐구해 보기에 아주 좋은 패키지입니다.
 
 ```{r}
 #| label: setup
@@ -33,9 +33,9 @@ We're just going to use a couple of purrr functions in this chapter, but it's a 
 library(tidyverse)
 ```
 
-## Modifying multiple columns {#sec-across}
+## 여러 열 수정하기 {#sec-across}
 
-Imagine you have this simple tibble and you want to count the number of observations and compute the median of every column.
+여기에 간단한 티블이 있고, 여러분이 모든 열의 관측값 개수를 세고 중간값(median)을 계산하고 싶다고 가정해 봅시다.
 
 ```{r}
 set.seed(1014)
@@ -47,7 +47,7 @@ df <- tibble(
 )
 ```
 
-You could do it with copy-and-paste:
+복사해서 붙여넣기를 사용하여 수행할 수 있습니다:
 
 ```{r}
 df |> summarize(
@@ -59,8 +59,8 @@ df |> summarize(
 )
 ```
 
-That breaks our rule of thumb to never copy and paste more than twice, and you can imagine that this will get very tedious if you have tens or even hundreds of columns.
-Instead, you can use `across()`:
+이것은 "두 번 이상 복사해서 붙여넣지 말라"는 우리의 경험칙을 어기는 것이며, 열이 수십 개 혹은 수백 개라면 매우 지루한 작업이 될 것임을 짐작할 수 있습니다.
+대신 `across()`를 사용할 수 있습니다:
 
 ```{r}
 df |> summarize(
@@ -69,18 +69,18 @@ df |> summarize(
 )
 ```
 
-`across()` has three particularly important arguments, which we'll discuss in detail in the following sections.
-You'll use the first two every time you use `across()`: the first argument, `.cols`, specifies which columns you want to iterate over, and the second argument, `.fns`, specifies what to do with each column.
-You can use the `.names` argument when you need additional control over the names of output columns, which is particularly important when you use `across()` with `mutate()`.
-We'll also discuss two important variations, `if_any()` and `if_all()`, which work with `filter()`.
+`across()`에는 특히 중요한 세 가지 인자가 있으며, 다음 섹션에서 자세히 논의하겠습니다.
+`across()`를 사용할 때마다 처음 두 개의 인자를 사용하게 될 것입니다. 첫 번째 인자 `.cols`는 반복 작업을 수행할 열을 지정하고, 두 번째 인자 `.fns`는 각 열에 대해 무엇을 할지 지정합니다.
+출력 열의 이름을 추가로 제어해야 할 때는 `.names` 인자를 사용할 수 있는데, 이는 특히 `mutate()`와 함께 `across()`를 사용할 때 중요합니다.
+또한 `filter()`와 함께 작동하는 두 가지 중요한 변형인 `if_any()`와 `if_all()`에 대해서도 논의하겠습니다.
 
-### Selecting columns with `.cols`
+### `.cols`로 열 선택하기
 
-The first argument to `across()`, `.cols`, selects the columns to transform.
-This uses the same specifications as `select()`, @sec-select, so you can use functions like `starts_with()` and `ends_with()` to select columns based on their name.
+`across()`의 첫 번째 인자인 `.cols`는 변환할 열을 선택합니다.
+이는 @sec-select에서 다룬 `select()`와 동일한 사양을 사용하므로, `starts_with()`나 `ends_with()`와 같은 함수를 사용하여 이름을 기반으로 열을 선택할 수 있습니다.
 
-There are two additional selection techniques that are particularly useful for `across()`: `everything()` and `where()`.
-`everything()` is straightforward: it selects every (non-grouping) column:
+`across()`에 특히 유용한 두 가지 추가 선택 기술은 `everything()`과 `where()`입니다.
+`everything()`은 간단합니다. 모든(그룹화되지 않은) 열을 선택합니다:
 
 ```{r}
 set.seed(1014)
@@ -97,7 +97,7 @@ df |>
   summarize(across(everything(), median))
 ```
 
-Note grouping columns (`grp` here) are not included in `across()`, because they're automatically preserved by `summarize()`.
+그룹화 열(여기서는 `grp`)은 `summarize()`에 의해 자동으로 보존되기 때문에 `across()`에 포함되지 않는다는 점에 유의하세요.
 
 `where()` allows you to select columns based on their type:
 

@@ -65,7 +65,7 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
 #| fig-width: 3
 #| fig-alt: |
 #|   x축과 y축 라벨에 수학 텍스트가 있는 산점도. x축 라벨은 x_i, 
-+   y축 라벨은 i가 1부터 n까지일 때 x_i 제곱의 합이라고 되어 있음.
+#|   y축 라벨은 i가 1부터 n까지일 때 x_i 제곱의 합이라고 되어 있음.
 df <- tibble(
   x = 1:10,
   y = cumsum(x^2)
@@ -371,7 +371,7 @@ presidential |>
 #| fig-alt: |
 #|   자동차 클래스에 따라 점들의 색상이 지정된 고속도로 연료 효율 대 엔진 
 #|   크기 산점도 4개. 시계 방향으로 범례가 플롯의 오른쪽, 왼쪽, 아래쪽, 
-+   위쪽에 배치됨.
+#|   위쪽에 배치됨.
 base <- ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_point(aes(color = class))
 
