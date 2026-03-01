@@ -1,0 +1,3 @@
+UsageClass,CheckoutType,MaterialType,CheckoutYear,CheckoutMonth,Checkouts,Title,ISBN,Creator,Subjects,Publisher,PublicationYear
+Physical,Checkout,BOOK,2021,1,100,Test Book,123456789X,Author,Data,Pub,2020
+Physical,Checkout,BOOK,2018,5,200,Test Book 2,9876543210,Author,Data,Pub,2017

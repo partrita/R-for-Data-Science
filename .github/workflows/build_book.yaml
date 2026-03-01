@@ -25,13 +25,13 @@ jobs:
         run: pixi run quarto render mybook
 
       - name: Upload website artifact
-        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/quarto-book' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: "mybook/_book"
 
   deploy:
-    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/quarto-book' }}
     needs: build
 
     permissions:
