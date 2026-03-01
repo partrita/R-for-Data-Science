@@ -1,4 +1,4 @@
-# Transform {#sec-transform-intro .unnumbered}
+# 변형 {#sec-transform-intro .unnumbered}
 
 ```{r}
 #| results: "asis"
@@ -6,44 +6,44 @@
 source("_common.R")
 ```
 
-The second part of the book was a deep dive into data visualization.
-In this part of the book, you'll learn about the most important types of variables that you'll encounter inside a data frame and learn the tools you can use to work with them.
+책의 두 번째 부분은 데이터 시각화에 대해 깊이 있게 다루었습니다.
+이번 부분에서는 데이터 프레임 내부에서 마주하게 될 가장 중요한 변수 유형들에 대해 배우고, 이들을 다루는 데 사용할 수 있는 도구들을 배우게 될 것입니다.
 
 ```{r}
 #| label: fig-ds-transform
 #| echo: false
 #| fig-cap: |
-#|   The options for data transformation depend heavily on the type of 
-#|   data involved, the subject of this part of the book.
+#|   데이터 변형의 옵션들은 관련된 데이터의 유형에 크게 좌우되며, 이는 책의 
+#|   이번 섹션에서 다루는 주제입니다.
 #| fig-alt: |
-#|   Our data science model, with transform highlighted in blue.
+#|   데이터 과학 모델에서 변형(transform) 단계가 파란색으로 강조된 다이어그램.
 #| out.width: NULL
 knitr::include_graphics("diagrams/data-science/transform.png", dpi = 270)
 ```
 
-You can read these chapters as you need them; they're designed to be largely standalone so that they can be read out of order.
+이 챕터들은 필요할 때마다 읽으시면 됩니다. 대부분 독립적으로 구성되어 있어 순서에 상관없이 읽을 수 있도록 설계되었습니다.
 
--   @sec-logicals teaches you about logical vectors.
-    These are the simplest types of vectors, but are extremely powerful.
-    You'll learn how to create them with numeric comparisons, how to combine them with Boolean algebra, how to use them in summaries, and how to use them for conditional transformations.
+-   @sec-logicals 에서는 논리형 벡터에 대해 배웁니다.
+    이들은 가장 단순한 유형의 벡터이지만 매우 강력합니다.
+    숫자 비교를 통해 논리형 벡터를 만드는 방법, 불리언 대수로 결합하는 방법, 요약에 사용하는 방법, 그리고 조건부 변형에 사용하는 방법을 배우게 됩니다.
 
--   @sec-numbers dives into tools for vectors of numbers, the powerhouse of data science.
-    You'll learn more about counting and a bunch of important transformation and summary functions.
+-   @sec-numbers 에서는 데이터 과학의 핵심인 숫자형 벡터를 위한 도구들을 깊이 있게 다룹니다.
+    개수를 세는 법과 수많은 중요한 변형 및 요약 함수들을 더 자세히 배우게 됩니다.
 
--   @sec-strings will give you the tools to work with strings: you'll slice them, you'll dice them, and you'll stick them back together again.
-    This chapter mostly focuses on the stringr package, but you'll also learn some more tidyr functions devoted to extracting data from character strings.
+-   @sec-strings 에서는 문자열을 다루기 위한 도구들을 제공합니다. 문자열을 자르고, 나누고, 다시 합치는 법을 배웁니다.
+    이 챕터는 주로 stringr 패키지에 집중하지만, 문자열에서 데이터를 추출하는 데 특화된 몇 가지 tidyr 함수들도 배우게 됩니다.
 
--   @sec-regular-expressions introduces you to regular expressions, a powerful tool for manipulating strings.
-    This chapter will take you from thinking that a cat walked over your keyboard to reading and writing complex string patterns.
+-   @sec-regular-expressions 에서는 문자열을 조작하는 강력한 도구인 정규 표현식을 소개합니다.
+    이 챕터를 통해 고양이가 키보드 위를 걸어간 것처럼 보이던 복잡한 문자열 패턴을 읽고 쓸 수 있게 될 것입니다.
 
--   @sec-factors introduces factors: the data type that R uses to store categorical data.
-    You use a factor when a variable has a fixed set of possible values, or when you want to use a non-alphabetical ordering of a string.
+-   @sec-factors 에서는 R이 범주형 데이터를 저장하는 데 사용하는 데이터 타입인 팩터(factor)를 소개합니다.
+    변수가 정해진 값의 집합을 가질 때나, 문자열을 알파벳 순서가 아닌 방식으로 정렬하고 싶을 때 팩터를 사용합니다.
 
--   @sec-dates-and-times will give you the key tools for working with dates and date-times.
-    Unfortunately, the more you learn about date-times, the more complicated they seem to get, but with the help of the lubridate package, you'll learn how to overcome the most common challenges.
+-   @sec-dates-and-times 에서는 데이트와 데이트-타임을 다루는 핵심 도구들을 제공합니다.
+    불행하게도 데이트-타임에 대해 더 많이 배울수록 더 복잡하게 느껴지겠지만, lubridate 패키지의 도움을 받아 가장 흔한 과제들을 극복하는 법을 배우게 될 것입니다.
 
--   @sec-missing-values discusses missing values in depth.
-    We've discussed them a couple of times in isolation, but now it's time to discuss them holistically, helping you come to grips with the difference between implicit and explicit missing values, and how and why you might convert between them.
+-   @sec-missing-values 에서는 결측값을 심도 있게 다룹니다.
+    지금까지 몇 번 단편적으로 다루었지만, 이제는 암묵적 결측값과 명시적 결측값의 차이, 그리고 이들 사이를 왜 그리고 어떻게 변환하는지를 이해할 수 있도록 총체적으로 다룰 시간입니다.
 
--   @sec-joins finishes up this part of the book by giving you tools to join two (or more) data frames together.
-    Learning about joins will force you to grapple with the idea of keys, and think about how you identify each row in a dataset.
+-   @sec-joins 에서는 두 개(또는 그 이상)의 데이터 프레임을 결합하는 도구들을 소개하며 이 부분을 마무리합니다.
+    조인(join)을 배우면서 키(key)라는 개념을 다루게 되고, 데이터셋에서 각 행을 어떻게 식별하는지에 대해 생각하게 될 것입니다.

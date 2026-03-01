@@ -1,28 +1,28 @@
-# Layers {#sec-layers}
+# 레이어 {#sec-layers}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-In @sec-data-visualization, you learned much more than just how to make scatterplots, bar charts, and boxplots.
-You learned a foundation that you can use to make *any* type of plot with ggplot2.
+@sec-data-visualization에서 여러분은 산점도, 막대 차트, 박스 플롯을 만드는 방법 이상의 것을 배웠습니다.
+여러분은 ggplot2를 사용하여 *어떤* 유형의 플롯이든 만드는 데 사용할 수 있는 토대를 배웠습니다.
 
-In this chapter, you'll expand on that foundation as you learn about the layered grammar of graphics.
-We'll start with a deeper dive into aesthetic mappings, geometric objects, and facets.
-Then, you will learn about statistical transformations ggplot2 makes under the hood when creating a plot.
-These transformations are used to calculate new values to plot, such as the heights of bars in a bar plot or medians in a box plot.
-You will also learn about position adjustments, which modify how geoms are displayed in your plots.
-Finally, we'll briefly introduce coordinate systems.
+이 챕터에서는 레이어 구조의 그래프 문법(layered grammar of graphics)에 대해 배우면서 그 토대를 확장해 보겠습니다.
+먼저 심미적 매핑(aesthetic mappings), 기하 객체(geometric objects), 그리고 파세트(facets)를 더 깊이 있게 살펴보는 것으로 시작합니다.
+그다음, 플롯을 생성할 때 ggplot2가 내부적으로 수행하는 통계적 변환(statistical transformations)에 대해 배울 것입니다.
+이러한 변환은 막대 플롯의 막대 높이나 박스 플롯의 중앙값과 같이 플롯에 그릴 새로운 값들을 계산하는 데 사용됩니다.
+또한 기하 객체(geoms)가 플롯에 표시되는 방식을 수정하는 위치 조정(position adjustments)에 대해서도 배울 것입니다.
+마지막으로 좌표계(coordinate systems)를 간략하게 소개하겠습니다.
 
-We will not cover every single function and option for each of these layers, but we will walk you through the most important and commonly used functionality provided by ggplot2 as well as introduce you to packages that extend ggplot2.
+이러한 레이어 각각에 대한 모든 함수와 옵션을 다루지는 않겠지만, ggplot2에서 제공하는 가장 중요하고 흔히 사용되는 기능들을 안내하고 ggplot2를 확장하는 패키지들을 소개하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-This chapter focuses on ggplot2.
-To access the datasets, help pages, and functions used in this chapter, load the tidyverse by running this code:
+이 챕터는 ggplot2에 초점을 맞춥니다.
+이 챕터에서 사용되는 데이터셋, 도움말 페이지, 함수들에 접근하려면 이 코드를 실행하여 tidyverse를 로드하세요:
 
 ```{r}
 #| label: setup
@@ -30,113 +30,106 @@ To access the datasets, help pages, and functions used in this chapter, load the
 library(tidyverse)
 ```
 
-## Aesthetic mappings
+## 심미적 매핑
 
-> "The greatest value of a picture is when it forces us to notice what we never expected to see." --- John Tukey
+> "그림의 가장 큰 가치는 우리가 전혀 예상치 못했던 것을 알아차리게 할 때 나타난다." --- 존 투키(John Tukey)
 
-Remember that the `mpg` data frame bundled with the ggplot2 package contains `r nrow(mpg)` observations on `r mpg |> distinct(model) |> nrow()` car models.
+ggplot2 패키지에 포함된 `mpg` 데이터 프레임에는 `r mpg |> distinct(model) |> nrow()`개 자동차 모델에 대한 `r nrow(mpg)`개의 관측값이 담겨 있음을 기억하세요.
 
 ```{r}
 mpg
 ```
 
-Among the variables in `mpg` are:
+`mpg`의 변수들 중에는 다음과 같은 것들이 있습니다:
 
-1.  `displ`: A car's engine size, in liters.
-    A numerical variable.
+1.  `displ`: 자동차의 엔진 크기(리터 단위). 수치형 변수.
+2.  `hwy`: 고속도로 연료 효율(갤런당 마일, mpg). 연료 효율이 낮은 차는 같은 거리를 주행할 때 연료 효율이 높은 차보다 더 많은 연료를 소비함. 수치형 변수.
+3.  `class`: 자동차 종류. 범주형 변수.
 
-2.  `hwy`: A car's fuel efficiency on the highway, in miles per gallon (mpg).
-    A car with a low fuel efficiency consumes more fuel than a car with a high fuel efficiency when they travel the same distance.
-    A numerical variable.
-
-3.  `class`: Type of car.
-    A categorical variable.
-
-Let's start by visualizing the relationship between `displ` and `hwy` for various `class`es of cars.
-We can do this with a scatterplot where the numerical variables are mapped to the `x` and `y` aesthetics and the categorical variable is mapped to an aesthetic like `color` or `shape`.
+다양한 자동차 종류(`class`)에 대해 `displ`과 `hwy` 사이의 관계를 시각화하는 것부터 시작해 봅시다.
+수치형 변수들을 `x`와 `y` 심미적 요소(aesthetics)에 매핑하고 범주형 변수를 `color`나 `shape`와 같은 심미적 요소에 매핑한 산점도로 이를 수행할 수 있습니다.
 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-alt: |
-#|   Two scatterplots next to each other, both visualizing highway fuel 
-#|   efficiency versus engine size of cars and showing a negative 
-#|   association. In the plot on the left class is mapped to the color 
-#|   aesthetic, resulting in different colors for each class. 
-#|   In the plot on the right class is mapped the shape aesthetic, 
-#|   resulting in different plotting character shapes for each class,
-#|   except for suv. Each plot comes with a legend that shows the 
-#|   mapping between color or shape and levels of the class variable.
-# Left
+#|   나란히 놓인 두 개의 산점도. 둘 다 자동차의 고속도로 연료 효율 대 엔진 크기를 
+#|   시각화하며 음의 상관관계를 보여줌. 왼쪽 플롯에서는 class가 color 심미적 
+#|   요소에 매핑되어 각 클래스마다 다른 색상이 나타남. 오른쪽 플롯에서는 class가 
+#|   shape 심미적 요소에 매핑되어 suv를 제외한 각 클래스마다 다른 모양의 
+#|   플롯 기호가 나타남. 각 플롯에는 색상이나 모양과 class 변수의 레벨 간의 
+#|   매핑을 보여주는 범례가 포함되어 있음.
+# 왼쪽
 ggplot(mpg, aes(x = displ, y = hwy, color = class)) +
   geom_point()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = displ, y = hwy, shape = class)) +
   geom_point()
 ```
 
-When `class` is mapped to `shape`, we get two warnings:
+`class`가 `shape`에 매핑될 때 두 가지 경고가 나타납니다:
 
 > 1: The shape palette can deal with a maximum of 6 discrete values because more than 6 becomes difficult to discriminate; you have 7.
 > Consider specifying shapes manually if you must have them.
 >
 > 2: Removed 62 rows containing missing values (`geom_point()`).
 
-Since ggplot2 will only use six shapes at a time, by default, additional groups will go unplotted when you use the shape aesthetic.
-The second warning is related -- there are 62 SUVs in the dataset and they're not plotted.
+(1: 모양 팔레트는 최대 6개의 이산형 값을 처리할 수 있는데, 6개가 넘어가면 구별하기 어렵기 때문입니다. 현재 7개가 있습니다. 반드시 필요하다면 모양을 직접 지정하는 것을 고려해 보세요. 2: 결측값을 포함한 62개의 행이 제거되었습니다.)
 
-Similarly, we can map `class` to `size` or `alpha` aesthetics as well, which control the size and the transparency of the points, respectively.
+ggplot2는 기본적으로 한 번에 6개의 모양만 사용하므로, 모양 심미적 요소를 사용할 때 추가적인 그룹은 플롯되지 않습니다. 두 번째 경고도 이와 관련이 있습니다. 데이터셋에 62개의 SUV가 있는데 이들이 플롯되지 않은 것입니다.
+
+마찬가지로 `class`를 각각 점의 크기와 투명도를 조절하는 `size`나 `alpha` 심미적 요소에 매핑할 수도 있습니다.
 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-alt: |
-#|   Two scatterplots next to each other, both visualizing highway fuel 
-#|   efficiency versus engine size of cars and showing a negative 
-#|   association. In the plot on the left class is mapped to the size 
-#|   aesthetic, resulting in different sizes for each class. 
-#|   In the plot on the right class is mapped the alpha aesthetic, 
-#|   resulting in different alpha (transparency) levels for each class. 
-#|   Each plot comes with a legend that shows the mapping between size 
-#|   or alpha level and levels of the class variable.
-# Left
+#|   나란히 놓인 두 개의 산점도. 둘 다 자동차의 고속도로 연료 효율 대 엔진 크기를 
+#|   시각화하며 음의 상관관계를 보여줌. 왼쪽 플롯에서는 class가 size 심미적 
+#|   요소에 매핑되어 각 클래스마다 다른 크기가 나타남. 오른쪽 플롯에서는 class가 
+#|   alpha 심미적 요소에 매핑되어 각 클래스마다 다른 alpha(투명도) 수치가 나타남. 
+#|   각 플롯에는 크기나 alpha 수치와 class 변수의 레벨 간의 매핑을 보여주는 
+#|   범례가 포함되어 있음.
+# 왼쪽
 ggplot(mpg, aes(x = displ, y = hwy, size = class)) +
   geom_point()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = displ, y = hwy, alpha = class)) +
   geom_point()
 ```
 
-Both of these produce warnings as well:
+이들 또한 경고를 생성합니다:
 
 > Using alpha for a discrete variable is not advised.
 
-Mapping an unordered discrete (categorical) variable (`class`) to an ordered aesthetic (`size` or `alpha`) is generally not a good idea because it implies a ranking that does not in fact exist.
+(이산형 변수에 alpha를 사용하는 것은 권장되지 않습니다.)
 
-Once you map an aesthetic, ggplot2 takes care of the rest.
-It selects a reasonable scale to use with the aesthetic, and it constructs a legend that explains the mapping between levels and values.
-For x and y aesthetics, ggplot2 does not create a legend, but it creates an axis line with tick marks and a label.
-The axis line provides the same information as a legend; it explains the mapping between locations and values.
+순서가 없는 이산형(범주형) 변수인 `class`를 순서가 있는 심미적 요소(`size`나 `alpha`)에 매핑하는 것은 실제로는 존재하지 않는 순위를 암시하기 때문에 일반적으로 좋은 생각이 아닙니다.
 
-You can also set the visual properties of your geom manually as an argument of your geom function (*outside* of `aes()`) instead of relying on a variable mapping to determine the appearance.
-For example, we can make all of the points in our plot blue:
+일단 심미적 요소를 매핑하고 나면 ggplot2가 나머지를 알아서 처리합니다.
+심미적 요소에 사용할 적절한 스케일(scale)을 선택하고, 레벨과 값 사이의 매핑을 설명하는 범례(legend)를 구성합니다.
+x 및 y 심미적 요소에 대해 ggplot2는 범례를 만들지 않지만, 눈금과 라벨이 있는 축(axis) 선을 만듭니다.
+축 선은 범례와 동일한 정보를 제공합니다. 즉, 위치와 값 사이의 매핑을 설명합니다.
+
+외관을 결정하기 위해 변수 매핑에 의존하는 대신, 기하 객체의 시각적 속성을 (`aes()` *외측의*) 기하 객체 함수의 인자로서 직접 설정할 수도 있습니다.
+예를 들어 플롯의 모든 점을 파란색으로 만들 수 있습니다:
 
 ```{r}
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars 
-#|   that shows a negative association. All points are blue.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기의 산점도로, 음의 상관관계를 보여줌. 
+#|   모든 점이 파란색임.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point(color = "blue")
 ```
 
-Here, the color doesn't convey information about a variable, but only changes the appearance of the plot.
-You'll need to pick a value that makes sense for that aesthetic:
+여기서 색상은 변수에 대한 정보를 전달하지 않고 플롯의 외관만 바꿉니다.
+해당 심미적 요소에 적합한 값을 선택해야 합니다:
 
--   The name of a color as a character string, e.g., `color = "blue"`
--   The size of a point in mm, e.g., `size = 1`
--   The shape of a point as a number, e.g., `shape = 1`, as shown in @fig-shapes.
+-   문자열로 된 색상 이름 (예: `color = "blue"`)
+-   mm 단위의 점 크기 (예: `size = 1`)
+-   숫자로 된 점 모양 (예: @fig-shapes에서 보이는 것처럼 `shape = 1`)
 
 ```{r}
 #| label: fig-shapes
@@ -145,23 +138,22 @@ You'll need to pick a value that makes sense for that aesthetic:
 #| fig.asp: 0.364
 #| fig-align: "center"
 #| fig-cap: |
-#|   R has 26 built-in shapes that are identified by numbers. There are some 
-#|   seeming duplicates: for example, 0, 15, and 22 are all squares. The 
-#|   difference comes from the interaction of the `color` and `fill` 
-#|   aesthetics. The hollow shapes (0--14) have a border determined by `color`; 
-#|   the solid shapes (15--20) are filled with `color`; the filled shapes 
-#|   (21--25) have a border of `color` and are filled with `fill`. Shapes are 
-#|   arranged to keep similar shapes next to each other.  
+#|   R에는 숫자로 식별되는 26개의 내장 모양이 있습니다. 0, 15, 22가 모두 
+#|   정사각형인 것처럼 중복되어 보이는 것들도 있습니다. 차이는 `color`와 
+#|   `fill` 심미적 요소의 상호작용에서 옵니다. 속이 빈 모양(0~14)은 
+#|   `color`에 의해 결정되는 테두리를 가집니다. 속이 찬 모양(15~20)은 
+#|   `color`로 채워집니다. 채워진 모양(21~25)은 `color` 테두리를 가지며 
+#|   `fill`로 채워집니다. 모양들은 유사한 것들끼리 이웃하도록 배치되었습니다.
 #| fig-alt: |
-#|   Mapping between shapes and the numbers that represent them: 0 - square open, 
-#|   1 - circle open, 2 - triangle open, 3 - plus, 4 - cross, 5 - diamond open, 
-#|   6 - triangle down open, 7 - square cross, 8 - asterisk, 9 - diamond plus, 
-#|   10 - circle plus, 11 - star, 12 - square plus, 
-#|   13 - circle cross, 14 - square triangle, 15 - square, 
-#|   16 - circle small, 17 - triangle, 18 - diamond, 
-#|   19 - circle, 20 - bullet, 21 - circle filled, 
-#|   22 - square filled, 23 - diamond filled, 24 - triangle filled, 
-#|   25 - triangle down filled.
+#|   모양들과 그들을 나타내는 숫자 간의 매핑: 0 - 빈 사각형, 
+#|   1 - 빈 원, 2 - 빈 삼각형, 3 - 더하기, 4 - 엑스, 5 - 빈 다이아몬드, 
+#|   6 - 빈 역삼각형, 7 - 사각형 엑스, 8 - 별표, 9 - 다이아몬드 더하기, 
+#|   10 - 원 더하기, 11 - 별, 12 - 사각형 더하기, 
+#|   13 - 원 엑스, 14 - 사각형 삼각형, 15 - 사각형, 
+#|   16 - 작은 원, 17 - 삼각형, 18 - 다이아몬드, 
+#|   19 - 원, 20 - 불렛, 21 - 채워진 원, 
+#|   22 - 채워진 사각형, 23 - 채워진 다이아몬드, 24 - 채워진 삼각형, 
+#|   25 - 채워진 역삼각형.
 shapes <- tibble(
   shape = c(0, 1, 2, 5, 3, 4, 6:19, 22, 21, 24, 23, 20, 25),
   x = (0:25 %/% 5) / 2,
@@ -178,38 +170,32 @@ ggplot(shapes, aes(x, y)) +
   theme(aspect.ratio = 1/2.75)
 ```
 
-So far we have discussed aesthetics that we can map or set in a scatterplot, when using a point geom.
-You can learn more about all possible aesthetic mappings in the aesthetic specifications vignette at <https://ggplot2.tidyverse.org/articles/ggplot2-specs.html>.
+지금까지 점 기하 객체(`point` geom)를 사용하는 산점도에서 매핑하거나 설정할 수 있는 심미적 요소들에 대해 논의했습니다. 모든 가능한 심미적 매핑에 대해 더 자세히 알아보려면 <https://ggplot2.tidyverse.org/articles/ggplot2-specs.html>의 aesthetic 명세 비넷을 확인하세요.
 
-The specific aesthetics you can use for a plot depend on the geom you use to represent the data.
-In the next section we dive deeper into geoms.
+플롯에서 사용할 수 있는 특정 심미적 요소는 데이터를 표현하기 위해 사용하는 기하 객체(geom)에 따라 달라집니다. 다음 섹션에서 기하 객체에 대해 더 깊이 다루겠습니다.
 
-### Exercises
+### 연습문제
 
-1.  Create a scatterplot of `hwy` vs. `displ` where the points are pink filled in triangles.
+1.  점이 분홍색으로 채워진 삼각형인 `hwy` 대 `displ`의 산점도를 만드세요.
 
-2.  Why did the following code not result in a plot with blue points?
+2.  왜 다음 코드는 파란색 점이 있는 플롯을 생성하지 않았나요?
 
     ```{r}
     #| fig-show: hide
     #| fig-alt: |
-    #|   Scatterplot of highway fuel efficiency versus engine size of cars  
-    #|   that shows a negative association. All points are red and 
-    #|   the legend shows a red point that is mapped to the word blue.
+    #|   자동차의 고속도로 연료 효율 대 엔진 크기의 산점도로, 음의 상관관계를 보여줌. 
+    #|   모든 점이 빨간색이며 범례는 'blue'라는 단어에 매핑된 빨간색 점을 보여줌.
     ggplot(mpg) + 
       geom_point(aes(x = displ, y = hwy, color = "blue"))
     ```
 
-3.  What does the `stroke` aesthetic do?
-    What shapes does it work with?
-    (Hint: use `?geom_point`)
+3.  `stroke` 심미적 요소는 무엇을 하나요? 어떤 모양들과 함께 작동하나요? (힌트: `?geom_point`를 사용하세요)
 
-4.  What happens if you map an aesthetic to something other than a variable name, like `aes(color = displ < 5)`?
-    Note, you'll also need to specify x and y.
+4.  `aes(color = displ < 5)`와 같이 심미적 요소를 변수 이름이 아닌 다른 것에 매핑하면 어떻게 되나요? x와 y도 지정해야 함에 유의하세요.
 
-## Geometric objects {#sec-geometric-objects}
+## 기하 객체 {#sec-geometric-objects}
 
-How are these two plots similar?
+이 두 플롯은 어떻게 비슷할까요?
 
 ```{r}
 #| echo: false
@@ -217,11 +203,9 @@ How are these two plots similar?
 #| layout-ncol: 2
 #| fig-width: 3
 #| fig-alt: |
-#|   There are two plots. The plot on the left is a scatterplot of highway 
-#|   fuel efficiency versus engine size of cars and the plot on the right 
-#|   shows a smooth curve that follows the trajectory of the relationship 
-#|   between these variables. A confidence interval around the smooth 
-#|   curve is also displayed.
+#|   두 개의 플롯이 있음. 왼쪽 플롯은 자동차의 고속도로 연료 효율 대 엔진 크기의 
+#|   산점도이며, 오른쪽 플롯은 이 변수들 사이의 관계 궤적을 따르는 매끄러운 
+#|   곡선을 보여줌. 매끄러운 곡선 주위의 신뢰 구간도 표시됨.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point()
 
@@ -229,77 +213,60 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth()
 ```
 
-Both plots contain the same x variable, the same y variable, and both describe the same data.
-But the plots are not identical.
-Each plot uses a different geometric object, geom, to represent the data.
-The plot on the left uses the point geom, and the plot on the right uses the smooth geom, a smooth line fitted to the data.
+두 플롯 모두 동일한 x 변수, 동일한 y 변수를 포함하며 동일한 데이터를 설명합니다. 하지만 플롯이 동일하지는 않습니다. 각 플롯은 데이터를 표현하기 위해 서로 다른 기하 객체(geoms)를 사용합니다. 왼쪽 플롯은 점 기하 객체를 사용하고, 오른쪽 플롯은 데이터에 적합한 매끄러운 선인 매끄러움(smooth) 기하 객체를 사용합니다.
 
-To change the geom in your plot, change the geom function that you add to `ggplot()`.
-For instance, to make the plots above, you can use the following code:
+플롯의 기하 객체를 바꾸려면 `ggplot()`에 추가하는 기하 객체 함수를 바꾸면 됩니다. 예를 들어 위의 플롯들을 만들려면 다음 코드를 사용할 수 있습니다:
 
 ```{r}
 #| fig-show: hide
-# Left
+# 왼쪽
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_smooth()
 ```
 
-Every geom function in ggplot2 takes a `mapping` argument, either defined locally in the geom layer or globally in the `ggplot()` layer.
-However, not every aesthetic works with every geom.
-You could set the shape of a point, but you couldn't set the "shape" of a line.
-If you try, ggplot2 will silently ignore that aesthetic mapping.
-On the other hand, you *could* set the linetype of a line.
-`geom_smooth()` will draw a different line, with a different linetype, for each unique value of the variable that you map to linetype.
+ggplot2의 모든 기하 객체 함수는 `mapping` 인자를 받는데, 기하 객체 레이어에서 국지적으로 정의되거나 `ggplot()` 레이어에서 전역적으로 정의됩니다. 하지만 모든 심미적 요소가 모든 기하 객체와 함께 작동하는 것은 아닙니다. 점의 모양을 설정할 수는 있지만, 선의 "모양"을 설정할 수는 없습니다. 그렇게 시도하면 ggplot2는 해당 심미적 매핑을 조용히 무시할 것입니다. 반면에 선의 선 유형(linetype)을 설정할 수는 *있습니다*. `geom_smooth()`는 선 유형에 매핑한 변수의 각 고유 값마다 다른 선 유형으로 다른 선을 그릴 것입니다.
 
 ```{r}
 #| message: false
 #| layout-ncol: 2
 #| fig-width: 3
 #| fig-alt: |
-#|   Two plots of highway fuel efficiency versus engine size of cars.
-#|   The data are represented with smooth curves. On the left, three 
-#|   smooth curves, all with the same linetype. On the right, three 
-#|   smooth curves with different line types (solid, dashed, or long 
-#|   dashed) for each type of drive train. In both plots, confidence 
-#|   intervals around the smooth curves are also displayed.
-# Left
+#|   자동차의 고속도로 연료 효율 대 엔진 크기의 두 플롯. 데이터는 
+#|   매끄러운 곡선으로 표현됨. 왼쪽에는 모두 같은 선 유형을 가진 
+#|   세 개의 매끄러운 곡선이 있음. 오른쪽에는 구동 방식 유형에 따라 
+#|   서로 다른 선 유형(실선, 파선, 긴 파선)을 가진 세 개의 매끄러운 
+#|   곡선이 있음. 두 플롯 모두 매끄러운 곡선 주위의 신뢰 구간이 표시됨.
+# 왼쪽
 ggplot(mpg, aes(x = displ, y = hwy, shape = drv)) + 
   geom_smooth()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = displ, y = hwy, linetype = drv)) + 
   geom_smooth()
 ```
 
-Here, `geom_smooth()` separates the cars into three lines based on their `drv` value, which describes a car's drive train.
-One line describes all of the points that have a `4` value, one line describes all of the points that have an `f` value, and one line describes all of the points that have an `r` value.
-Here, `4` stands for four-wheel drive, `f` for front-wheel drive, and `r` for rear-wheel drive.
+여기서 `geom_smooth()`는 자동차의 구동 방식을 나타내는 `drv` 값에 따라 자동차들을 세 개의 선으로 분리합니다. 하나의 선은 `4` 값을 가진 모든 점을 설명하고, 하나의 선은 `f` 값을 가진 모든 점을, 나머지 하나는 `r` 값을 가진 모든 점을 설명합니다. 여기서 `4`는 4륜 구동, `f`는 전륜 구동, `r`은 후륜 구동을 의미합니다.
 
-If this sounds strange, we can make it clearer by overlaying the lines on top of the raw data and then coloring everything according to `drv`.
+이것이 생경하게 들린다면, 원시 데이터 위에 선을 겹치고 모든 것을 `drv`에 따라 색칠함으로써 더 명확하게 만들 수 있습니다.
 
 ```{r}
 #| message: false
 #| fig-alt: |
-#|   A plot of highway fuel efficiency versus engine size of cars. The data 
-#|   are represented with points (colored by drive train) as well as smooth 
-#|   curves (where line type is determined based on drive train as well). 
-#|   Confidence intervals around the smooth curves are also displayed.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기 플롯. 데이터는 점(구동 방식에 
+#|   따라 색상 지정)과 매끄러운 곡선(선 유형 또한 구동 방식에 따라 결정됨)으로 
+#|   표현됨. 매끄러운 곡선 주위의 신뢰 구간도 표시됨.
 ggplot(mpg, aes(x = displ, y = hwy, color = drv)) + 
   geom_point() +
   geom_smooth(aes(linetype = drv))
 ```
 
-Notice that this plot contains two geoms in the same graph.
+이 플롯이 같은 그래프 안에 두 개의 기하 객체를 포함하고 있음에 주목하세요.
 
-Many geoms, like `geom_smooth()`, use a single geometric object to display multiple rows of data.
-For these geoms, you can set the `group` aesthetic to a categorical variable to draw multiple objects.
-ggplot2 will draw a separate object for each unique value of the grouping variable.
-In practice, ggplot2 will automatically group the data for these geoms whenever you map an aesthetic to a discrete variable (as in the `linetype` example).
-It is convenient to rely on this feature because the `group` aesthetic by itself does not add a legend or distinguishing features to the geoms.
+`geom_smooth()`와 같은 많은 기하 객체는 단일 기하 객체를 사용하여 여러 행의 데이터를 표시합니다. 이러한 기하 객체의 경우, `group` 심미적 요소를 범주형 변수로 설정하여 여러 객체를 그릴 수 있습니다. ggplot2는 그룹화 변수의 각 고유 값마다 별도의 객체를 그릴 것입니다. 실제로 ggplot2는 심미적 요소를 이산형 변수에 매핑할 때마다(선 유형 예제와 같이) 이러한 기하 객체들에 대해 데이터를 자동으로 그룹화합니다. `group` 심미적 요소 자체는 범례나 구별되는 특징을 기하 객체에 추가하지 않기 때문에 이 기능을 이용하는 것이 편리합니다.
 
 ```{r}
 #| layout-ncol: 3
@@ -307,53 +274,44 @@ It is convenient to rely on this feature because the `group` aesthetic by itself
 #| fig-asp: 1
 #| message: false
 #| fig-alt: |
-#|   Three plots, each with highway fuel efficiency on the y-axis and engine 
-#|   size of cars on the x-axis, where data are represented by a smooth curve.
-#|   The first plot 
-#|   only has these two variables, the center plot has three separate smooth 
-#|   curves for each level of drive train, and the right plot not only has the 
-#|   same three separate smooth curves for each level of drive train but these 
-#|   curves are plotted in different colors. 
-#|   Confidence intervals around the smooth curves 
-#|   are also displayed.
-# Left
+#|   y축은 고속도로 연료 효율, x축은 자동차의 엔진 크기인 세 개의 플롯으로, 
+#|   데이터는 매끄러운 곡선으로 표현됨. 첫 번째 플롯은 이 두 변수만 가지고 됨. 
+#|   가운데 플롯은 구동 방식 레벨마다 세 개의 별도 매끄러운 곡선을 가짐. 
+#|   오른쪽 플롯은 같은 세 개의 매끄러운 곡선을 가질 뿐만 아니라 이 곡선들이 
+#|   서로 다른 색상으로 그려짐. 매끄러운 곡선 주위의 신뢰 구간도 표시됨.
+# 왼쪽
 ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth()
 
-# Middle
+# 가운데
 ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth(aes(group = drv))
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth(aes(color = drv), show.legend = FALSE)
 ```
 
-If you place mappings in a geom function, ggplot2 will treat them as local mappings for the layer.
-It will use these mappings to extend or overwrite the global mappings *for that layer only*.
-This makes it possible to display different aesthetics in different layers.
+매핑을 기하 객체 함수 안에 배치하면, ggplot2는 이를 해당 레이어에 대한 국지적(local) 매핑으로 취급합니다. ggplot2는 이 매핑들을 사용하여 *해당 레이어에 대해서만* 전역(global) 매핑을 확장하거나 덮어씁니다. 이를 통해 서로 다른 레이어에서 서로 다른 심미적 요소를 표시할 수 있습니다.
 
 ```{r}
 #| message: false
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars, where 
-#|   points are colored according to the car class. A smooth curve following 
-#|   the trajectory of the relationship between highway fuel efficiency versus 
-#|   engine size of cars is overlaid along with a confidence interval around it.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기의 산점도로, 점들은 자동차 클래스에 
+#|   따라 색칠됨. 고속도로 연료 효율 대 엔진 크기 사이의 관계 궤적을 따르는 
+#|   매끄러운 곡선이 주위의 신뢰 구간과 함께 겹쳐져 있음.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point(aes(color = class)) + 
   geom_smooth()
 ```
 
-You can use the same idea to specify different `data` for each layer.
-Here, we use red points as well as open circles to highlight two-seater cars.
-The local data argument in `geom_point()` overrides the global data argument in `ggplot()` for that layer only.
+동일한 원리로 각 레이어마다 서로 다른 `data`를 지정할 수도 있습니다. 여기서는 2인승 자동차를 강조하기 위해 빨간색 점뿐만 아니라 빈 원을 사용합니다. `geom_point()`의 국지적 데이터 인자는 해당 레이어에 대해서만 `ggplot()`의 전역 데이터 인자를 덮어씁니다.
 
 ```{r}
 #| message: false
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars, where 
-#|   two-seater cars are highlighted with red points and open circles. 
+#|   자동차의 고속도로 연료 효율 대 엔진 크기 산점도로, 2인승 자동차가 
+#|   빨간색 점과 빈 원으로 강조되어 있음.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point() + 
   geom_point(
@@ -366,59 +324,48 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
   )
 ```
 
-Geoms are the fundamental building blocks of ggplot2.
-You can completely transform the look of your plot by changing its geom, and different geoms can reveal different features of your data.
-For example, the histogram and density plot below reveal that the distribution of highway mileage is bimodal and right skewed while the boxplot reveals two potential outliers.
+기하 객체(Geoms)는 ggplot2의 근본적인 빌딩 블록입니다. 기하 객체를 바꿈으로써 플롯의 외관을 완전히 변형시킬 수 있으며, 서로 다른 기하 객체는 데이터의 서로 다른 특징을 드러낼 수 있습니다. 예를 들어, 아래의 히스토그램과 밀도 플롯은 고속도로 연비의 분포가 이봉형(bimodal)이고 오른쪽으로 치우쳐 있음(right skewed)을 드러내는 반면, 박스 플롯은 두 개의 잠재적인 이상값(outliers)을 드러냅니다.
 
 ```{r}
 #| layout-ncol: 3
 #| fig-width: 3
 #| fig-alt: |
-#|   Three plots: histogram, density plot, and box plot of highway
-#|   mileage.
-# Left
+#|   세 개의 플롯: 고속도로 연비의 히스토그램, 밀도 플롯, 박스 플롯.
+# 왼쪽
 ggplot(mpg, aes(x = hwy)) +
   geom_histogram(binwidth = 2)
 
-# Middle
+# 가운데
 ggplot(mpg, aes(x = hwy)) +
   geom_density()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = hwy)) +
   geom_boxplot()
 ```
 
-ggplot2 provides more than 40 geoms but these don't cover all possible plots one could make.
-If you need a different geom, we recommend looking into extension packages first to see if someone else has already implemented it (see <https://exts.ggplot2.tidyverse.org/gallery/> for a sampling).
-For example, the **ggridges** package ([https://wilkelab.org/ggridges](https://wilkelab.org/ggridges/){.uri}) is useful for making ridgeline plots, which can be useful for visualizing the density of a numerical variable for different levels of a categorical variable.
-In the following plot not only did we use a new geom (`geom_density_ridges()`), but we have also mapped the same variable to multiple aesthetics (`drv` to `y`, `fill`, and `color`) as well as set an aesthetic (`alpha = 0.5`) to make the density curves transparent.
+ggplot2는 40개 이상의 기하 객체를 제공하지만, 이것들이 만들어질 수 있는 모든 가능한 플롯을 다루지는 않습니다. 다른 기하 객체가 필요하다면, 누군가 이미 구현해 둔 것이 있는지 확인하기 위해 확장 패키지들을 먼저 살펴보는 것을 권장합니다 (일부 샘플은 <https://exts.ggplot2.tidyverse.org/gallery/>를 참조하세요). 예를 들어, **ggridges** 패키지 ([https://wilkelab.org/ggridges](https://wilkelab.org/ggridges/){.uri})는 범주형 변수의 각 레벨에 대해 수치형 변수의 밀도를 시각화하는 데 유용한 리지라인 플롯(ridgeline plots)을 만드는 데 유용합니다. 다음 플롯에서는 새로운 기하 객체(`geom_density_ridges()`)를 사용했을 뿐만 아니라, 동일한 변수를 여러 심미적 요소(`drv`를 `y`, `fill`, `color`에)에 매핑했고 밀도 곡선을 투명하게 만들기 위해 심미적 요소(`alpha = 0.5`)를 설정했습니다.
 
 ```{r}
 #| fig-asp: 0.33
 #| fig-alt: 
-#|   Density curves for highway mileage for cars with rear wheel, 
-#|   front wheel, and 4-wheel drives plotted separately. The 
-#|   distribution is bimodal and roughly symmetric for rear and 
-#|   4 wheel drive cars and unimodal and right skewed for front 
-#|   wheel drive cars.
+#|   후륜, 전륜, 4륜 구동 자동차들에 대해 별도로 그려진 고속도로 연비의 
+#|   밀도 곡선. 후륜 및 4륜 구동 자동차들에 대한 분포는 이봉형이고 대략 
+#|   대칭적이며, 전륜 구동 자동차에 대해서는 단봉형(unimodal)이고 오른쪽으로 
+#|   치우쳐 있음.
 library(ggridges)
 
 ggplot(mpg, aes(x = hwy, y = drv, fill = drv, color = drv)) +
   geom_density_ridges(alpha = 0.5, show.legend = FALSE)
 ```
 
-The best place to get a comprehensive overview of all of the geoms ggplot2 offers, as well as all functions in the package, is the reference page: <https://ggplot2.tidyverse.org/reference>.
-To learn more about any single geom, use the help (e.g., `?geom_smooth`).
+ggplot2가 제공하는 모든 기하 객체와 패키지의 모든 함수에 대한 종합적인 개요를 얻기에 가장 좋은 곳은 참조 페이지 <https://ggplot2.tidyverse.org/reference>입니다. 어떤 단일 기하 객체에 대해 더 자세히 알아보려면 도움말(예: `?geom_smooth`)을 사용하세요.
 
-### Exercises
+### 연습문제
 
-1.  What geom would you use to draw a line chart?
-    A boxplot?
-    A histogram?
-    An area chart?
+1.  선 차트(line chart)를 그리기 위해 어떤 기하 객체를 사용하시겠습니까? 박스 플롯(boxplot)은요? 히스토그램(histogram)은요? 영역 차트(area chart)는요?
 
-2.  Earlier in this chapter we used `show.legend` without explaining it:
+2.  앞서 이 챕터에서 설명 없이 `show.legend`를 사용했습니다:
 
     ```{r}
     #| fig-show: hide
@@ -427,14 +374,11 @@ To learn more about any single geom, use the help (e.g., `?geom_smooth`).
       geom_smooth(aes(color = drv), show.legend = FALSE)
     ```
 
-    What does `show.legend = FALSE` do here?
-    What happens if you remove it?
-    Why do you think we used it earlier?
+    여기서 `show.legend = FALSE`는 무엇을 하나요? 이것을 제거하면 어떻게 되나요? 왜 앞서 이것을 사용했다고 생각하시나요?
 
-3.  What does the `se` argument to `geom_smooth()` do?
+3.  `geom_smooth()`의 `se` 인자는 무엇을 하나요?
 
-4.  Recreate the R code necessary to generate the following graphs.
-    Note that wherever a categorical variable is used in the plot, it's `drv`.
+4.  다음 그래프들을 생성하는 데 필요한 R 코드를 재현해 보세요. 플롯에서 범주형 변수가 사용된 곳은 어디든 `drv`입니다.
 
     ```{r}
     #| echo: false
@@ -442,20 +386,17 @@ To learn more about any single geom, use the help (e.g., `?geom_smooth`).
     #| layout-ncol: 2
     #| fig-width: 3
     #| fig-alt: |
-    #|   There are six scatterplots in this figure, arranged in a 3x2 grid. 
-    #|   In all plots highway fuel efficiency of cars are on the y-axis and 
-    #|   engine size is on the x-axis. The first plot shows all points in black 
-    #|   with a smooth curve overlaid on them. In the second plot points are 
-    #|   also all black, with separate smooth curves overlaid for each level of 
-    #|   drive train. On the third plot, points and the smooth curves are 
-    #|   represented in different colors for each level of drive train. In the 
-    #|   fourth plot the points are represented in different colors for each 
-    #|   level of drive train but there is only a single smooth line fitted to 
-    #|   the whole data. In the fifth plot, points are represented in different 
-    #|   colors for each level of drive train, and a separate smooth curve with 
-    #|   different line types are fitted to each level of drive train. And 
-    #|   finally in the sixth plot points are represented in different colors 
-    #|   for each level of drive train and they have a thick white border.
+    #|   이 그림에는 3x2 격자로 배열된 6개의 산점도가 있음. 모든 플롯에서 y축은 
+    #|   자동차의 고속도로 연료 효율이고 x축은 엔진 크기임. 첫 번째 플롯은 
+    #|   매끄러운 곡선이 겹쳐진 모든 점을 검은색으로 보여줌. 두 번째 플롯에서도 
+    #|   점들은 모두 검은색이며 구동 방식 레벨마다 별도의 매끄러운 곡선이 
+    #|   겹쳐져 있음. 세 번째 플롯에서 점들과 매끄러운 곡선은 구동 방식 
+    #|   레벨마다 다른 색상으로 표현됨. 네 번째 플롯에서 점들은 구동 방식 
+    #|   레벨마다 다른 색상으로 표현되지만 전체 데이터에 대해 단 하나의 
+    #|   매끄러운 선만 적합됨. 다섯 번째 플롯에서 점들은 구동 방식 레벨마다 
+    #|   다른 색상으로 표현되며, 각 구동 방식 레벨에 대해 서로 다른 선 유형으로 
+    #|   별도의 매끄러운 곡선이 적합됨. 마지막으로 여섯 번째 플롯에서 점들은 
+    #|   구동 방식 레벨마다 다른 색상으로 표현되며 두꺼운 흰색 테두리를 가짐.
     ggplot(mpg, aes(x = displ, y = hwy)) + 
       geom_point() + 
       geom_smooth(se = FALSE)
@@ -476,58 +417,51 @@ To learn more about any single geom, use the help (e.g., `?geom_smooth`).
       geom_point(aes(color = drv))
     ```
 
-## Facets
+## 파세트
 
-In @sec-data-visualization you learned about faceting with `facet_wrap()`, which splits a plot into subplots that each display one subset of the data based on a categorical variable.
+@sec-data-visualization에서 여러분은 범주형 변수를 기반으로 데이터의 각 하위 집합을 표시하는 서브플롯들로 플롯을 분할하는 `facet_wrap()`을 통한 파세팅(faceting)에 대해 배웠습니다.
 
 ```{r}
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars, 
-#|   faceted by number of cylinders, with facets spanning two rows.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기 산점도를 실린더 수에 따라 
+#|   파세팅함. 파세트들은 두 개 행에 걸쳐 있음.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point() + 
   facet_wrap(~cyl)
 ```
 
-To facet your plot with the combination of two variables, switch from `facet_wrap()` to `facet_grid()`.
-The first argument of `facet_grid()` is also a formula, but now it's a double sided formula: `rows ~ cols`.
+두 변수의 조합으로 플롯을 파세팅하려면, `facet_wrap()`에서 `facet_grid()`로 바꾸세요. `facet_grid()`의 첫 번째 인자 또한 포뮬러(formula)이지만, 이제는 `rows ~ cols` 형태의 양면 포뮬러입니다.
 
 ```{r}
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars, faceted 
-#|   by number of cylinders across rows and by type of drive train across 
-#|   columns. This results in a 4x3 grid of 12 facets. Some of these facets have 
-#|   no observations: 5 cylinders and 4 wheel drive, 4 or 5 cylinders and front 
-#|   wheel drive.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기 산점도를 행으로는 실린더 수에 
+#|   따라, 열로는 구동 방식 유형에 따라 파세팅함. 결과적으로 12개 파세트의 
+#|   4x3 격자가 만들어짐. 일부 파세트에는 관측값이 없음: 5기통이면서 4륜 구동, 
+#|   4기통 또는 5기통이면서 전륜 구동인 경우.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point() + 
   facet_grid(drv ~ cyl)
 ```
 
-By default each of the facets share the same scale and range for x and y axes.
-This is useful when you want to compare data across facets but it can be limiting when you want to visualize the relationship within each facet better.
-Setting the `scales` argument in a faceting function to `"free_x"` will allow for different scales of x-axis across columns, `"free_y"` will allow for different scales on y-axis across rows, and `"free"` will allow both.
+기본적으로 각 파세트는 x축과 y축에 대해 동일한 스케일과 범위를 공유합니다. 이것은 파세트 전반에 걸쳐 데이터를 비교하고 싶을 때 유용하지만, 각 파세트 내부의 관계를 더 잘 시각화하고 싶을 때는 제약이 될 수 있습니다. 파세팅 함수에서 `scales` 인자를 `"free_x"`로 설정하면 열마다 x축 스케일을 다르게 할 수 있고, `"free_y"`는 행마다 y축 스케일을 다르게 하며, `"free"`는 둘 다 허용합니다.
 
 ```{r}
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars, 
-#|   faceted by number of cylinders across rows and by type of drive train 
-#|   across columns. This results in a 4x3 grid of 12 facets. Some of these 
-#|   facets have no observations: 5 cylinders and 4 wheel drive, 4 or 5 
-#|   cylinders and front wheel drive. Facets within a row share the same 
-#|   y-scale and facets within a column share the same x-scale.
+#|   자동차의 고속도로 연료 효율 대 엔진 크기 산점도를 행으로는 실린더 수에 
+#|   따라, 열로는 구동 방식 유형에 따라 파세팅함. 결과적으로 12개 파세트의 
+#|   4x3 격자가 만들어짐. 일부 파세트에는 관측값이 없음: 5기통이면서 4륜 구동, 
+#|   4기통 또는 5기통이면서 전륜 구동인 경우. 같은 행 내의 파세트들은 같은 
+#|   y-스케일을 공유하고 같은 열 내의 파세트들은 같은 x-스케일을 공유함.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point() + 
   facet_grid(drv ~ cyl, scales = "free")
 ```
 
-### Exercises
+### 연습문제
 
-1.  What happens if you facet on a continuous variable?
+1.  연속형 변수로 파세팅하면 어떻게 되나요?
 
-2.  What do the empty cells in the plot above with `facet_grid(drv ~ cyl)` mean?
-    Run the following code.
-    How do they relate to the resulting plot?
+2.  `facet_grid(drv ~ cyl)`로 그린 위 플롯에서 빈 셀들은 무엇을 의미하나요? 다음 코드를 실행하세요. 그 결과가 이 플롯과 어떻게 관련되나요?
 
     ```{r}
     #| fig-show: hide
@@ -535,8 +469,7 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
       geom_point(aes(x = drv, y = cyl))
     ```
 
-3.  What plots does the following code make?
-    What does `.` do?
+3.  다음 코드는 어떤 플롯들을 만드나요? `.`은 무엇을 하나요?
 
     ```{r}
     #| fig-show: hide
@@ -549,7 +482,7 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
       facet_grid(. ~ cyl)
     ```
 
-4.  Take the first faceted plot in this section:
+4.  이 섹션의 첫 번째 파세팅된 플롯을 봅시다:
 
     ```{r}
     #| fig-show: hide
@@ -558,18 +491,11 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
       facet_wrap(~ cyl, nrow = 2)
     ```
 
-    What are the advantages to using faceting instead of the color aesthetic?
-    What are the disadvantages?
-    How might the balance change if you had a larger dataset?
+    색상 심미적 요소 대신 파세팅을 사용하는 것의 장점은 무엇인가요? 단점은 무엇인가요? 더 큰 데이터셋을 가지고 있다면 그 균형이 어떻게 바뀔까요?
 
-5.  Read `?facet_wrap`.
-    What does `nrow` do?
-    What does `ncol` do?
-    What other options control the layout of the individual panels?
-    Why doesn't `facet_grid()` have `nrow` and `ncol` arguments?
+5.  `?facet_wrap`을 읽어보세요. `nrow`는 무엇을 하나요? `ncol`은 무엇을 하나요? 개별 패널의 레이아웃을 제어하는 다른 옵션은 무엇이 있나요? 왜 `facet_grid()`에는 `nrow`와 `ncol` 인자가 없나요?
 
-6.  Which of the following plots makes it easier to compare engine size (`displ`) across cars with different drive trains?
-    What does this say about when to place a faceting variable across rows or columns?
+6.  다음 중 서로 다른 구동 방식을 가진 자동차들 간의 엔진 크기(`displ`)를 비교하기에 더 쉬운 플롯은 무엇인가요? 이것은 행이나 열 중 어디에 파세팅 변수를 배치해야 하는지에 대해 무엇을 시각화해 주나요?
 
     ```{r}
     #| fig-show: hide
@@ -583,8 +509,7 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
       facet_grid(. ~ drv)
     ```
 
-7.  Recreate the following plot using `facet_wrap()` instead of `facet_grid()`.
-    How do the positions of the facet labels change?
+7.  `facet_grid()` 대신 `facet_wrap()`을 사용하여 다음 플롯을 재현해 보세요. 파세트 라벨의 위치가 어떻게 바뀌나요?
 
     ```{r}
     #| fig-show: hide
@@ -593,103 +518,82 @@ ggplot(mpg, aes(x = displ, y = hwy)) +
       facet_grid(drv ~ .)
     ```
 
-## Statistical transformations
+## 통계적 변환
 
-Consider a basic bar chart, drawn with `geom_bar()` or `geom_col()`.
-The following chart displays the total number of diamonds in the `diamonds` dataset, grouped by `cut`.
-The `diamonds` dataset is in the ggplot2 package and contains information on \~54,000 diamonds, including the `price`, `carat`, `color`, `clarity`, and `cut` of each diamond.
-The chart shows that more diamonds are available with high quality cuts than with low quality cuts.
+`geom_bar()`나 `geom_col()`로 그려진 기본적인 막대 차트를 생각해 봅시다. 다음 차트는 `diamonds` 데이터셋에 있는 다이아몬드의 총수를 `cut`별로 그룹화하여 보여줍니다. `diamonds` 데이터셋은 ggplot2 패키지에 포함되어 있으며, 각 다이아몬드의 `price`, `carat`, `color`, `clarity`, `cut`을 포함한 약 54,000개 다이아몬드에 대한 정보를 담고 있습니다. 차트는 품질이 낮은 컷보다 품질이 높은 컷의 다이아몬드가 더 많이 있음을 보여줍니다.
 
 ```{r}
 #| fig-alt: |
-#|   Bar chart of number of each cut of diamond. There are roughly 1500 
-#|   Fair, 5000 Good, 12000 Very Good, 14000 Premium, and 22000 Ideal cut 
-#|   diamonds.
+#|   다이아몬드 각 커팅별 개수의 막대 차트. Fair는 약 1500개, Good은 5000개, 
+#|   Very Good은 12000개, Premium은 14000개, Ideal 커팅 다이아몬드는 
+#|   22000개 정도가 있음.
 ggplot(diamonds, aes(x = cut)) + 
   geom_bar()
 ```
 
-On the x-axis, the chart displays `cut`, a variable from `diamonds`.
-On the y-axis, it displays count, but count is not a variable in `diamonds`!
-Where does count come from?
-Many graphs, like scatterplots, plot the raw values of your dataset.
-Other graphs, like bar charts, calculate new values to plot:
+x축에서 차트는 `diamonds`의 변수인 `cut`을 표시합니다. y축에서는 count(개수)를 표시하는데, count는 `diamonds`의 변수가 아닙니다! count는 어디에서 왔을까요? 산점도와 같은 많은 그래프는 데이터셋의 원시 값(raw values)을 플롯합니다. 막대 차트와 같은 다른 그래프들은 플롯할 새로운 값들을 계산합니다:
 
--   Bar charts, histograms, and frequency polygons bin your data and then plot bin counts, the number of points that fall in each bin.
+-   막대 차트, 히스토그램, 빈도 다각형(frequency polygons)은 데이터를 빈(bin)으로 나눈 다음 각 빈에 속하는 점들의 개수인 빈 도수(bin counts)를 플롯합니다.
+-   매끄러움 기하 객체(Smoothers)는 데이터에 모델을 적합시킨 다음 모델의 예측값을 플롯합니다.
+-   박스 플롯은 분포의 다섯 수치 요약(five-number summary)을 계산한 다음 그 요약을 특수하게 형식화된 박스로 표시합니다.
 
--   Smoothers fit a model to your data and then plot predictions from the model.
-
--   Boxplots compute the five-number summary of the distribution and then display that summary as a specially formatted box.
-
-The algorithm used to calculate new values for a graph is called a **stat**, short for statistical transformation.
-@fig-vis-stat-bar shows how this process works with `geom_bar()`.
+그래프를 위해 새로운 값을 계산하는 데 사용되는 알고리즘을 **stat**(statistical transformation의 약자, 통계적 변환)이라고 부릅니다. @fig-vis-stat-bar는 이 과정이 `geom_bar()`와 함께 어떻게 작동하는지 보여줍니다.
 
 ```{r}
 #| label: fig-vis-stat-bar
 #| echo: false
 #| out-width: "100%"
 #| fig-cap: |
-#|   When creating a bar chart we first start with the raw data, then
-#|   aggregate it to count the number of observations in each bar,
-#|   and finally map those computed variables to plot aesthetics.
+#|   막대 차트를 생성할 때는 먼저 원시 데이터에서 시작하여, 각 막대의 
+#|   관측값 개수를 집계하기 위해 데이터를 요약한 다음, 마지막으로 그렇게 
+#|   계산된 변수들을 플롯 심미적 요소에 매핑합니다.
 #| fig-alt: |
-#|   A figure demonstrating three steps of creating a bar chart. 
-#|   Step 1. geom_bar() begins with the diamonds data set. Step 2. geom_bar() 
-#|   transforms the data with the count stat, which returns a data set of 
-#|   cut values and counts. Step 3. geom_bar() uses the transformed data to 
-#|   build the plot. cut is mapped to the x-axis, count is mapped to the y-axis.
+#|   막대 차트 생성의 세 단계를 보여주는 그림. 
+#|   1단계. geom_bar()는 diamonds 데이터셋에서 시작함. 2단계. geom_bar()는 
+#|   count stat을 사용하여 데이터를 변환하며, 이는 컷 값과 개수의 데이터셋을 
+#|   반환함. 3단계. geom_bar()는 변환된 데이터를 사용하여 플롯을 구축함. 
+#|   cut은 x축에 매핑되고, count는 y축에 매핑됨.
 knitr::include_graphics("images/visualization-stat-bar.png")
 ```
 
-You can learn which stat a geom uses by inspecting the default value for the `stat` argument.
-For example, `?geom_bar` shows that the default value for `stat` is "count", which means that `geom_bar()` uses `stat_count()`.
-`stat_count()` is documented on the same page as `geom_bar()`.
-If you scroll down, the section called "Computed variables" explains that it computes two new variables: `count` and `prop`.
+기하 객체 함수가 사용하는 기본 `stat` 인자 값을 검사함으로써 해당 기하 객체가 어떤 통계적 변환을 사용하는지 알 수 있습니다. 예를 들어, `?geom_bar`를 보면 `stat`의 기본값이 "count"임을 알 수 있으며, 이는 `geom_bar()`가 `stat_count()`를 사용함을 의미합니다. `stat_count()`는 `geom_bar()`와 같은 페이지에 문서화되어 있습니다. 아래로 스크롤하면 "Computed variables"라는 섹션에서 `count`와 `prop`이라는 두 개의 새로운 변수를 계산한다고 설명합니다.
 
-Every geom has a default stat; and every stat has a default geom.
-This means that you can typically use geoms without worrying about the underlying statistical transformation.
-However, there are three reasons why you might need to use a stat explicitly:
+모든 기하 객체는 기본 통계적 변환을 가지며, 모든 통계적 변환은 기본 기하 객체를 가집니다. 이는 기저에 깔린 통계적 변환에 신경 쓰지 않고도 일반적으로 기하 객체를 사용할 수 있음을 의미합니다. 하지만 명시적으로 통계적 변환을 사용해야 할 세 가지 이유가 있습니다:
 
-1.  You might want to override the default stat.
-    In the code below, we change the stat of `geom_bar()` from count (the default) to identity.
-    This lets us map the height of the bars to the raw values of a y variable.
+1.  기본 통계적 변환을 덮어쓰고 싶을 수 있습니다. 아래 코드에서 우리는 `geom_bar()`의 통계적 변환을 count(기본값)에서 identity로 바꿉니다. 이를 통해 막대의 높이를 y 변수의 원시 값에 매핑할 수 있습니다.
 
     ```{r}
     #| warning: false
     #| fig-alt: |
-    #|   Bar chart of number of each cut of diamond. There are roughly 1500 
-    #|   Fair, 5000 Good, 12000 Very Good, 14000 Premium, and 22000 Ideal cut 
-    #|   diamonds.
+    #|   다이아몬드 각 커팅별 개수의 막대 차트. Fair는 약 1500개, Good은 5000개, 
+    #|   Very Good은 12000개, Premium은 14000개, Ideal 커팅 다이아몬드는 
+    #|   22000개 정도가 있음.
     diamonds |>
       count(cut) |>
       ggplot(aes(x = cut, y = n)) +
       geom_bar(stat = "identity")
     ```
 
-2.  You might want to override the default mapping from transformed variables to aesthetics.
-    For example, you might want to display a bar chart of proportions, rather than counts:
+2.  변환된 변수에서 심미적 요소로의 기본 매핑을 덮어쓰고 싶을 수 있습니다. 예를 들어, 개수(counts)가 아니라 비율(proportions)의 막대 차트를 표시하고 싶을 수 있습니다:
 
     ```{r}
     #| fig-alt: |
-    #|   Bar chart of proportion of each cut of diamond. Roughly, Fair 
-    #|   diamonds make up 0.03, Good 0.09, Very Good 0.22, Premium 0.26, and 
-    #|   Ideal 0.40.
+    #|   다이아몬드 각 커팅별 비율의 막대 차트. 대략 Fair 다이아몬드는 0.03, 
+    #|   Good은 0.09, Very Good은 0.22, Premium은 0.26, Ideal은 0.40을 차지함.
     ggplot(diamonds, aes(x = cut, y = after_stat(prop), group = 1)) + 
       geom_bar()
     ```
 
-    To find the possible variables that can be computed by the stat, look for the section titled "computed variables" in the help for `geom_bar()`.
+    통계적 변환에 의해 계산될 수 있는 가능한 변수들을 찾으려면, `geom_bar()` 도움말에서 "computed variables"라는 섹션을 확인하세요.
 
-3.  You might want to draw greater attention to the statistical transformation in your code.
-    For example, you might use `stat_summary()`, which summarizes the y values for each unique x value, to draw attention to the summary that you're computing:
+3.  코드에서 통계적 변환에 더 큰 주의를 환기하고 싶을 수 있습니다. 예를 들어, 각 고유한 x 값에 대해 y 값을 요약하는 `stat_summary()`를 사용하여 계산 중인 요약 값에 주의를 환기할 수 있습니다:
 
     ```{r}
     #| fig-alt: |
-    #|   A plot with depth on the y-axis and cut on the x-axis (with levels 
-    #|   fair, good, very good, premium, and ideal) of diamonds. For each level 
-    #|   of cut, vertical lines extend from minimum to maximum depth for diamonds 
-    #|   in that cut category, and the median depth is indicated on the line 
-    #|   with a point.
+    #|   다이아몬드의 y축은 depth, x축은 cut(fair, good, very good, 
+    #|   premium, ideal 레벨)인 플롯. 각 cut 레벨에 대해 해당 컷 범주에 속한 
+    #|   다이아몬드들의 최소 depth부터 최대 depth까지 수직선이 뻗어 있고, 
+    #|   중앙값 depth가 선 위의 점으로 표시됨.
     ggplot(diamonds) + 
       stat_summary(
         aes(x = cut, y = depth),
@@ -699,28 +603,19 @@ However, there are three reasons why you might need to use a stat explicitly:
       )
     ```
 
-ggplot2 provides more than 20 stats for you to use.
-Each stat is a function, so you can get help in the usual way, e.g., `?stat_bin`.
+ggplot2는 여러분이 사용할 수 있는 20개 이상의 통계적 변환을 제공합니다. 각 통계적 변환은 함수이므로 보통의 방법으로 도움말을 얻을 수 있습니다 (예: `?stat_bin`).
 
-### Exercises
+### 연습문제
 
-1.  What is the default geom associated with `stat_summary()`?
-    How could you rewrite the previous plot to use that geom function instead of the stat function?
+1.  `stat_summary()`와 연관된 기본 기하 객체는 무엇인가요? 통계적 변환 함수 대신 해당 기하 객체 함수를 사용하도록 이전 플롯을 어떻게 다시 작성할 수 있을까요?
 
-2.  What does `geom_col()` do?
-    How is it different from `geom_bar()`?
+2.  `geom_col()`은 무엇을 하나요? `geom_bar()`와는 어떻게 다른가요?
 
-3.  Most geoms and stats come in pairs that are almost always used in concert.
-    Make a list of all the pairs.
-    What do they have in common?
-    (Hint: Read through the documentation.)
+3.  대부분의 기하 객체와 통계적 변환은 거의 항상 협력하여 사용되는 쌍을 이룹니다. 모든 쌍의 리스트를 만들어 보세요. 그들은 어떤 공통점을 가지고 있나요? (힌트: 문서를 읽어보세요.)
 
-4.  What variables does `stat_smooth()` compute?
-    What arguments control its behavior?
+4.  `stat_smooth()`는 어떤 변수들을 계산하나요? 어떤 인자들이 그 동작을 제어하나요?
 
-5.  In our proportion bar chart, we needed to set `group = 1`.
-    Why?
-    In other words, what is the problem with these two graphs?
+5.  우리의 비율 막대 차트에서 `group = 1`을 설정해야 했습니다. 왜일까요? 다시 말해, 다음 두 그래프의 문제는 무엇인가요?
 
     ```{r}
     #| fig-show: hide
@@ -730,138 +625,117 @@ Each stat is a function, so you can get help in the usual way, e.g., `?stat_bin`
       geom_bar()
     ```
 
-## Position adjustments
+## 위치 조정
 
-There's one more piece of magic associated with bar charts.
-You can color a bar chart using either the `color` aesthetic, or, more usefully, the `fill` aesthetic:
+막대 차트와 관련된 유용한 마법이 하나 더 있습니다. `color` 심미적 요소를 사용하거나, 더 유용하게는 `fill` 심미적 요소를 사용하여 막대 차트에 색을 입힐 수 있습니다:
 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-alt: |
-#|   Two bar charts of drive types of cars. In the first plot, the bars have 
-#|   colored borders. In the second plot, they're filled with colors. Heights 
-#|   of the bars correspond to the number of cars in each drv category.
-# Left
+#|   자동차 구동 방식 유형의 두 막대 차트. 첫 번째 플롯에서는 막대들이 
+#|   색상이 있는 테두리를 가짐. 두 번째 플롯에서는 막대들이 색상으로 
+#|   채워져 있음. 막대들의 높이는 각 drv 범주에 속하는 자동차 수에 해당함.
+# 왼쪽
 ggplot(mpg, aes(x = drv, color = drv)) + 
   geom_bar()
 
-# Right
+# 오른쪽
 ggplot(mpg, aes(x = drv, fill = drv)) + 
   geom_bar()
 ```
 
-Note what happens if you map the fill aesthetic to another variable, like `class`: the bars are automatically stacked.
-Each colored rectangle represents a combination of `drv` and `class`.
+`fill` 심미적 요소를 `class`와 같은 다른 변수에 매핑하면 어떻게 되는지 보세요. 막대들이 자동으로 쌓입니다(stacked). 각 색칠된 사각형은 `drv`와 `class`의 조합을 나타냅니다.
 
 ```{r}
 #| fig-alt: |
-#|   Segmented bar chart of drive types of cars, where each bar is filled with 
-#|   colors for the classes of cars. Heights of the bars correspond to the 
-#|   number of cars in each drive category, and heights of the colored 
-#|   segments represent the number of cars with a given class 
-#|   level within a given drive type level.
+#|   자동차 구동 방식 유형의 분할 막대 차트로, 각 막대는 자동차 클래스에 
+#|   따라 색상으로 채워져 있음. 막대의 높이는 각 구동 방식 범주의 자동차 
+#|   수에 해당하며, 색칠된 세그먼트의 높이는 해당 구동 방식 내에서 특정 
+#|   클래스 레벨을 가진 자동차 수를 나타냄.
 ggplot(mpg, aes(x = drv, fill = class)) + 
   geom_bar()
 ```
 
-The stacking is performed automatically using the **position adjustment** specified by the `position` argument.
-If you don't want a stacked bar chart, you can use one of three other options: `"identity"`, `"dodge"` or `"fill"`.
+이러한 쌓기 형식은 `position` 인자로 지정된 **위치 조정(position adjustment)**을 사용하여 자동으로 수행됩니다. 쌓기 형태의 막대 차트를 원하지 않는다면 `"identity"`, `"dodge"`, `"fill"` 이라는 세 가지 다른 옵션 중 하나를 사용할 수 있습니다.
 
--   `position = "identity"` will place each object exactly where it falls in the context of the graph.
-    This is not very useful for bars, because it overlaps them.
-    To see that overlapping we either need to make the bars slightly transparent by setting `alpha` to a small value, or completely transparent by setting `fill = NA`.
+-   `position = "identity"`는 각 객체를 그래프 문맥상의 정확한 위치에 배치합니다. 막대의 경우 서로 겹치게 되므로 별로 유용하지 않습니다. 겹치는 것을 확인하려면 `alpha`를 작은 값으로 설정하여 막대를 약간 투명하게 만들거나, `fill = NA`로 설정하여 완전히 투명하게 만들어야 합니다.
 
     ```{r}
     #| layout-ncol: 2
     #| fig-width: 4
     #| fig-alt: |
-    #|   Segmented bar chart of drive types of cars, where each bar is filled with 
-    #|   colors for the classes of cars. 
-    #|   Heights of the colored 
-    #|   segments represent the number of cars with a given class 
-    #|   level within a given drive type level. However the segments overlap. In 
-    #|   the first plot the bars are filled with transparent colors
-    #|   and in the second plot they are only outlined with color.
-    # Left
+    #|   자동차 구동 방식 유형의 분할 막대 차트로, 각 막대는 자동차 클래스에 
+    #|   따라 색상으로 채워져 있음. 색칠된 세그먼트의 높이는 특정 구동 방식 
+    #|   내에서 특정 클래스 레벨을 가진 자동차 수를 나타내지만, 세그먼트들이 
+    #|   서로 겹쳐져 있음. 첫 번째 플롯에서는 막대들이 투명한 색상으로 
+    #|   채워져 있고, 두 번째 플롯에서는 테두리만 색칠되어 있음.
+    # 왼쪽
     ggplot(mpg, aes(x = drv, fill = class)) + 
       geom_bar(alpha = 1/5, position = "identity")
 
-    # Right
+    # 오른쪽
     ggplot(mpg, aes(x = drv, color = class)) + 
       geom_bar(fill = NA, position = "identity")
     ```
 
-    The identity position adjustment is more useful for 2d geoms, like points, where it is the default.
+    identity 위치 조정은 기본값으로 설정된 점과 같은 2D 기하 객체에 더 유용합니다.
 
--   `position = "fill"` works like stacking, but makes each set of stacked bars the same height.
-    This makes it easier to compare proportions across groups.
+-   `position = "fill"`은 쌓기(stacking)와 같이 작동하지만, 쌓인 각 막대 세트의 높이를 동일하게 만듭니다. 이를 통해 그룹 간의 비율을 더 쉽게 비교할 수 있습니다.
 
--   `position = "dodge"` places overlapping objects directly *beside* one another.
-    This makes it easier to compare individual values.
+-   `position = "dodge"`는 겹치는 객체들을 서로 바로 *옆에* 배치합니다. 이를 통해 개별 값들을 더 쉽게 비교할 수 있습니다.
 
     ```{r}
     #| layout-ncol: 2
     #| fig-width: 4
     #| fig-alt: |
-    #|   On the left, segmented bar chart of drive types of cars, where each bar is 
-    #|   filled with colors for the levels of class. Height of each bar is 1 and 
-    #|   heights of the colored segments represent the proportions of cars 
-    #|   with a given class level within a given drive type.
-    #|   On the right, dodged bar chart of drive types of cars. Dodged bars are 
-    #|   grouped by levels of drive type. Within each group bars represent each 
-    #|   level of class. Some classes are represented within some drive types and 
-    #|   not represented in others, resulting in unequal number of bars within each 
-    #|   group. Heights of these bars represent the number of cars with a given 
-    #|   level of drive type and class.
-    # Left
+    #|   왼쪽은 자동차 구동 방식 유형의 분할 막대 차트로, 각 막대는 클래스의 
+    #|   레벨에 따른 색상으로 채워져 있음. 각 막대의 높이는 1이며, 색칠된 
+    #|   세그먼트의 높이는 특정 구동 방식 내에서 특정 클래스 레벨을 가진 
+    #|   자동차의 비율을 나타냄. 오른쪽은 구동 방식 유형에 따른 닷지(dodged) 
+    #|   막대 차트임. 닷지된 막대들은 구동 방식 레벨에 따라 그룹화됨. 
+    #|   각 그룹 내에서 막대들은 각 클래스 레벨을 나타냄. 일부 클래스는 
+    #|   특정 구동 방식에서만 나타나고 다른 곳에서는 나타나지 않아 각 그룹 
+    #|   내의 막대 수가 일정하지 않을 수 있음. 색칠된 막대의 높이는 특정 
+    #|   구동 방식과 클래스 레벨을 가진 자동차 수를 나타냄.
+    # 왼쪽
     ggplot(mpg, aes(x = drv, fill = class)) + 
       geom_bar(position = "fill")
 
-    # Right
+    # 오른쪽
     ggplot(mpg, aes(x = drv, fill = class)) + 
       geom_bar(position = "dodge")
     ```
 
-There's one other type of adjustment that's not useful for bar charts, but can be very useful for scatterplots.
-Recall our first scatterplot.
-Did you notice that the plot displays only 126 points, even though there are 234 observations in the dataset?
+막대 차트에는 유용하지 않지만 산점도에는 매우 유용할 수 있는 또 다른 유형의 조정이 있습니다. 우리의 첫 산점도를 떠올려 보세요. 데이터셋에 234개의 관측값이 있음에도 불구하고 플롯에는 126개의 점만 표시된다는 사실을 눈치채셨나요?
 
 ```{r}
 #| echo: false
 #| fig-alt: |
-#|   Scatterplot of highway fuel efficiency versus engine size of cars that 
-#|   shows a negative association.
+#|   음의 상관관계를 보여주는 자동차의 고속도로 연료 효율 대 엔진 크기 산점도.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point()
 ```
 
-The underlying values of `hwy` and `displ` are rounded so the points appear on a grid and many points overlap each other.
-This problem is known as **overplotting**.
-This arrangement makes it difficult to see the distribution of the data.
-Are the data points spread equally throughout the graph, or is there one special combination of `hwy` and `displ` that contains 109 values?
+`hwy`와 `displ`의 기저 값들이 반올림되어 점들이 격자 위에 나타나기 때문에 많은 점이 서로 겹치게 됩니다. 이 문제는 **오버플로팅(overplotting)**으로 알려져 있습니다. 이러한 배치는 데이터의 분포를 보기 어렵게 만듭니다. 데이터 포인트가 그래프 전체에 고르게 퍼져 있는 것일까요, 아니면 109개의 값을 포함하는 `hwy`와 `displ`의 특별한 조합이 하나 있는 것일까요?
 
-You can avoid this gridding by setting the position adjustment to "jitter".
-`position = "jitter"` adds a small amount of random noise to each point.
-This spreads the points out because no two points are likely to receive the same amount of random noise.
+위치 조정을 "jitter"로 설정하면 이러한 격자 현상을 피할 수 있습니다. `position = "jitter"`는 각 점에 소량의 무작위 노이즈를 추가합니다. 두 점이 동일한 양의 무작위 노이즈를 받을 가능성이 작기 때문에 점들이 흩어지게 됩니다.
 
 ```{r}
 #| fig-alt: |
-#|   Jittered scatterplot of highway fuel efficiency versus engine size of cars. 
-#|   The plot shows a negative association.
+#|   지터링(jittered)된 자동차의 고속도로 연료 효율 대 엔진 크기 산점도. 
+#|   플롯은 음의 상관관계를 보여줌.
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point(position = "jitter")
 ```
 
-Adding randomness seems like a strange way to improve your plot, but while it makes your graph less accurate at small scales, it makes your graph *more* revealing at large scales.
-Because this is such a useful operation, ggplot2 comes with a shorthand for `geom_point(position = "jitter")`: `geom_jitter()`.
+무작위성을 추가하는 것이 플롯을 개선하는 생경한 방법처럼 보일 수 있지만, 작은 스케일에서는 그래프의 정확도를 떨어뜨리는 반면 큰 스케일에서는 그래프를 훨씬 더 잘 *드러나게* 만듭니다. 이것은 매우 유용한 작업이기 때문에 ggplot2는 `geom_point(position = "jitter")`에 대한 약칭으로 `geom_jitter()`를 제공합니다.
 
-To learn more about a position adjustment, look up the help page associated with each adjustment: `?position_dodge`, `?position_fill`, `?position_identity`, `?position_jitter`, and `?position_stack`.
+위치 조정에 대해 더 자세히 알아보려면 각 조정과 연관된 도움말 페이지를 찾아보세요: `?position_dodge`, `?position_fill`, `?position_identity`, `?position_jitter`, `?position_stack`.
 
-### Exercises
+### 연습문제
 
-1.  What is the problem with the following plot?
-    How could you improve it?
+1.  다음 플롯의 문제는 무엇인가요? 어떻게 개선할 수 있을까요?
 
     ```{r}
     #| fig-show: hide
@@ -869,8 +743,7 @@ To learn more about a position adjustment, look up the help page associated with
       geom_point()
     ```
 
-2.  What, if anything, is the difference between the two plots?
-    Why?
+2.  두 플롯 사이에 차이점이 있다면 무엇인가요? 왜 그런가요?
 
     ```{r}
     #| fig-show: hide
@@ -880,30 +753,25 @@ To learn more about a position adjustment, look up the help page associated with
       geom_point(position = "identity")
     ```
 
-3.  What parameters to `geom_jitter()` control the amount of jittering?
+3.  `geom_jitter()`의 어떤 파라미터가 지터링의 양을 제어하나요?
 
-4.  Compare and contrast `geom_jitter()` with `geom_count()`.
+4.  `geom_jitter()`와 `geom_count()`를 비교하고 대조해 보세요.
 
-5.  What's the default position adjustment for `geom_boxplot()`?
-    Create a visualization of the `mpg` dataset that demonstrates it.
+5.  `geom_boxplot()`의 기본 위치 조정은 무엇인가요? 이를 시각화하여 보여주는 `mpg` 데이터셋의 시각화를 만들어 보세요.
 
-## Coordinate systems
+## 좌표계
 
-Coordinate systems are probably the most complicated part of ggplot2.
-The default coordinate system is the Cartesian coordinate system where the x and y positions act independently to determine the location of each point.
-There are two other coordinate systems that are occasionally helpful.
+좌표계는 아마도 ggplot2에서 가장 복잡한 부분일 것입니다. 기본 좌표계는 데카르트 좌표계(Cartesian coordinate system)로, x와 y 위치가 독립적으로 작용하여 각 점의 위치를 결정합니다. 가끔 도움이 되는 다른 두 가지 좌표계가 있습니다.
 
--   `coord_quickmap()` sets the aspect ratio correctly for geographic maps.
-    This is very important if you're plotting spatial data with ggplot2.
-    We don't have the space to discuss maps in this book, but you can learn more in the [Maps chapter](https://ggplot2-book.org/maps.html) of *ggplot2: Elegant graphics for data analysis*.
+-   `coord_quickmap()`은 지리적 지도를 위해 가로세로 비(aspect ratio)를 올바르게 설정합니다. ggplot2로 공간 데이터를 플롯한다면 이것은 매우 중요합니다. 이 책에서 지도를 다룰 공간은 부족하지만, *ggplot2: Elegant graphics for data analysis*의 [Maps 챕터](https://ggplot2-book.org/maps.html)에서 더 자세히 배울 수 있습니다.
 
     ```{r}
     #| layout-ncol: 2
     #| fig-width: 3
     #| message: false
     #| fig-alt: |
-    #|   Two maps of the boundaries of New Zealand. In the first plot the aspect 
-    #|   ratio is incorrect, in the second plot it is correct.
+    #|   뉴질랜드 경계선의 두 지도. 첫 번째 플롯에서는 가로세로 비가 올바르지 
+    #|   않고, 두 번째 플롯에서는 올바름.
     nz <- map_data("nz")
 
     ggplot(nz, aes(x = long, y = lat, group = group)) +
@@ -914,16 +782,15 @@ There are two other coordinate systems that are occasionally helpful.
       coord_quickmap()
     ```
 
--   `coord_polar()` uses polar coordinates.
-    Polar coordinates reveal an interesting connection between a bar chart and a Coxcomb chart.
+-   `coord_polar()`는 극좌표(polar coordinates)를 사용합니다. 극좌표는 막대 차트와 콕스콤 차트(Coxcomb chart) 사이의 흥미로운 연결 고리를 드러냅니다.
 
     ```{r}
     #| layout-ncol: 2
     #| fig-width: 3
     #| fig-asp: 1
     #| fig-alt: |
-    #|   There are two plots. On the left is a bar chart of clarity of diamonds, 
-    #|   on the right is a Coxcomb chart of the same data.
+    #|   두 개의 플롯이 있음. 왼쪽은 다이아몬드 투명도(clarity)의 막대 차트이고, 
+    #|   오른쪽은 동일한 데이터의 콕스콤 차트임.
     bar <- ggplot(data = diamonds) + 
       geom_bar(
         mapping = aes(x = clarity, fill = clarity), 
@@ -936,15 +803,13 @@ There are two other coordinate systems that are occasionally helpful.
     bar + coord_polar()
     ```
 
-### Exercises
+### 연습문제
 
-1.  Turn a stacked bar chart into a pie chart using `coord_polar()`.
+1.  `coord_polar()`를 사용하여 쌓여 있는 막대 차트를 파이 차트로 바꾸어 보세요.
 
-2.  What's the difference between `coord_quickmap()` and `coord_map()`?
+2.  `coord_quickmap()`과 `coord_map()`의 차이점은 무엇인가요?
 
-3.  What does the following plot tell you about the relationship between city and highway mpg?
-    Why is `coord_fixed()` important?
-    What does `geom_abline()` do?
+3.  다음 플롯은 도시 및 고속도로 연비 사이의 관계에 대해 무엇을 말해 주나요? 왜 `coord_fixed()`가 중요할까요? `geom_abline()`은 무엇을 하나요?
 
     ```{r}
     #| fig-show: hide
@@ -954,9 +819,9 @@ There are two other coordinate systems that are occasionally helpful.
       coord_fixed()
     ```
 
-## The layered grammar of graphics
+## 레이어 구조의 그래프 문법
 
-We can expand on the graphing template you learned in @sec-ggplot2-calls by adding position adjustments, stats, coordinate systems, and faceting:
+우리는 @sec-ggplot2-calls에서 배운 그래프 템플릿에 위치 조정, 통계적 변환, 좌표계, 파세팅을 추가하여 확장할 수 있습니다:
 
 ```         
 ggplot(data = <DATA>) + 
@@ -969,46 +834,35 @@ ggplot(data = <DATA>) +
   <FACET_FUNCTION>
 ```
 
-Our new template takes seven parameters, the bracketed words that appear in the template.
-In practice, you rarely need to supply all seven parameters to make a graph because ggplot2 will provide useful defaults for everything except the data, the mappings, and the geom function.
+새로운 템플릿은 템플릿에 나타나는 대괄호 단어인 7개의 파라미터를 가집니다. 실제로 그래프를 만들기 위해 7개의 파라미터를 모두 제공해야 하는 경우는 드문데, ggplot2가 데이터, 매핑, 기하 객체 함수를 제외한 모든 것에 유용한 기본값을 제공하기 때문입니다.
 
-The seven parameters in the template compose the grammar of graphics, a formal system for building plots.
-The grammar of graphics is based on the insight that you can uniquely describe *any* plot as a combination of a dataset, a geom, a set of mappings, a stat, a position adjustment, a coordinate system, a faceting scheme, and a theme.
+템플릿의 7개 파라미터는 플롯 구축을 위한 공식 시스템인 그래프 문법(grammar of graphics)을 구성합니다. 그래프 문법은 *어떤* 플롯이든 데이터셋, 기하 객체(geom), 매핑 집합, 통계적 변환(stat), 위치 조정, 좌표계, 파세팅 체계 및 테마의 조합으로 고유하게 설명할 수 있다는 통찰에 기반합니다.
 
-To see how this works, consider how you could build a basic plot from scratch: you could start with a dataset and then transform it into the information that you want to display (with a stat).
-Next, you could choose a geometric object to represent each observation in the transformed data.
-You could then use the aesthetic properties of the geoms to represent variables in the data.
-You would map the values of each variable to the levels of an aesthetic.
-These steps are illustrated in @fig-visualization-grammar.
-You'd then select a coordinate system to place the geoms into, using the location of the objects (which is itself an aesthetic property) to display the values of the x and y variables.
+이것이 어떻게 작동하는지 보려면, 처음부터 기본적인 플롯을 어떻게 구축할 수 있는지 생각해 보세요. 데이터셋에서 시작하여 (통계적 변환을 통해) 표시하고 싶은 정보로 변형시킬 수 있습니다. 다음으로 변환된 데이터의 각 관측값을 표현할 기하 객체를 선택할 수 있습니다. 그런 다음 기하 객체들의 심미적 속성을 사용하여 데이터의 변수들을 표현할 수 있습니다. 각 변수의 값을 심미적 요소의 레벨에 매핑할 것입니다. 이러한 단계들은 @fig-visualization-grammar에 예시되어 있습니다. 그런 다음 객체들의 위치(그 자체로 심미적 속성임)를 사용하여 x 및 y 변수의 값을 표시하도록 기하 객체들을 배치할 좌표계를 선택합니다.
 
 ```{r}
 #| label: fig-visualization-grammar
 #| echo: false
 #| fig-alt: |
-#|   A figure demonstrating the steps for going from raw data to table of 
-#|   frequencies where each row represents one level of cut and a count column 
-#|   shows how many diamonds are in that cut level. Then, these values are 
-#|   mapped to heights of bars.
+#|   원시 데이터에서 각 행이 cut의 한 레벨을 나타내고 count 열이 해당 컷 
+#|   레벨에 다이아몬드가 몇 개 있는지 보여주는 빈도 테이블로 가는 
+#|   단계들을 보여주는 그림. 그다음, 이 값들이 막대의 높이에 매핑됨.
 #| fig-cap: |
-#|   Steps for going from raw data to a table of frequencies to a bar plot where 
-#|   the heights of the bar represent the frequencies.
+#|   원시 데이터에서 빈도 테이블을 거쳐 막대 높이가 빈도를 나타내는 
+#|   막대 플롯으로 가는 단계들.
 knitr::include_graphics("images/visualization-grammar.png")
 ```
 
-At this point, you would have a complete graph, but you could further adjust the positions of the geoms within the coordinate system (a position adjustment) or split the graph into subplots (faceting).
-You could also extend the plot by adding one or more additional layers, where each additional layer uses a dataset, a geom, a set of mappings, a stat, and a position adjustment.
+이 시점에서 완전한 그래프를 갖게 되지만, 좌표계 내에서 기하 객체들의 위치를 더 조정하거나(위치 조정) 그래프를 서브플롯들로 분할(파세팅)할 수 있습니다. 또한 하나 이상의 추가 레이어를 추가하여 플롯을 확장할 수도 있는데, 각 추가 레이어는 데이터셋, 기하 객체, 매핑 집합, 통계적 변환 및 위치 조정을 사용합니다.
 
-You could use this method to build *any* plot that you imagine.
-In other words, you can use the code template that you've learned in this chapter to build hundreds of thousands of unique plots.
+이 방법을 사용하여 상상하는 *어떤* 플롯이든 만들 수 있습니다. 즉, 이 챕터에서 배운 코드 템플릿을 사용하여 수십만 개의 고유한 플롯을 만들 수 있습니다.
 
-If you'd like to learn more about the theoretical underpinnings of ggplot2, you might enjoy reading "[The Layered Grammar of Graphics](https://vita.had.co.nz/papers/layered-grammar.pdf)", the scientific paper that describes the theory of ggplot2 in detail.
+ggplot2의 이론적 토대에 대해 더 배우고 싶다면, ggplot2의 이론을 상세히 설명하는 과학 논문인 "[The Layered Grammar of Graphics](https://vita.had.co.nz/papers/layered-grammar.pdf)"를 읽어보시는 것도 좋겠습니다.
 
-## Summary
+## 요약
 
-In this chapter you learned about the layered grammar of graphics starting with aesthetics and geometries to build a simple plot, facets for splitting the plot into subsets, statistics for understanding how geoms are calculated, position adjustments for controlling the fine details of position when geoms might otherwise overlap, and coordinate systems which allow you to fundamentally change what `x` and `y` mean.
-One layer we have not yet touched on is theme, which we will introduce in @sec-themes.
+이 챕터에서 여러분은 심미적 요소(aesthetics)와 기구(geometries)로 간단한 플롯을 구축하는 것부터 시작하여, 플롯을 하위 집합으로 나누는 파세트(facets), 기하 객체가 어떻게 계산되는지 이해하기 위한 통계(statistics), 기하 객체들이 겹칠 수 있을 때 위치의 세부 사항을 제어하기 위한 위치 조정(position adjustments), 그리고 `x`와 `y`가 의미하는 바를 근본적으로 바꿀 수 있게 해주는 좌표계(coordinate systems)까지 레이어 구조의 그래프 문법에 대해 배웠습니다. 우리가 아직 다루지 않은 한 가지 레이어는 테마(theme)인데, 이는 @sec-themes에서 소개할 것입니다.
 
-Two very useful resources for getting an overview of the complete ggplot2 functionality are the ggplot2 cheatsheet (which you can find at <https://posit.co/resources/cheatsheets>) and the ggplot2 package website ([https://ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/)).
+전체 ggplot2 기능을 개요 파악하기에 매우 유용한 두 가지 리소스는 ggplot2 치트 시트(<https://posit.co/resources/cheatsheets>에서 찾을 수 있음)와 ggplot2 패키지 웹사이트([https://ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/))입니다.
 
-An important lesson you should take from this chapter is that when you feel the need for a geom that is not provided by ggplot2, it's always a good idea to look into whether someone else has already solved your problem by creating a ggplot2 extension package that offers that geom.
+이 챕터에서 얻어야 할 중요한 교훈은 ggplot2가 제공하지 않는 기하 객체의 필요성을 느낄 때, 누군가 이미 해당 기하 객체를 제공하는 ggplot2 확장 패키지를 만들어 여러분의 문제를 해결해 두었는지 찾아보는 것이 항상 좋은 아이디어라는 것입니다.

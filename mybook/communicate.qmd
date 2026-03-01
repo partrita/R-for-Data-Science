@@ -1,34 +1,32 @@
-# Communicate {#sec-communicate-intro .unnumbered}
+# 소통 {#sec-communicate-intro .unnumbered}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-So far, you've learned the tools to get your data into R, tidy it into a form convenient for analysis, and then understand your data through transformation, and visualization.
-However, it doesn't matter how great your analysis is unless you can explain it to others: you need to **communicate** your results.
+지금까지 여러분은 데이터를 R로 불러오고, 분석하기 편리한 형태로 정돈한 다음, 변형과 시각화를 통해 데이터를 이해하는 도구들을 배웠습니다.
+하지만 여러분의 분석 내용을 다른 사람들에게 설명할 수 없다면, 그 분석이 얼마나 훌륭한지는 중요하지 않습니다. 즉, 분석 결과를 **소통(communicate)** 해야 합니다.
 
 ```{r}
 #| label: fig-ds-communicate
 #| echo: false
 #| fig-cap: |
-#|   Communication is the final part of the data science process; if you
-#|   can't communicate your results to other humans, it doesn't matter how
-#|   great your analysis is.
+#|   소통은 데이터 과학 프로세스의 마지막 부분입니다. 분석 결과를 다른 사람에게 
+#|   전달할 수 없다면, 분석이 얼마나 훌륭한지는 중요하지 않습니다.
 #| fig-alt: |
-#|   A diagram displaying the data science cycle with
-#|   communicate highlighed in blue.
+#|   소통하기(communicate) 단계가 파란색으로 강조된 데이터 과학 사이클 다이어그램.
 #| out.width: NULL
 knitr::include_graphics("diagrams/data-science/communicate.png", dpi = 270)
 ```
 
-Communication is the theme of the following two chapters:
+소통은 이어지는 두 개 챕터의 주제입니다:
 
--   In @sec-quarto, you will learn about Quarto, a tool for integrating prose, code, and results.
-    You can use Quarto for analyst-to-analyst communication as well as analyst-to-decision-maker communication.
-    Thanks to the power of Quarto formats, you can even use the same document for both purposes.
+-   @sec-quarto 에서는 글, 코드 및 결과를 통합하는 도구인 Quarto에 대해 배웁니다.
+    Quarto는 분석가 간의 소통 뿐만 아니라 분석가와 의사 결정자 간의 소통을 위해서도 사용할 수 있습니다.
+    Quarto 형식의 강력한 기능 덕분에, 심지어 동일한 문서를 두 가지 목적 모두에 사용할 수도 있습니다.
 
--   In @sec-quarto-formats, you'll learn a little about the many other varieties of outputs you can produce using Quarto, including dashboards, websites, and books.
+-   @sec-quarto-formats 에서는 대시보드, 웹사이트, 책을 포함하여 Quarto를 사용하여 제작할 수 있는 다양한 형태의 출력물에 대해 약간 배우게 됩니다.
 
-These chapters focus mostly on the technical mechanics of communication, not the really hard problems of communicating your thoughts to other humans.
-However, there are lot of other great books about communication, which we'll point you to at the end of each chapter.
+이 챕터들은 여러분의 생각을 다른 사람에게 전달하는 정말 어려운 문제보다는, 소통의 기술적인 메커니즘에 주로 집중합니다.
+하지만 소통에 관한 다른 훌륭한 책들이 많이 있으며, 각 챕터의 끝에서 여러분에게 추천해 드릴 것입니다.

@@ -1,53 +1,53 @@
-# Workflow: getting help {#sec-workflow-getting-help}
+# 워크플로: 도움 얻기 {#sec-workflow-getting-help}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-This book is not an island; there is no single resource that will allow you to master R.
-As you begin to apply the techniques described in this book to your own data, you will soon find questions that we do not answer.
-This section describes a few tips on how to get help and to help you keep learning.
+이 책은 고립된 섬이 아닙니다. R을 마스터할 수 있게 해주는 단 하나의 리소스란 존재하지 않습니다.
+이 책에서 설명하는 기술들을 여러분의 데이터에 적용하기 시작하면, 곧 우리가 답하지 않은 질문들을 마주하게 될 것입니다.
+이 섹션은 도움을 얻는 방법과 계속해서 학습하는 데 도움이 되는 몇 가지 팁을 설명합니다.
 
-## Google is your friend
+## 구글(Google)은 여러분의 친구입니다
 
-If you get stuck, start with Google.
-Typically adding "R" to a query is enough to restrict it to relevant results: if the search isn't useful, it often means that there aren't any R-specific results available.
-Additionally, adding package names like "tidyverse" or "ggplot2" will help narrow down the results to code that will feel more familiar to you as well, e.g., "how to make a boxplot in R" vs. "how to make a boxplot in R with ggplot2".
-Google is particularly useful for error messages.
-If you get an error message and you have no idea what it means, try googling it!
-Chances are that someone else has been confused by it in the past, and there will be help somewhere on the web.
-(If the error message isn't in English, run `Sys.setenv(LANGUAGE = "en")` and re-run the code; you're more likely to find help for English error messages.)
+막혔을 때는 구글링부터 시작하세요.
+검색어에 "R"만 추가해도 관련 결과로 제한하기에 충분합니다. 만약 검색 결과가 유용하지 않다면, 이는 대개 R과 관련된 결과가 없음을 의미합니다.
+또한 "tidyverse"나 "ggplot2"와 같은 패키지 이름을 추가하면 "how to make a boxplot in R"보다는 "how to make a boxplot in R with ggplot2"와 같이 여러분에게 더 익숙한 코드로 결과를 좁히는 데 도움이 됩니다.
+구글은 특히 에러 메시지를 검색할 때 유용합니다.
+에러 메시지가 떴는데 그게 무슨 뜻인지 전혀 모르겠다면, 구글에 직접 검색해 보세요!
+아마 과거에 다른 누군가도 그 메시지 때문에 혼란스러워했을 것이고, 웹 어디엔가 도움말이 있을 것입니다.
+(만약 에러 메시지가 영어가 아니라면, `Sys.setenv(LANGUAGE = "en")`을 실행하고 코드를 다시 실행해 보세요. 영어 에러 메시지에 대해 도움을 찾기가 훨씬 쉽습니다.)
 
-If Google doesn't help, try [Stack Overflow](https://stackoverflow.com).
-Start by spending a little time searching for an existing answer, including `[R]`, to restrict your search to questions and answers that use R.
+구글로 해결되지 않는다면 [스택 오버플로우(Stack Overflow)](https://stackoverflow.com)를 시도해 보세요.
+먼저 기존의 답변을 검색하는 데 시간을 조금 할애하되, `[R]`을 포함하여 R을 사용하는 질문과 답변으로 검색 범위를 제한하세요.
 
-## Making a reprex
+## reprex 만들기
 
-If your googling doesn't find anything useful, it's a really good idea to prepare a **reprex,** short for minimal **repr**oducible **ex**ample.
-A good reprex makes it easier for other people to help you, and often you'll figure out the problem yourself in the course of making it.
-There are two parts to creating a reprex:
+구글링으로 유용한 정보를 찾지 못했다면, **reprex**(minimal **repr**oducible **ex**ample, 최소 재현 가능 예제)를 준비하는 것이 정말 좋은 아이디어입니다.
+좋은 reprex를 만들면 다른 사람들이 여러분을 돕기가 더 쉬워지며, 종종 예제를 만드는 과정에서 스스로 문제를 해결하게 되기도 합니다.
+reprex를 만드는 데는 두 가지 부분이 있습니다:
 
--   First, you need to make your code reproducible.
-    This means that you need to capture everything, i.e. include any `library()` calls and create all necessary objects.
-    The easiest way to make sure you've done this is using the reprex package.
+-   첫째, 코드를 재현 가능하게 만들어야 합니다.
+    이는 `library()` 호출과 필요한 모든 객체 생성을 포함하여 모든 것을 담아야 함을 의미합니다.
+    이를 확인하는 가장 쉬운 방법은 reprex 패키지를 사용하는 것입니다.
 
--   Second, you need to make it minimal.
-    Strip away everything that is not directly related to your problem.
-    This usually involves creating a much smaller and simpler R object than the one you're facing in real life or even using built-in data.
+-   둘째, 최소한으로 만들어야 합니다.
+    문제와 직접 관련이 없는 모든 것을 걷어내세요.
+    이는 대개 실제 상황에서 마주한 객체보다 훨씬 작고 간단한 R 객체를 새로 만들거나, 내장된 데이터를 사용하는 과정을 포함합니다.
 
-That sounds like a lot of work!
-And it can be, but it has a great payoff:
+말은 쉽지만 꽤 많은 노력이 필요해 보입니다!
+실제로 그럴 수 있지만, 그 노력은 큰 보상으로 돌아옵니다:
 
--   80% of the time, creating an excellent reprex reveals the source of your problem.
-    It's amazing how often the process of writing up a self-contained and minimal example allows you to answer your own question.
+-   80%의 경우, 훌륭한 reprex를 만드는 과정에서 문제의 원인이 드러납니다.
+    자기 완결적이고(self-contained) 최소한의 예제를 작성하는 과정 자체가 스스로 질문에 답하게 해주는 경우가 놀라울 정도로 많습니다.
 
--   The other 20% of the time, you will have captured the essence of your problem in a way that is easy for others to play with.
-    This substantially improves your chances of getting help!
+-   나머지 20%의 경우에도 문제의 본질을 다른 사람들이 쉽게 다룰 수 있는 방식으로 담아내게 됩니다.
+    이는 도움을 받을 확률을 실질적으로 높여줍니다!
 
-When creating a reprex by hand, it's easy to accidentally miss something, meaning your code can't be run on someone else's computer.
-Avoid this problem by using the reprex package, which is installed as part of the tidyverse.
-Let's say you copy this code onto your clipboard (or, on RStudio Server or Cloud, select it):
+수동으로 reprex를 만들 때는 실수로 무언가를 빠뜨려 다른 사람의 컴퓨터에서 코드가 실행되지 않게 되기 쉽습니다.
+tidyverse의 일부로 설치되는 reprex 패키지를 사용하여 이 문제를 피하세요.
+예를 들어 다음 코드를 클립보드에 복사했다고 가정해 봅시다(RStudio Server나 Cloud에서는 선택하세요):
 
 ```{r}
 #| eval: false
@@ -55,14 +55,14 @@ y <- 1:4
 mean(y)
 ```
 
-Then call `reprex()`, where the default output is formatted for GitHub:
+그다음 GitHub 형식으로 출력되는 `reprex()`를 호출합니다:
 
-``` r
+```{ r }
 reprex::reprex()
 ```
 
-A nicely rendered HTML preview will display in RStudio's Viewer (if you're in RStudio) or your default browser otherwise.
-The reprex is automatically copied to your clipboard (on RStudio Server or Cloud, you will need to copy this yourself):
+RStudio를 사용 중이라면 뷰어(Viewer) 탭에, 그렇지 않다면 기본 브라우저에 멋지게 렌더링된 HTML 미리보기가 표시될 것입니다.
+reprex는 자동으로 클립보드에 복사됩니다(RStudio Server나 Cloud에서는 직접 복사해야 할 수도 있습니다):
 
 ````         
 ``` r
@@ -72,8 +72,8 @@ mean(y)
 ```
 ````
 
-This text is formatted in a special way, called Markdown, which can be pasted to sites like Stack Overflow or GitHub and they will automatically render it to look like code.
-Here's what that Markdown would look like rendered on GitHub:
+이 텍스트는 마크다운(Markdown)이라는 특수한 방식으로 형식이 지정되어 있으며, 스택 오버플로우나 GitHub와 같은 사이트에 붙여넣으면 자동으로 코드처럼 보이게 렌더링 됩니다.
+GitHub에서 렌더링 된 마크다운의 모습은 다음과 같습니다:
 
 ```{r}
 #| eval: false
@@ -82,49 +82,47 @@ mean(y)
 #> [1] 2.5
 ```
 
-Anyone else can copy, paste, and run this immediately.
+다른 누구든 이 코드를 복사해서 붙여넣고 즉시 실행할 수 있습니다.
 
-There are three things you need to include to make your example reproducible: required packages, data, and code.
+예제를 재현 가능하게 만들기 위해 포함해야 할 세 가지 사항은 필요한 패키지, 데이터, 그리고 코드입니다.
 
-1.  **Packages** should be loaded at the top of the script so it's easy to see which ones the example needs.
-    This is a good time to check that you're using the latest version of each package; you may have discovered a bug that's been fixed since you installed or last updated the package.
-    For packages in the tidyverse, the easiest way to check is to run `tidyverse_update()`.
+1.  **패키지**는 스크립트 상단에서 로드해야 예제에 어떤 패키지가 필요한지 쉽게 알 수 있습니다.
+    지금이 각 패키지의 최신 버전을 사용하고 있는지 확인하기 좋은 때입니다. 패키지를 설치하거나 마지막으로 업데이트한 이후에 수정된 버그를 발견한 것일 수도 있기 때문입니다.
+    tidyverse 패키지의 경우, 가장 쉬운 확인 방법은 `tidyverse_update()`를 실행하는 것입니다.
 
-2.  The easiest way to include **data** is to use `dput()` to generate the R code needed to recreate it.
-    For example, to recreate the `mtcars` dataset in R, perform the following steps:
+2.  **데이터**를 포함하는 가장 쉬운 방법은 `dput()`을 사용하여 데이터를 다시 생성하는 데 필요한 R 코드를 생성하는 것입니다.
+    예를 들어 R에서 `mtcars` 데이터셋을 재현하려면 다음 단계를 수행하세요:
 
-    1.  Run `dput(mtcars)` in R
-    2.  Copy the output
-    3.  In reprex, type `mtcars <-`, then paste.
+    1. R에서 `dput(mtcars)` 실행
+    2. 출력 결과 복사
+    3. reprex 스크립트에서 `mtcars <-`라고 입력한 후 붙여넣기
 
-    Try to use the smallest subset of your data that still reveals the problem.
+    문제를 여전히 보여줄 수 있는 한도 내에서 데이터의 가장 작은 부분만 사용하도록 노력하세요.
 
-3.  Spend a little bit of time ensuring that your **code** is easy for others to read:
+3.  다른 사람들이 읽기 쉽도록 **코드**를 다듬는 데 시간을 조금 투자하세요:
 
-    -   Make sure you've used spaces and your variable names are concise yet informative.
+    -   공백을 사용하고 변수 이름은 간결하면서도 정보가 담기도록 하세요.
+    -   문제가 어디에 있는지 주석을 사용하여 표시하세요.
+    -   문제와 관련 없는 모든 것을 제거하기 위해 최선을 다하세요.
 
-    -   Use comments to indicate where your problem lies.
+    코드가 짧을수록 이해하기 쉽고 수정하기도 쉽습니다.
 
-    -   Do your best to remove everything that is not related to the problem.
+마지막으로 깨끗한 R 세션을 시작하고 스크립트를 복사해서 붙여넣어 봄으로써 실제로 재현 가능한 예제를 만들었는지 확인하세요.
 
-    The shorter your code is, the easier it is to understand and the easier it is to fix.
+reprex를 만드는 일은 결코 사소하지 않으며, 정말 유용하고 최소한의 reprex를 만드는 법을 배우려면 연습이 필요할 것입니다.
+하지만 코드를 포함한 질문을 하는 법을 배우고 이를 재현 가능하게 만드는 데 시간을 투자하는 것은 R을 배우고 마스터해감에 따라 계속해서 보상을 줄 것입니다.
 
-Finish by checking that you have actually made a reproducible example by starting a fresh R session and copying and pasting your script.
+## 자기 계발
 
-Creating reprexes is not trivial, and it will take some practice to learn to create good, truly minimal reprexes.
-However, learning to ask questions that include the code, and investing the time to make it reproducible will continue to pay off as you learn and master R.
+문제가 발생하기 전에 문제를 해결할 준비를 하는 데에도 시간을 투자해야 합니다.
+매일 R을 배우는 데 약간의 시간을 투자하는 것은 장기적으로 큰 보상을 가져다줄 것입니다.
+한 가지 방법은 [tidyverse 블로그](https://www.tidyverse.org/blog/)에서 tidyverse 팀이 무엇을 하고 있는지 팔로우하는 것입니다.
+R 커뮤니티 전반의 소식을 접하려면 [R Weekly](https://rweekly.org)를 읽는 것을 권합니다. 매주 R 커뮤니티에서 가장 흥미로운 뉴스들을 수집하는 커뮤니티 차원의 노력입니다.
 
-## Investing in yourself
+## 요약
 
-You should also spend some time preparing yourself to solve problems before they occur.
-Investing a little time in learning R each day will pay off handsomely in the long run.
-One way is to follow what the tidyverse team is doing on the [tidyverse blog](https://www.tidyverse.org/blog/).
-To keep up with the R community more broadly, we recommend reading [R Weekly](https://rweekly.org): it's a community effort to aggregate the most interesting news in the R community each week.
+이 챕터는 이 책의 '전체 게임(Whole Game)' 파트를 마무리합니다.
+이제 데이터 과학 과정의 가장 중요한 부분들인 시각화, 변형, 정돈, 그리고 불러오기를 살펴보았습니다.
+이제 전체 과정에 대한 총체적인 뷰를 갖게 되었으며, 이제 각 작은 조각의 세부 사항으로 들어가기 시작합니다.
 
-## Summary
-
-This chapter concludes the Whole Game part of the book.
-You've now seen the most important parts of the data science process: visualization, transformation, tidying and importing.
-Now you've got a holistic view of the whole process, and we start to get into the details of small pieces.
-
-The next part of the book, Visualize, does a deeper dive into the grammar of graphics and creating data visualizations with ggplot2, showcases how to use the tools you've learned so far to conduct exploratory data analysis, and introduces good practices for creating plots for communication.
+책의 다음 파트인 'Visualize'에서는 그래프 문법(grammar of graphics)과 ggplot2를 사용한 데이터 시각화 생성을 더 깊이 있게 다루고, 지금까지 배운 도구들을 사용하여 탐색적 데이터 분석(EDA)을 수행하는 방법을 보여주며, 소통을 위한 플롯을 만드는 좋은 습관들을 소개합니다.

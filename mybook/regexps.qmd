@@ -1,26 +1,26 @@
-# Regular expressions {#sec-regular-expressions}
+# 정규 표현식 {#sec-regular-expressions}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-In @sec-strings, you learned a whole bunch of useful functions for working with strings.
-This chapter will focus on functions that use **regular expressions**, a concise and powerful language for describing patterns within strings.
-The term "regular expression" is a bit of a mouthful, so most people abbreviate it to "regex"[^regexps-1] or "regexp".
+@sec-strings 에서 여러분은 문자열 작업을 위한 매우 유용한 함수들을 많이 배웠습니다.
+이 챕터에서는 문자열 내의 패턴을 설명하기 위한 간결하고 강력한 언어인 **정규 표현식(regular expressions)** 을 사용하는 함수들에 집중할 것입니다.
+"정규 표현식"이라는 용어는 다소 길기 때문에 대부분의 사람들은 이를 "regex"[^regexps-1] 또는 "regexp"로 줄여서 부릅니다.
 
-[^regexps-1]: You can pronounce it with either a hard-g (reg-x) or a soft-g (rej-x).
+[^regexps-1]: '레직스' 혹은 '리그-엑스'라고 발음할 수 있습니다.
 
-The chapter starts with the basics of regular expressions and the most useful stringr functions for data analysis.
-We'll then expand your knowledge of patterns and cover seven important new topics (escaping, anchoring, character classes, shorthand classes, quantifiers, precedence, and grouping).
-Next, we'll talk about some of the other types of patterns that stringr functions can work with and the various "flags" that allow you to tweak the operation of regular expressions.
-We'll finish with a survey of other places in the tidyverse and base R where you might use regexes.
+이 챕터는 정규 표현식의 기초와 데이터 분석에 가장 유용한 stringr 함수들로 시작합니다.
+그다음 패턴에 대한 지식을 확장하고 일곱 가지 중요한 새로운 주제(이스케이프, 앵커링, 문자 클래스, 속성 클래스, 수량자, 우선순위, 그룹화)를 다룰 것입니다.
+다음으로 stringr 함수가 다룰 수 있는 다른 유형의 패턴들과 정규 표현식의 동작을 미세 조정할 수 있는 다양한 "플래그(flags)"에 대해 이야기하겠습니다.
+마지막으로 tidyverse와 base R의 다른 곳에서 정규식을 사용할 수 있는 사례들을 살펴보며 마무리하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-In this chapter, we'll use regular expression functions from stringr and tidyr, both core members of the tidyverse, as well as data from the babynames package.
+이 챕터에서는 tidyverse의 핵심 멤버인 stringr과 tidyr의 정규 표현식 함수들과 babynames 패키지의 데이터를 사용합니다.
 
 ```{r}
 #| label: setup
@@ -29,96 +29,94 @@ library(tidyverse)
 library(babynames)
 ```
 
-Through this chapter, we'll use a mix of very simple inline examples so you can get the basic idea, the baby names data, and three character vectors from stringr:
+이 챕터 전반에 걸쳐 여러분이 기본 아이디어를 얻을 수 있도록 매우 간단한 인라인 예제와 함께, 아기 이름 데이터 및 stringr에서 제공하는 세 가지 문자형 벡터를 혼합하여 사용할 것입니다:
 
--   `fruit` contains the names of 80 fruits.
--   `words` contains 980 common English words.
--   `sentences` contains 720 short sentences.
+-   `fruit`에는 80가지 과일 이름이 포함되어 있습니다.
+-   `words`에는 흔히 쓰이는 영어 단어 980개가 포함되어 있습니다.
+-   `sentences`에는 짧은 문장 720개가 포함되어 있습니다.
 
-## Pattern basics {#sec-reg-basics}
+## 패턴 기초 {#sec-reg-basics}
 
-We'll use `str_view()` to learn how regex patterns work.
-We used `str_view()` in the last chapter to better understand a string vs. its printed representation, and now we'll use it with its second argument, a regular expression.
-When this is supplied, `str_view()` will show only the elements of the string vector that match, surrounding each match with `<>`, and, where possible, highlighting the match in blue.
+정규식 패턴이 어떻게 작동하는지 배우기 위해 `str_view()`를 사용하겠습니다.
+지난 장에서 문자열과 출력 표현 사이의 차이를 더 잘 이해하기 위해 `str_view()`를 사용했는데, 이번에는 두 번째 인자인 정규 표현식과 함께 사용해 보겠습니다.
+정규 표현식이 제공되면 `str_view()`는 일치하는 문자열 요소만 보여주며, 각 일치 항목을 `<>`로 감싸고 가능한 경우 일치 항목을 파란색으로 강조 표시합니다.
 
-The simplest patterns consist of letters and numbers which match those characters exactly:
+가장 단순한 패턴은 해당 문자와 정확히 일치하는 글자와 숫자로 구성됩니다:
 
 ```{r}
 str_view(fruit, "berry")
 ```
 
-Letters and numbers match exactly and are called **literal characters**.
-Most punctuation characters, like `.`, `+`, `*`, `[`, `]`, and `?`, have special meanings[^regexps-2] and are called **metacharacters**. For example, `.`
-will match any character[^regexps-3], so `"a."` will match any string that contains an "a" followed by another character
-:
+글자와 숫자는 정확히 일치하며 이를 **리터럴 문자(literal characters)** 라고 부릅니다.
+`.`, `+`, `*`, `[`, `]`, `?`와 같은 대부분의 문장 부호들은 특수한 의미를 가지며[^regexps-2] **메타 문자(metacharacters)** 라고 부릅니다. 예를 들어 `.`은 모든 문자[^regexps-3]와 일치합니다. 따라서 `"a."`는 "a" 다음에 다른 문자가 오는 모든 문자열과 일치합니다:
 
-[^regexps-2]: You'll learn how to escape these special meanings in @sec-regexp-escaping.
+[^regexps-2]: @sec-regexp-escaping 에서 이러한 특수 의미를 이스케이프 하는 방법을 배울 것입니다.
 
-[^regexps-3]: Well, any character apart from `\n`.
+[^regexps-3]: 정확히는 `\n`을 제외한 모든 문자입니다.
 
 ```{r}
 str_view(c("a", "ab", "ae", "bd", "ea", "eab"), "a.")
 ```
 
-Or we could find all the fruits that contain an "a", followed by three letters, followed by an "e":
+또는 "a"로 시작하고 세 글자가 온 뒤 "e"가 포함된 모든 과일을 찾을 수 있습니다:
 
 ```{r}
 str_view(fruit, "a...e")
 ```
 
-**Quantifiers** control how many times a pattern can match:
+**수량자(Quantifiers)** 는 패턴이 몇 번이나 일치할 수 있는지를 제어합니다:
 
--   `?` makes a pattern optional (i.e. it matches 0 or 1 times)
--   `+` lets a pattern repeat (i.e. it matches at least once)
--   `*` lets a pattern be optional or repeat (i.e. it matches any number of times, including 0).
+-   `?`는 패턴을 선택 사항으로 만듭니다 (즉, 0번 또는 1번 일치함)
+-   `+`는 패턴을 반복할 수 있게 합니다 (즉, 최소 1번 일치함)
+-   `*`는 패턴이 선택 사항이거나 반복될 수 있게 합니다 (즉, 0번을 포함하여 몇 번이든 일치함)
 
 ```{r}
-# ab? matches an "a", optionally followed by a "b".
+# ab?는 "a" 다음에 선택적으로 "b"가 오는 패턴과 일치합니다.
 str_view(c("a", "ab", "abb"), "ab?")
 
-# ab+ matches an "a", followed by at least one "b".
+# ab+는 "a" 다음에 최소 하나 이상의 "b"가 오는 패턴과 일치합니다.
 str_view(c("a", "ab", "abb"), "ab+")
 
-# ab* matches an "a", followed by any number of "b"s.
+# ab*는 "a" 다음에 임의의 개수의 "b"가 오는 패턴과 일치합니다.
 str_view(c("a", "ab", "abb"), "ab*")
 ```
 
-**Character classes** are defined by `[]` and let you match a set of characters, e.g., `[abcd]` matches "a", "b", "c", or "d".
-You can also invert the match by starting with `^`: `[^abcd]` matches anything **except** "a", "b", "c", or "d".
-We can use this idea to find the words containing an "x" surrounded by vowels, or a "y" surrounded by consonants:
+**문자 클래스(Character classes)** 는 `[]`로 정의되며 문자 집합과 일치시킬 수 있습니다. 예를 들어 `[abcd]`는 "a", "b", "c", "d" 중 하나와 일치합니다.
+또한 `^`로 시작하여 일치 항목을 반전시킬 수 있습니다. `[^abcd]`는 "a", "b", "c", "d"를 **제외한** 모든 것과 일치합니다.
+이 아이디어를 사용하여 모음으로 둘러싸인 "x"를 포함하는 단어나 자음으로 둘러싸인 "y"를 포함하는 단어를 찾을 수 있습니다:
 
 ```{r}
 str_view(words, "[aeiou]x[aeiou]")
 str_view(words, "[^aeiou]y[^aeiou]")
 ```
 
-You can use **alternation**, `|`, to pick between one or more alternative patterns.
-For example, the following patterns look for fruits containing "apple", "melon", or "nut", or a repeated vowel.
+**선택(alternation)** 인 `|`를 사용하여 하나 이상의 대안적인 패턴 중에서 선택할 수 있습니다.
+예를 들어 다음 패턴은 "apple", "melon", "nut"이 포함된 과일이나 반복되는 모음을 찾습니다.
 
 ```{r}
 str_view(fruit, "apple|melon|nut")
 str_view(fruit, "aa|ee|ii|oo|uu")
 ```
 
-Regular expressions are very compact and use a lot of punctuation characters, so they can seem overwhelming and hard to read at first.
-Don't worry; you'll get better with practice, and simple patterns will soon become second nature.
-Let's kick off that process by practicing with some useful stringr functions.
+정규 표현식은 매우 간결하고 많은 문장 부호를 사용하기 때문에 처음에는 압도적이고 읽기 어려워 보일 수 있습니다.
+걱정하지 마세요. 연습을 통해 실력이 늘 것이며, 곧 간단한 패턴들은 제2의 천성처럼 익숙해질 것입니다.
+유용한 stringr 함수들로 연습하며 그 과정을 시작해 봅시다.
 
-## Key functions {#sec-stringr-regex-funs}
+## 주요 함수 {#sec-stringr-regex-funs}
 
-Now that you've got the basics of regular expressions under your belt, let's use them with some stringr and tidyr functions.
-In the following section, you'll learn how to detect the presence or absence of a match, how to count the number of matches, how to replace a match with fixed text, and how to extract text using a pattern.
+이제 정규 표현식의 기초를 익혔으므로 stringr 및 tidyr 함수와 함께 사용해 봅시다.
+다음 섹션에서는 일치 항목의 존재 여부를 감지하는 방법, 일치 항목의 개수를 세는 방법, 일치 항목을 고정된 텍스트로 바꾸는 방법, 패턴을 사용하여 텍스트를 추출하는 방법을 배울 것입니다.
 
-### Detect matches
+### 일치 감지
 
-`str_detect()` returns a logical vector that is `TRUE` if the pattern matches an element of the character vector and `FALSE` otherwise:
+`str_detect()`는 패턴이 문자형 벡터의 요소와 일치하면 `TRUE`를, 그렇지 않으면 `FALSE`를 반환하는 논리형 벡터를 반환합니다:
 
 ```{r}
 str_detect(c("a", "b", "c"), "[aeiou]")
 ```
 
-Since `str_detect()` returns a logical vector of the same length as the initial vector, it pairs well with `filter()`.
-For example, this code finds all the most popular names containing a lower-case "x":
+`str_detect()`는 초기 벡터와 동일한 길이의 논리형 벡터를 반환하므로 `filter()`와 잘 어울립니다.
+예를 들어 다음 코드는 소문자 "x"를 포함하는 가장 인기 있는 이름들을 모두 찾습니다:
 
 ```{r}
 babynames |> 
@@ -126,17 +124,17 @@ babynames |>
   count(name, wt = n, sort = TRUE)
 ```
 
-We can also use `str_detect()` with `summarize()` by pairing it with `sum()` or `mean()`: `sum(str_detect(x, pattern))` tells you the number of observations that match and `mean(str_detect(x, pattern))` tells you the proportion that match.
-For example, the following snippet computes and visualizes the proportion of baby names[^regexps-4] that contain "x", broken down by year.
-It looks like they've radically increased in popularity lately!
+또한 `str_detect()`를 `sum()` 또는 `mean()`과 함께 `summarize()`에서 사용할 수 있습니다. `sum(str_detect(x, pattern))`은 일치하는 관측치 수를 알려주고 `mean(str_detect(x, pattern))`은 일치하는 비율을 알려줍니다.
+예를 들어 다음 조각은 "x"를 포함하는 아기 이름[^regexps-4]의 비율을 연도별로 계산하고 시각화합니다.
+최근 인기가 급상승한 것 같네요!
 
-[^regexps-4]: This gives us the proportion of **names** that contain an "x"; if you wanted the proportion of babies with a name containing an x, you'd need to perform a weighted mean.
+[^regexps-4]: 이것은 "x"를 포함하는 **이름**의 비율을 알려줍니다. "x"가 포함된 이름을 가진 아기의 비율을 원한다면 가중 평균을 수행해야 합니다.
 
 ```{r}
 #| fig-alt: |
-#|   A time series showing the proportion of baby names that contain the letter x. 
-#|   The proportion declines gradually from 8 per 1000 in 1880 to 4 per 1000 in 
-#|   1980, then increases rapidly to 16 per 1000 in 2019.
+#|   글자 x를 포함하는 아기 이름의 비율을 보여주는 시계열 그래프.
+#|   비율은 1880년에 1000명당 8명에서 1980년에 1000명당 4명으로 점차 감소하다가, 
+#|   2019년에 1000명당 16명으로 빠르게 증가합니다.
 babynames |> 
   group_by(year) |> 
   summarize(prop_x = mean(str_detect(name, "x"))) |> 
@@ -144,30 +142,30 @@ babynames |>
   geom_line()
 ```
 
-There are two functions that are closely related to `str_detect()`: `str_subset()` and `str_which()`.
-`str_subset()` returns a character vector containing only the strings that match.
-`str_which()` returns an integer vector giving the positions of the strings that match.
+`str_detect()`와 밀접한 관련이 있는 두 함수가 있습니다: `str_subset()`과 `str_which()`입니다.
+`str_subset()`은 일치하는 문자열만 포함된 문자형 벡터를 반환합니다.
+`str_which()`는 일치하는 문자열의 위치를 나타내는 정수형 벡터를 반환합니다.
 
-### Count matches
+### 일치 개수 세기
 
-The next step up in complexity from `str_detect()` is `str_count()`: rather than a true or false, it tells you how many matches there are in each string.
+`str_detect()`보다 한 단계 더 복잡한 함수가 `str_count()`입니다. 참 또는 거짓이 아니라 각 문자열에 몇 개의 일치 항목이 있는지 알려줍니다.
 
 ```{r}
 x <- c("apple", "banana", "pear")
 str_count(x, "p")
 ```
 
-Note that each match starts at the end of the previous match, i.e. regex matches never overlap.
-For example, in `"abababa"`, how many times will the pattern `"aba"` match?
-Regular expressions say two, not three:
+각 일치 항목은 이전 일치 항목이 끝나는 지점부터 시작합니다. 즉, 정규식 일치 항목은 절대 겹치지 않습니다.
+예를 들어 `"abababa"`에서 `"aba"` 패턴은 몇 번이나 일치할까요?
+정규 표현식은 세 번이 아니라 두 번이라고 답합니다:
 
 ```{r}
 str_count("abababa", "aba")
 str_view("abababa", "aba")
 ```
 
-It's natural to use `str_count()` with `mutate()`.
-The following example uses `str_count()` with character classes to count the number of vowels and consonants in each name.
+`str_count()`를 `mutate()`와 함께 사용하는 것은 지극히 자연스럽습니다.
+다음 예제는 `str_count()`를 문자 클래스와 함께 사용하여 각 이름의 모음과 자음 개수를 셉니다.
 
 ```{r}
 babynames |> 
@@ -178,18 +176,18 @@ babynames |>
   )
 ```
 
-If you look closely, you'll notice that there's something off with our calculations: "Aaban" contains three "a"s, but our summary reports only two vowels.
-That's because regular expressions are case sensitive.
-There are three ways we could fix this:
+자세히 살펴보면 계산 결과가 이상하다는 것을 알 수 있습니다. "Aaban"은 세 개의 "a"를 포함하고 있는데 요약 결과에는 모음이 두 개로만 보고됩니다.
+정규 표현식은 대소문자를 구분하기 때문입니다.
+이를 고치는 세 가지 방법이 있습니다:
 
--   Add the upper case vowels to the character class: `str_count(name, "[aeiouAEIOU]")`.
--   Tell the regular expression to ignore case: `str_count(name, regex("[aeiou]", ignore_case = TRUE))`. We'll talk about more in @sec-flags.
--   Use `str_to_lower()` to convert the names to lower case: `str_count(str_to_lower(name), "[aeiou]")`.
+-   문자 클래스에 대문자 모음을 추가합니다: `str_count(name, "[aeiouAEIOU]")`.
+-   정규 표현식에 대소문자를 무시하도록 알립니다: `str_count(name, regex("[aeiou]", ignore_case = TRUE))`. 이에 대해서는 @sec-flags 에서 더 자세히 이야기하겠습니다.
+-   `str_to_lower()`를 사용하여 이름을 소문자로 바꿉니다: `str_count(str_to_lower(name), "[aeiou]")`.
 
-This variety of approaches is pretty typical when working with strings --- there are often multiple ways to reach your goal, either by making your pattern more complicated or by doing some preprocessing on your string.
-If you get stuck trying one approach, it can often be useful to switch gears and tackle the problem from a different perspective.
+문자열 작업을 할 때 이런 다양한 접근 방식은 꽤 흔합니다. 패턴을 더 복잡하게 만들거나 문자열을 미리 처리함으로써 목표에 도달하는 방법이 대개 여러 가지가 있습니다.
+한 가지 접근 방식으로 막힌다면 관점을 바꿔서 다른 방식으로 문제를 해결해 보는 것이 도움이 될 때가 많습니다.
 
-In this case, since we're applying two functions to the name, I think it's easier to transform it first:
+이 경우에는 이름에 두 함수를 적용하고 있으므로, 먼저 변환하는 것이 더 쉽다고 생각합니다:
 
 ```{r}
 babynames |> 
@@ -201,35 +199,35 @@ babynames |>
   )
 ```
 
-### Replace values
+### 값 바꾸기
 
-As well as detecting and counting matches, we can also modify them with `str_replace()` and `str_replace_all()`.
-`str_replace()` replaces the first match, and as the name suggests, `str_replace_all()` replaces all matches.
+일치 항목을 감지하고 세는 것뿐만 아니라 `str_replace()`와 `str_replace_all()`을 사용하여 수정할 수도 있습니다.
+`str_replace()`는 첫 번째 일치 항목을 바꾸고, 이름에서 알 수 있듯이 `str_replace_all()`은 모든 일치 항목을 바꿉니다.
 
 ```{r}
 x <- c("apple", "pear", "banana")
 str_replace_all(x, "[aeiou]", "-")
 ```
 
-`str_remove()` and `str_remove_all()` are handy shortcuts for `str_replace(x, pattern, "")`:
+`str_remove()`와 `str_remove_all()`은 `str_replace(x, pattern, "")`를 사용하는 편리한 단축 기능입니다.
 
 ```{r}
 x <- c("apple", "pear", "banana")
 str_remove_all(x, "[aeiou]")
 ```
 
-These functions are naturally paired with `mutate()` when doing data cleaning, and you'll often apply them repeatedly to peel off layers of inconsistent formatting.
+데이터 정리를 할 때 이 함수들은 `mutate()`와 자연스럽게 어울리며, 불일치한 형식을 한 겹씩 벗겨내기 위해 반복적으로 적용되곤 합니다.
 
-### Extract variables {#sec-extract-variables}
+### 변수 추출하기 {#sec-extract-variables}
 
-The last function we'll discuss uses regular expressions to extract data out of one column into one or more new columns: `separate_wider_regex()`.
-It's a peer of the `separate_wider_position()` and `separate_wider_delim()` functions that you learned about in @sec-string-columns.
-These functions live in tidyr because they operate on (columns of) data frames, rather than individual vectors.
+우리가 논의할 마지막 함수는 정규 표현식을 사용하여 하나의 열에 있는 데이터를 하나 이상의 새로운 열로 추출하는 `separate_wider_regex()`입니다.
+이 함수는 @sec-string-columns 에서 배운 `separate_wider_position()` 및 `separate_wider_delim()`과 형제 격인 함수입니다.
+이 함수들은 개별 벡터가 아닌 데이터 프레임(의 열)에 대해 작동하기 때문에 tidyr에 속해 있습니다.
 
-Let's create a simple dataset to show how it works.
-Here we have some data derived from `babynames` where we have the name, gender, and age of a bunch of people in a rather weird format[^regexps-5]:
+작동 방식을 보여주기 위해 간단한 데이터셋을 만들어 봅시다.
+여기에 `babynames`에서 추출한 데이터가 있는데, 이름, 성별, 나이가 다소 이상한 형식으로 되어 있습니다[^regexps-5]:
 
-[^regexps-5]: We wish we could reassure you that you'd never see something this weird in real life, but unfortunately over the course of your career you're likely to see much weirder!
+[^regexps-5]: 실제 생활에서 이렇게 이상한 것은 절대 볼 일이 없다고 안심시켜 드리고 싶지만, 안타깝게도 커리어 동안 이보다 훨씬 더 이상한 것을 볼 가능성이 높습니다!
 
 ```{r}
 df <- tribble(
@@ -244,8 +242,8 @@ df <- tribble(
 )
 ```
 
-To extract this data using `separate_wider_regex()` we just need to construct a sequence of regular expressions that match each piece.
-If we want the contents of that piece to appear in the output, we give it a name:
+`separate_wider_regex()`를 사용하여 이 데이터를 추출하려면 각 조각과 일치하는 일련의 정규 표현식을 구성하기만 하면 됩니다.
+해당 조각의 내용이 결과에 나타나기를 원한다면 이름을 붙여줍니다:
 
 ```{r}
 df |> 
@@ -262,7 +260,7 @@ df |>
   )
 ```
 
-If the match fails, you can use `too_few = "debug"` to figure out what went wrong, just like `separate_wider_delim()` and `separate_wider_position()`.
+일치가 실패할 경우 `separate_wider_delim()` 및 `separate_wider_position()`과 마찬가지로 `too_few = "debug"`를 사용하여 무엇이 잘못되었는지 파악할 수 있습니다.
 
 ### Exercises
 
@@ -278,47 +276,47 @@ If the match fails, you can use `too_few = "debug"` to figure out what went wron
 
 4.  Create a regular expression that will match telephone numbers as commonly written in your country.
 
-## Pattern details
+## 패턴 상세
 
-Now that you understand the basics of the pattern language and how to use it with some stringr and tidyr functions, it's time to dig into more of the details.
-First, we'll start with **escaping**, which allows you to match metacharacters that would otherwise be treated specially.
-Next, you'll learn about **anchors** which allow you to match the start or end of the string.
-Then, you'll learn more about **character classes** and their shortcuts which allow you to match any character from a set.
-Next, you'll learn the final details of **quantifiers** which control how many times a pattern can match.
-Then, we have to cover the important (but complex) topic of **operator precedence** and parentheses.
-And we'll finish off with some details of **grouping** components of the pattern.
+이제 패턴 언어의 기초와 이를 stringr 및 tidyr 함수와 함께 사용하는 방법을 이해했으므로, 더 세부적인 내용을 살펴볼 시간입니다.
+먼저, 다르게 다루면 특수하게 취급될 메타 문자를 있는 그대로 일치시킬 수 있게 해주는 **이스케이프(escaping)** 부터 시작하겠습니다.
+다음으로, 문자열의 시작이나 끝과 일치시킬 수 있게 해주는 **앵커(anchors)** 에 대해 배울 것입니다.
+그 후에는 집합에서 임의의 문자와 일치시킬 수 있게 해주는 **문자 클래스(character classes)** 와 그 단축형에 대해 더 자세히 알아봅니다.
+그다음에는 패턴이 일치할 수 있는 횟수를 제어하는 **수량자(quantifiers)** 의 최종 세부 사항을 배울 것입니다.
+그 후에는 중요하지만 복잡한 주제인 **연산자 우선순위(operator precedence)** 와 괄호에 대해 다루어야 합니다.
+그리고 패턴의 구성 요소를 **그룹화(grouping)** 하는 세부 사항으로 마무리하겠습니다.
 
-The terms we use here are the technical names for each component.
-They're not always the most evocative of their purpose, but it's very helpful to know the correct terms if you later want to Google for more details.
+여기서 사용하는 용어들은 각 구성 요소의 기술적인 이름입니다.
+용어들이 항상 그 목적을 잘 연상시키는 것은 아니지만, 나중에 더 자세한 내용을 구글링하고 싶을 때 정확한 용어를 아는 것이 매우 도움이 됩니다.
 
-### Escaping {#sec-regexp-escaping}
+### 이스케이프 {#sec-regexp-escaping}
 
-In order to match a literal `.`, you need an **escape** which tells the regular expression to match metacharacters[^regexps-6] literally.
-Like strings, regexps use the backslash for escaping.
-So, to match a `.`, you need the regexp `\.`. Unfortunately this creates a problem.
-We use strings to represent regular expressions, and `\` is also used as an escape symbol in strings.
-So to create the regular expression `\.` we need the string `"\\."`, as the following example shows.
+리터럴 `.`을 일치시키려면 메타 문자[^regexps-6]를 문자 그대로 일치시키도록 정규 표현식에 알리는 **이스케이프(escape)** 가 필요합니다.
+문자열과 마찬가지로 정규 표현식도 이스케이프를 위해 백슬래시를 사용합니다.
+따라서 `.`을 일치시키려면 정규식 `\.`이 필요합니다. 불행히도 이것은 문제를 일으킵니다.
+우리는 정규 표현식을 표현하기 위해 문자열을 사용하는데, `\`는 문자열에서도 이스케이프 기호로 사용되기 때문입니다.
+따라서 다음 예제에서 보여주듯이 정규 표현식 `\.`을 만들려면 문자열 `"\\."`가 필요합니다.
 
-[^regexps-6]: The complete set of metacharacters is `.^$\|*+?{}[]()`
+[^regexps-6]: 메타 문자의 전체 집합은 `.^$\|*+?{}[]()`입니다.
 
 ```{r}
-# To create the regular expression \., we need to use \\.
+# 정규 표현식 \.을 만들려면 \\.를 사용해야 합니다.
 dot <- "\\."
 
-# But the expression itself only contains one \
+# 하지만 표현식 자체에는 \가 하나만 포함됩니다.
 str_view(dot)
 
-# And this tells R to look for an explicit .
+# 그리고 이것은 R에 명시적인 .을 찾도록 알립니다.
 str_view(c("abc", "a.c", "bef"), "a\\.c")
 ```
 
-In this book, we'll usually write regular expressions without quotes, like `\.`.
-If we need to emphasize what you'll actually type, we'll surround it with quotes and add extra escapes, like `"\\."`.
+이 책에서는 보통 `\.`과 같이 따옴표 없이 정규 표현식을 작성할 것입니다.
+실제로 입력할 내용을 강조해야 하는 경우 `"\\."`와 같이 따옴표로 감싸고 추가 이스케이프를 더할 것입니다.
 
-If `\` is used as an escape character in regular expressions, how do you match a literal `\`?
-Well, you need to escape it, creating the regular expression `\\`.
-To create that regular expression, you need to use a string, which also needs to escape `\`.
-That means to match a literal `\` you need to write `"\\\\"` --- you need four backslashes to match one!
+`\`가 정규 표현식에서 이스케이프 문자로 사용된다면, 리터럴 `\`는 어떻게 일치시킬까요?
+정규 표현식 `\\`를 만들어 이스케이프해야 합니다.
+해당 정규 표현식을 만들려면 문자열을 사용해야 하는데, 문자열 역시 `\`를 이스케이프 해야 합니다.
+즉, 리터럴 `\` 하나를 일치시키려면 `"\\\\"`라고 써야 합니다. 하나를 맞히기 위해 네 개의 백슬래시가 필요합니다!
 
 ```{r}
 x <- "a\\b"
@@ -326,43 +324,42 @@ str_view(x)
 str_view(x, "\\\\")
 ```
 
-Alternatively, you might find it easier to use the raw strings you learned about in @sec-raw-strings.
-That lets you avoid one layer of escaping:
+또는 @sec-raw-strings 에서 배운 원시 문자열(raw strings)을 사용하는 것이 더 쉽다는 것을 알게 될 수도 있습니다.
+원시 문자열을 사용하면 이스케이프 한 단계를 피할 수 있습니다:
 
 ```{r}
 str_view(x, r"{\\}")
 ```
 
-If you're trying to match a literal `.`, `$`, `|`, `*`, `+`, `?`, `{`, `}`, `(`, `)`, there's an alternative to using a backslash escape: you can use a character class: `[.]`, `[$]`, `[|]`, ...
-all match the literal values.
+리터럴 `.`, `$`, `|`, `*`, `+`, `?`, `{`, `}`, `(`, `)`을 일치시키려 할 때 백슬래시 이스케이프를 사용하는 대신 문자 클래스를 사용하는 방법도 있습니다. `[.]`, `[$]`, `[|]` 등은 모두 리터럴 값과 일치합니다.
 
 ```{r}
 str_view(c("abc", "a.c", "a*c", "a c"), "a[.]c")
 str_view(c("abc", "a.c", "a*c", "a c"), ".[*]c")
 ```
 
-### Anchors
+### 앵커
 
-By default, regular expressions will match any part of a string.
-If you want to match at the start or end you need to **anchor** the regular expression using `^` to match the start or `$` to match the end:
+기본적으로 정규 표현식은 문자열의 모든 부분과 일치합니다.
+시작이나 끝부분에서 일치시키고 싶다면 `^`를 사용하여 시작 부분을, `$`를 사용하여 끝부분을 일치시키도록 정규 표현식을 **고정(anchor)** 해야 합니다.
 
 ```{r}
 str_view(fruit, "^a")
 str_view(fruit, "a$")
 ```
 
-It's tempting to think that `$` should match the start of a string, because that's how we write dollar amounts, but that's not what regular expressions want.
+달러 금액을 쓰는 방식 때문에 `$`가 문자열의 시작 부분과 일치해야 한다고 생각하기 쉽지만, 정규 표현식은 그렇지 않습니다.
 
-To force a regular expression to match only the full string, anchor it with both `^` and `$`:
+정규 표현식이 전체 문자열과만 일치하도록 강제하려면 `^`와 `$`를 모두 사용하여 고정하세요:
 
 ```{r}
 str_view(fruit, "apple")
 str_view(fruit, "^apple$")
 ```
 
-You can also match the boundary between words (i.e. the start or end of a word) with `\b`.
-This can be particularly useful when using RStudio's find and replace tool.
-For example, if to find all uses of `sum()`, you can search for `\bsum\b` to avoid matching `summarize`, `summary`, `rowsum` and so on:
+`\b`를 사용하여 단어 사이의 경계(즉, 단어의 시작 또는 끝)를 일치시킬 수도 있습니다.
+이는 특히 RStudio의 찾기 및 바꾸기 도구를 사용할 때 유용할 수 있습니다.
+예를 들어 `sum()`의 모든 사용처를 찾으려면, `summarize`, `summary`, `rowsum` 등과 일치하는 것을 피하기 위해 `\bsum\b`를 검색하면 됩니다.
 
 ```{r}
 x <- c("summary(x)", "summarize(df)", "rowsum(x)", "sum(x)")
@@ -370,28 +367,28 @@ str_view(x, "sum")
 str_view(x, "\\bsum\\b")
 ```
 
-When used alone, anchors will produce a zero-width match:
+앵커 단독으로 사용하면 너비가 0인 일치 항목(zero-width match)을 생성합니다.
 
 ```{r}
 str_view("abc", c("$", "^", "\\b"))
 ```
 
-This helps you understand what happens when you replace a standalone anchor:
+이는 독립된 앵커를 바꿀 때 어떤 일이 일어나는지 이해하는 데 도움이 됩니다.
 
 ```{r}
 str_replace_all("abc", c("$", "^", "\\b"), "--")
 ```
 
-### Character classes
+### 문자 클래스
 
-A **character class**, or character **set**, allows you to match any character in a set.
-As we discussed above, you can construct your own sets with `[]`, where `[abc]` matches "a", "b", or "c" and `[^abc]` matches any character except "a", "b", or "c".
-Apart from `^` there are two other characters that have special meaning inside of `[]:`
+**문자 클래스(Character class)** 또는 문자 **집합(set)** 을 사용하면 집합 내의 임의의 문자와 일치시킬 수 있습니다.
+위에서 논의했듯이 `[]`로 자신만의 집합을 구성할 수 있는데, `[abc]`는 "a", "b", "c" 중 하나와 일치하고 `[^abc]`는 "a", "b", "c"를 제외한 모든 문자와 일치합니다.
+`^` 이외에도 `[]` 내부에서 특별한 의미를 갖는 두 가지 문자가 더 있습니다.
 
--   `-` defines a range, e.g., `[a-z]` matches any lower case letter and `[0-9]` matches any number.
--   `\` escapes special characters, so `[\^\-\]]` matches `^`, `-`, or `]`.
+-   `-`는 범위를 정의합니다. 예: `[a-z]`는 모든 소문자와 일치하고 `[0-9]`는 모든 숫자와 일치합니다.
+-   `\`는 특수 문자를 이스케이프 합니다. 따라서 `[\^\-\]]`는 `^`, `-`, `]` 중 하나와 일치합니다.
 
-Here are few examples:
+몇 가지 예시입니다.
 
 ```{r}
 x <- "abcd ABCD 12345 -!@#%."
@@ -399,26 +396,26 @@ str_view(x, "[abc]+")
 str_view(x, "[a-z]+")
 str_view(x, "[^a-z0-9]+")
 
-# You need an escape to match characters that are otherwise
-# special inside of []
+# [] 내부에서 특수한 의미를 갖는 문자를 일치시키려면 
+# 이스케이프가 필요합니다.
 str_view("a-b-c", "[a-c]")
 str_view("a-b-c", "[a\\-c]")
 ```
 
-Some character classes are used so commonly that they get their own shortcut.
-You've already seen `.`, which matches any character apart from a newline.
-There are three other particularly useful pairs[^regexps-7]:
+일부 문자 클래스는 매우 흔히 사용되어 자체적인 단축키를 가지고 있습니다.
+이미 줄바꿈을 제외한 모든 문자와 일치하는 `.`을 보셨을 것입니다.
+특히 유용한 다른 세 쌍이 있습니다[^regexps-7]:
 
-[^regexps-7]: Remember, to create a regular expression containing `\d` or `\s`, you'll need to escape the `\` for the string, so you'll type `"\\d"` or `"\\s"`.
+[^regexps-7]: `\d`나 `\s`를 포함하는 정규 표현식을 만들려면 문자열에서 `\`를 이스케이프 해야 하므로 `"\\d"` 또는 `"\\s"`를 입력해야 한다는 점을 기억하세요.
 
--   `\d` matches any digit;\
-    `\D` matches anything that isn't a digit.
--   `\s` matches any whitespace (e.g., space, tab, newline);\
-    `\S` matches anything that isn't whitespace.
--   `\w` matches any "word" character, i.e. letters and numbers;\
-    `\W` matches any "non-word" character.
+-   `\d`는 임의의 숫자와 일치합니다.\
+    `\D`는 숫자가 아닌 모든 것과 일치합니다.
+-   `\s`는 임의의 공백 문자(예: 스페이스, 탭, 줄바꿈)와 일치합니다.\
+    `\S`는 공백 문자가 아닌 모든 것과 일치합니다.
+-   `\w`는 임의의 "단어" 문자(즉, 글자와 숫자)와 일치합니다.\
+    `\W`는 단어 문자가 아닌 모든 것과 일치합니다.
 
-The following code demonstrates the six shortcuts with a selection of letters, numbers, and punctuation characters.
+다음 코드는 글자, 숫자, 문장 부호 선택 항목을 통해 여섯 가지 단축키를 보여줍니다.
 
 ```{r}
 x <- "abcd ABCD 12345 -!@#%."
@@ -430,50 +427,50 @@ str_view(x, "\\w+")
 str_view(x, "\\W+")
 ```
 
-### Quantifiers {#sec-quantifiers}
+### 수량자 {#sec-quantifiers}
 
-**Quantifiers** control how many times a pattern matches.
-In @sec-reg-basics you learned about `?` (0 or 1 matches), `+` (1 or more matches), and `*` (0 or more matches).
-For example, `colou?r` will match American or British spelling, `\d+` will match one or more digits, and `\s?` will optionally match a single item of whitespace.
-You can also specify the number of matches precisely with `{}`:
+**수량자(Quantifiers)** 는 패턴이 일치하는 횟수를 제어합니다.
+@sec-reg-basics 에서 `?`(0번 또는 1번 일치), `+`(1번 이상 일치), `*`(0번 이상 일치)에 대해 배웠습니다.
+예를 들어 `colou?r`는 미국식 또는 영국식 철자와 일치할 것이고, `\d+`는 하나 이상의 숫자와 일치하며, `\s?`는 선택적으로 하나의 공백 문자와 일치할 것입니다.
+또한 `{}`를 사용하여 일치 횟수를 정밀하게 지정할 수도 있습니다.
 
--   `{n}` matches exactly n times.
--   `{n,}` matches at least n times.
--   `{n,m}` matches between n and m times.
+-   `{n}`은 정확히 n번 일치합니다.
+-   `{n,}`은 최소 n번 일치합니다.
+-   `{n,m}`은 n번에서 m번 사이로 일치합니다.
 
-### Operator precedence and parentheses
+### 연산자 우선순위와 괄호
 
-What does `ab+` match?
-Does it match "a" followed by one or more "b"s, or does it match "ab" repeated any number of times?
-What does `^a|b$` match?
-Does it match the complete string a or the complete string b, or does it match a string starting with a or a string ending with b?
+`ab+`는 무엇과 일치할까요?
+"a" 다음에 하나 이상의 "b"가 오는 것일까요, 아니면 "ab"가 임의의 횟수만큼 반복되는 것일까요?
+`^a|b$`는 무엇과 일치할까요?
+전체 문자열 a 또는 전체 문자열 b와 일치할까요, 아니면 a로 시작하는 문자열 또는 b로 끝나는 문자열과 일치할까요?
 
-The answer to these questions is determined by operator precedence, similar to the PEMDAS or BEDMAS rules you might have learned in school.
-You know that `a + b * c` is equivalent to `a + (b * c)` not `(a + b) * c` because `*` has higher precedence and `+` has lower precedence: you compute `*` before `+`.
+이 질문들에 대한 답은 학교에서 배웠을 PEMDAS 또는 BEDMAS 규칙과 유사한 연산자 우선순위에 의해 결정됩니다.
+`*`가 더 높은 우선순위를 갖고 `+`가 더 낮은 우선순위를 갖기 때문에 `a + b * c`가 `(a + b) * c`가 아니라 `a + (b * c)`와 같다는 것을 알고 계실 것입니다. `+`보다 `*`를 먼저 계산합니다.
 
-Similarly, regular expressions have their own precedence rules: quantifiers have high precedence and alternation has low precedence which means that `ab+` is equivalent to `a(b+)`, and `^a|b$` is equivalent to `(^a)|(b$)`.
-Just like with algebra, you can use parentheses to override the usual order.
-But unlike algebra you're unlikely to remember the precedence rules for regexes, so feel free to use parentheses liberally.
+마찬가지로 정규 표현식도 자신만의 우선순위 규칙이 있습니다. 수량자는 높은 우선순위를 갖고 선택(alternation)은 낮은 우선순위를 갖습니다. 즉, `ab+`는 `a(b+)`와 같고, `^a|b$`는 `(^a)|(b$)`와 같습니다.
+대수학과 마찬가지로 일반적인 순서를 덮어쓰기 위해 괄호를 사용할 수 있습니다.
+하지만 대수학과 달리 정규식의 우선순위 규칙을 기억할 가능성은 낮으므로 괄호를 아낌없이 사용하세요.
 
-### Grouping and capturing
+### 그룹화 및 캡처
 
-As well as overriding operator precedence, parentheses have another important effect: they create **capturing groups** that allow you to use sub-components of the match.
+연산자 우선순위를 덮어쓰는 것 외에도 괄호는 또 다른 중요한 효과가 있습니다. 일치 항목의 하위 구성 요소를 사용할 수 있게 해주는 **캡처 그룹(capturing groups)** 을 만듭니다.
 
-The first way to use a capturing group is to refer back to it within a match with **back reference**: `\1` refers to the match contained in the first parenthesis, `\2` in the second parenthesis, and so on.
-For example, the following pattern finds all fruits that have a repeated pair of letters:
+캡처 그룹을 사용하는 첫 번째 방법은 **역참조(back reference)** 를 통해 일치 항목 내에서 그룹을 다시 참조하는 것입니다. `\1`은 첫 번째 괄호에 포함된 일치 항목을 참조하고, `\2`는 두 번째 괄호를 참조하는 식입니다.
+예를 들어 다음 패턴은 반복되는 한 쌍의 글자가 있는 모든 과일을 찾습니다.
 
 ```{r}
 str_view(fruit, "(..)\\1")
 ```
 
-And this one finds all words that start and end with the same pair of letters:
+그리고 이 패턴은 동일한 한 쌍의 글자로 시작하고 끝나는 모든 단어를 찾습니다.
 
 ```{r}
 str_view(words, "^(..).*\\1$")
 ```
 
-You can also use back references in `str_replace()`.
-For example, this code switches the order of the second and third words in `sentences`:
+`str_replace()`에서도 역참조를 사용할 수 있습니다.
+예를 들어 다음 코드는 `sentences`에서 두 번째 단어와 세 번째 단어의 순서를 바꿉니다.
 
 ```{r}
 sentences |> 
@@ -481,10 +478,10 @@ sentences |>
   str_view()
 ```
 
-If you want to extract the matches for each group you can use `str_match()`.
-But `str_match()` returns a matrix, so it's not particularly easy to work with[^regexps-8]:
+각 그룹에 대한 일치 항목을 추출하려면 `str_match()`를 사용할 수 있습니다.
+하지만 `str_match()`는 행렬(matrix)을 반환하므로 다루기가 특별히 쉽지는 않습니다[^regexps-8].
 
-[^regexps-8]: Mostly because we never discuss matrices in this book!
+[^regexps-8]: 주로 이 책에서 행렬에 대해 전혀 논의하지 않기 때문입니다!
 
 ```{r}
 sentences |> 
@@ -492,7 +489,7 @@ sentences |>
   head()
 ```
 
-You could convert to a tibble and name the columns:
+이를 티블(tibble)로 변환하고 열의 이름을 지정할 수 있습니다.
 
 ```{r}
 sentences |> 
@@ -501,11 +498,10 @@ sentences |>
   set_names("match", "word1", "word2")
 ```
 
-But then you've basically recreated your own version of `separate_wider_regex()`.
-Indeed, behind the scenes, `separate_wider_regex()` converts your vector of patterns to a single regex that uses grouping to capture the named components.
+하지만 그렇게 하면 기본적으로 자신만의 `separate_wider_regex()` 버전을 재현한 셈입니다.
+실제로 내부적으로 `separate_wider_regex()`는 여러분의 패턴 벡터를 이름이 지정된 구성 요소를 캡처하기 위해 그룹화를 사용하는 단일 정규식으로 변환합니다.
 
-Occasionally, you'll want to use parentheses without creating matching groups.
-You can create a non-capturing group with `(?:)`.
+가끔 일치 그룹을 생성하지 않고 괄호를 사용하고 싶을 때가 있을 것입니다. `(?:)`를 사용하여 캡처하지 않는 그룹(non-capturing group)을 만들 수 있습니다.
 
 ```{r}
 x <- c("a gray cat", "a grey dog")
@@ -513,30 +509,30 @@ str_match(x, "gr(e|a)y")
 str_match(x, "gr(?:e|a)y")
 ```
 
-### Exercises
+### 연습문제
 
-1.  How would you match the literal string `"'\`? How about `"$^$"`?
+1.  리터럴 문자열 `"'\`을 어떻게 일치시키겠습니까? `"$^$"`는 어떻습니까?
 
-2.  Explain why each of these patterns don't match a `\`: `"\"`, `"\\"`, `"\\\"`.
+2.  왜 이 패턴들이 `\`와 일치하지 않는지 설명하세요: `"\"`, `"\\"`, `"\\\"`.
 
-3.  Given the corpus of common words in `stringr::words`, create regular expressions that find all words that:
+3.  `stringr::words`에 있는 공통 단어 말뭉치가 주어졌을 때, 다음 조건에 맞는 모든 단어를 찾는 정규 표현식을 만드세요.
 
-    a.  Start with "y".
-    b.  Don't start with "y".
-    c.  End with "x".
-    d.  Are exactly three letters long. (Don't cheat by using `str_length()`!)
-    e.  Have seven letters or more.
-    f.  Contain a vowel-consonant pair.
-    g.  Contain at least two vowel-consonant pairs in a row.
-    h.  Only consist of repeated vowel-consonant pairs.
+    a.  "y"로 시작함.
+    b.  "y"로 시작하지 않음.
+    c.  "x"로 끝남.
+    d.  정확히 세 글자 길이임. (`str_length()`를 사용하여 속이지 마세요!)
+    e.  일곱 글자 이상임.
+    f.  모음-자음 쌍을 포함함.
+    g.  연속해서 두 개 이상의 모음-자음 쌍을 포함함.
+    h.  반복되는 모음-자음 쌍으로만 구성됨.
 
-4.  Create 11 regular expressions that match the British or American spellings for each of the following words: airplane/aeroplane, aluminum/aluminium, analog/analogue, ass/arse, center/centre, defense/defence, donut/doughnut, gray/grey, modeling/modelling, skeptic/sceptic, summarize/summarise.
-    Try and make the shortest possible regex!
+4.  비행기(airplane/aeroplane), 알루미늄(aluminum/aluminium), 아날로그(analog/analogue), 엉덩이(ass/arse), 중심(center/centre), 방어(defense/defence), 도넛(donut/doughnut), 회색(gray/grey), 모델링(modeling/modelling), 회의론자(skeptic/sceptic), 요약하다(summarize/summarise)의 영국식 또는 미국식 철자와 일치하는 11개의 정규 표현식을 만드세요.
+    최대한 짧은 정규식을 만들어 보세요!
 
-5.  Switch the first and last letters in `words`.
-    Which of those strings are still `words`?
+5.  `words`에서 첫 글자와 마지막 글자를 바꾸어 보세요.
+    그중 어떤 문자열이 여전히 `words`에 있습니까?
 
-6.  Describe in words what these regular expressions match: (read carefully to see if each entry is a regular expression or a string that defines a regular expression.)
+6.  이 정규 표현식들이 무엇과 일치하는지 말로 설명해 보세요. (각 항목이 정규 표현식인지 정규 표현식을 정의하는 문자열인지 주의 깊게 확인하세요.)
 
     a.  `^.*$`
     b.  `"\\{.+\\}"`
@@ -546,19 +542,19 @@ str_match(x, "gr(?:e|a)y")
     f.  `(.)\1\1`
     g.  `"(..)\\1"`
 
-7.  Solve the beginner regexp crosswords at <https://regexcrossword.com/challenges/beginner>.
+7.  <https://regexcrossword.com/challenges/beginner> 에서 초보자용 정규식 크로스워드를 풀어보세요.
 
-## Pattern control
+## 패턴 제어
 
-It's possible to exercise extra control over the details of the match by using a pattern object instead of just a string.
-This allows you to control the so called regex flags and match various types of fixed strings, as described below.
+단순한 문자열 대신 패턴 객체를 사용하면 일치의 세부 사항을 추가로 제어할 수 있습니다.
+이를 통해 아래에서 설명하는 것처럼 소위 정규식 플래그를 제어하고 다양한 유형의 고정된 문자열을 일치시킬 수 있습니다.
 
-### Regex flags {#sec-flags}
+### 정규식 플래그 {#sec-flags}
 
-There are a number of settings that can be used to control the details of the regexp.
-These settings are often called **flags** in other programming languages.
-In stringr, you can use these by wrapping the pattern in a call to `regex()`.
-The most useful flag is probably `ignore_case = TRUE` because it allows characters to match either their uppercase or lowercase forms:
+정규식의 세부 사항을 제어하는 데 사용할 수 있는 여러 설정이 있습니다.
+이러한 설정은 다른 프로그래밍 언어에서 종종 **플래그(flags)** 라고 불립니다.
+stringr에서는 패턴을 `regex()` 호출로 감싸서 이를 사용할 수 있습니다.
+가장 유용한 플래그는 아마도 `ignore_case = TRUE`일 것입니다. 대문자와 소문자 형태를 구분 없이 일치시킬 수 있기 때문입니다:
 
 ```{r}
 bananas <- c("banana", "Banana", "BANANA")
@@ -566,9 +562,9 @@ str_view(bananas, "banana")
 str_view(bananas, regex("banana", ignore_case = TRUE))
 ```
 
-If you're doing a lot of work with multiline strings (i.e. strings that contain `\n`), `dotall` and `multiline` may also be useful:
+여러 줄 문자열(즉, `\n`을 포함하는 문자열)로 많은 작업을 수행하는 경우, `dotall`과 `multiline`도 유용할 수 있습니다:
 
--   `dotall = TRUE` lets `.` match everything, including `\n`:
+-   `dotall = TRUE`는 `.`이 `\n`을 포함한 모든 문자와 일치하게 합니다:
 
     ```{r}
     x <- "Line 1\nLine 2\nLine 3"
@@ -576,30 +572,30 @@ If you're doing a lot of work with multiline strings (i.e. strings that contain 
     str_view(x, regex(".Line", dotall = TRUE))
     ```
 
--   `multiline = TRUE` makes `^` and `$` match the start and end of each line rather than the start and end of the complete string:
+-   `multiline = TRUE`는 `^`와 `$`가 전체 문자열의 시작과 끝이 아니라 각 줄의 시작과 끝과 일치하게 합니다:
 
     ```{r}
     x <- "Line 1\nLine 2\nLine 3"
     str_view(x, "^Line")
     str_view(x, regex("^Line", multiline = TRUE))
-    ```
+```
 
-Finally, if you're writing a complicated regular expression and you're worried you might not understand it in the future, you might try `comments = TRUE`.
-It tweaks the pattern language to ignore spaces and new lines, as well as everything after `#`.
-This allows you to use comments and whitespace to make complex regular expressions more understandable[^regexps-9], as in the following example:
+마지막으로 복잡한 정규 표현식을 작성하고 나중에 이해하지 못할까 봐 걱정된다면 `comments = TRUE`를 시도해 보세요.
+패키지가 공백과 줄바꿈은 물론 `#` 뒤의 모든 내용을 무시하도록 패턴 언어를 조정합니다.
+이를 통해 다음 예제와 같이 주석과 공백을 사용하여 복잡한 정규 표현식을 더 이해하기 쉽게 만들 수 있습니다[^regexps-9]:
 
-[^regexps-9]: `comments = TRUE` is particularly effective in combination with a raw string, as we use here.
+[^regexps-9]: `comments = TRUE`는 여기서 사용한 것처럼 원시 문자열(raw string)과 결합했을 때 특히 효과적입니다.
 
 ```{r}
 phone <- regex(
   r"(
-    \(?     # optional opening parens
-    (\d{3}) # area code
-    [)\-]?  # optional closing parens or dash
-    \ ?     # optional space
-    (\d{3}) # another three numbers
-    [\ -]?  # optional space or dash
-    (\d{4}) # four more numbers
+    \(?     # 선택적인 여는 괄호
+    (\d{3}) # 지역 번호
+    [)\-]?  # 선택적인 닫는 괄호 또는 대시
+    \ ?     # 선택적인 공백
+    (\d{3}) # 또 다른 세 개의 숫자
+    [\ -]?  # 선택적인 공백 또는 대시
+    (\d{4}) # 네 개의 숫자 더
   )", 
   comments = TRUE
 )
@@ -607,71 +603,66 @@ phone <- regex(
 str_extract(c("514-791-8141", "(123) 456 7890", "123456"), phone)
 ```
 
-If you're using comments and want to match a space, newline, or `#`, you'll need to escape it with `\`.
+주석을 사용하면서 공백, 줄바꿈 또는 `#`을 일치시키려면 `\ `로 이스케이프 해야 합니다.
 
-### Fixed matches
+### 고정 일치
 
-You can opt-out of the regular expression rules by using `fixed()`:
+`fixed()`를 사용하여 정규 표현식 규칙을 사용하지 않을 수 있습니다:
 
 ```{r}
 str_view(c("", "a", "."), fixed("."))
 ```
 
-`fixed()` also gives you the ability to ignore case:
+`fixed()` 또한 대소문자를 무시하는 기능을 제공합니다:
 
 ```{r}
 str_view("x X", "X")
 str_view("x X", fixed("X", ignore_case = TRUE))
 ```
 
-If you're working with non-English text, you will probably want `coll()` instead of `fixed()`, as it implements the full rules for capitalization as used by the `locale` you specify.
-See @sec-other-languages for more details on locales.
+비영어권 텍스트로 작업하는 경우 `fixed()` 대신 `coll()`을 사용하고 싶을 것입니다. `coll()`은 지정한 `locale`에서 사용하는 대문자 전환 규칙을 완전히 구현하기 때문입니다.
+로케일에 대한 자세한 내용은 @sec-other-languages 를 참조하세요.
 
 ```{r}
 str_view("i İ ı I", fixed("İ", ignore_case = TRUE))
 str_view("i İ ı I", coll("İ", ignore_case = TRUE, locale = "tr"))
 ```
 
-## Practice
+## 실습
 
-To put these ideas into practice we'll solve a few semi-authentic problems next.
-We'll discuss three general techniques:
+이러한 아이디어를 실천에 옮기기 위해 다음으로 몇 가지 실제와 유사한 문제들을 해결해 보겠습니다. 세 가지 일반적인 기법에 대해 논의할 것입니다:
 
-1.  checking your work by creating simple positive and negative controls
-2.  combining regular expressions with Boolean algebra
-3.  creating complex patterns using string manipulation
+1.  단순한 긍정적 및 부정적 제어 사례를 만들어 작업을 확인하기
+2.  정규 표현식을 불리언 대수(Boolean algebra)와 결합하기
+3.  문자열 조작을 사용하여 복잡한 패턴 만들기
 
-### Check your work
+### 작업 확인하기
 
-First, let's find all sentences that start with "The".
-Using the `^` anchor alone is not enough:
+먼저 "The"로 시작하는 모든 문장을 찾아봅시다. `^` 앵커만 사용하는 것으로는 충분하지 않습니다:
 
 ```{r}
 str_view(sentences, "^The")
 ```
 
-Because that pattern also matches sentences starting with words like `They` or `These`.
-We need to make sure that the "e" is the last letter in the word, which we can do by adding a word boundary:
+이 패턴은 `They` 또는 `These`와 같은 단어로 시작하는 문장과도 일치하기 때문입니다. "e"가 단어의 마지막 글자인지 확인해야 하며, 단어 경계를 추가하여 이를 수행할 수 있습니다:
 
 ```{r}
 str_view(sentences, "^The\\b")
 ```
 
-What about finding all sentences that begin with a pronoun?
+대명사로 시작하는 모든 문장을 찾는 것은 어떨까요?
 
 ```{r}
 str_view(sentences, "^She|He|It|They\\b")
 ```
 
-A quick inspection of the results shows that we're getting some spurious matches.
-That's because we've forgotten to use parentheses:
+결과를 빠르게 살펴보면 몇 가지 가짜 일치 항목이 나타나는 것을 볼 수 있습니다. 괄호를 사용하는 것을 잊었기 때문입니다:
 
 ```{r}
 str_view(sentences, "^(She|He|It|They)\\b")
 ```
 
-You might wonder how you might spot such a mistake if it didn't occur in the first few matches.
-A good technique is to create a few positive and negative matches and use them to test that your pattern works as expected:
+처음 몇 개의 일치 항목에서 나타나지 않는 실수를 어떻게 발견할 수 있는지 궁금할 것입니다. 좋은 방법은 몇 가지 긍정적 및 부정적 일치 사례를 만들어 여러분의 패턴이 예상대로 작동하는지 테스트하는 것입니다:
 
 ```{r}
 pos <- c("He is a boy", "She had a good time")
@@ -682,42 +673,35 @@ str_detect(pos, pattern)
 str_detect(neg, pattern)
 ```
 
-It's typically much easier to come up with good positive examples than negative examples, because it takes a while before you're good enough with regular expressions to predict where your weaknesses are.
-Nevertheless, they're still useful: as you work on the problem you can slowly accumulate a collection of your mistakes, ensuring that you never make the same mistake twice.
+보통 부정적인 예시보다 긍정적인 예시를 생각해 내는 것이 훨씬 쉽습니다. 정규 표현식의 약점을 예측할 만큼 익숙해지는 데는 시간이 걸리기 때문입니다. 그럼에도 불구하고 이들은 유용합니다. 문제를 풀면서 실수 목록을 천천히 쌓아 나가면 동일한 실수를 두 번 다시 하지 않게 될 것입니다.
 
-### Boolean operations {#sec-boolean-operations}
+### 불리언 연산 {#sec-boolean-operations}
 
-Imagine we want to find words that only contain consonants.
-One technique is to create a character class that contains all letters except for the vowels (`[^aeiou]`), then allow that to match any number of letters (`[^aeiou]+`), then force it to match the whole string by anchoring to the beginning and the end (`^[^aeiou]+$`):
+자음만 포함된 단어를 찾고 싶다고 가정해 봅시다. 한 가지 방법은 모음을 제외한 모든 글자를 포함하는 문자 클래스(`[^aeiou]`)를 만든 다음, 임의의 개수만큼 일치하도록 허용하고(`[^aeiou]+`), 시작과 끝에 앵커를 걸어 전체 문자열과 일치하도록 강제하는 것입니다(`^[^aeiou]+$`):
 
 ```{r}
 str_view(words, "^[^aeiou]+$")
 ```
 
-But you can make this problem a bit easier by flipping the problem around.
-Instead of looking for words that contain only consonants, we could look for words that don't contain any vowels:
+하지만 문제의 관점을 뒤집어서 이 문제를 조금 더 쉽게 만들 수 있습니다. 자음만 들어 있는 단어를 찾는 대신, 모음이 하나도 들어 있지 않은 단어를 찾을 수 있습니다:
 
 ```{r}
 str_view(words[!str_detect(words, "[aeiou]")])
 ```
 
-This is a useful technique whenever you're dealing with logical combinations, particularly those involving "and" or "not".
-For example, imagine if you want to find all words that contain "a" and "b".
-There's no "and" operator built in to regular expressions so we have to tackle it by looking for all words that contain an "a" followed by a "b", or a "b" followed by an "a":
+이는 논리적 결합, 특히 "and" 또는 "not"과 관련된 문제를 다룰 때 유용한 기법입니다. 예를 들어 "a"와 "b"를 모두 포함하는 모든 단어를 찾고 싶다고 가정해 봅시다. 정규 표현식에는 기본적으로 "and" 연산자가 없으므로 "a" 다음에 "b"가 오거나 "b" 다음에 "a"가 오는 모든 단어를 찾는 방식으로 접근해야 합니다:
 
 ```{r}
 str_view(words, "a.*b|b.*a")
 ```
 
-It's simpler to combine the results of two calls to `str_detect()`:
+`str_detect()`를 두 번 호출한 결과를 결합하는 것이 더 간단합니다:
 
 ```{r}
 words[str_detect(words, "a") & str_detect(words, "b")]
 ```
 
-What if we wanted to see if there was a word that contains all vowels?
-If we did it with patterns we'd need to generate 5!
-(120) different patterns:
+모든 모음이 포함된 단어가 있는지 확인하고 싶다면 어떨까요? 패턴으로 하려면 5!(120)개의 서로 다른 패턴을 생성해야 할 것입니다:
 
 ```{r}
 #| results: false
@@ -726,7 +710,7 @@ words[str_detect(words, "a.*e.*i.*o.*u")]
 words[str_detect(words, "u.*o.*i.*e.*a")]
 ```
 
-It's much simpler to combine five calls to `str_detect()`:
+다섯 번의 `str_detect()` 호출을 결합하는 것이 훨씬 간단합니다:
 
 ```{r}
 words[
@@ -738,39 +722,35 @@ words[
 ]
 ```
 
-In general, if you get stuck trying to create a single regexp that solves your problem, take a step back and think if you could break the problem down into smaller pieces, solving each challenge before moving onto the next one.
+일반적으로 문제를 해결하는 단일 정규식을 만드는 데 막혔다면, 한 걸음 물러나 문제를 더 작은 부분으로 나누어 각 과제를 해결한 후 다음 단계로 넘어갈 수 있을지 생각해 보세요.
 
-### Creating a pattern with code
+### 코드로 패턴 만들기
 
-What if we wanted to find all `sentences` that mention a color?
-The basic idea is simple: we just combine alternation with word boundaries.
+색상을 언급하는 모든 `sentences`를 찾고 싶다면 어떨까요? 기본 아이디어는 간단합니다. 단어 경계와 선택(alternation)을 결합하기만 하면 됩니다.
 
 ```{r}
 str_view(sentences, "\\b(red|green|blue)\\b")
 ```
 
-But as the number of colors grows, it would quickly get tedious to construct this pattern by hand.
-Wouldn't it be nice if we could store the colors in a vector?
+하지만 색상의 수가 늘어남에 따라 이 패턴을 수동으로 구성하는 것은 금방 지루해질 것입니다. 색상들을 벡터에 저장할 수 있다면 좋지 않을까요?
 
 ```{r}
 rgb <- c("red", "green", "blue")
 ```
 
-Well, we can!
-We'd just need to create the pattern from the vector using `str_c()` and `str_flatten()`:
+가능합니다! `str_c()`와 `str_flatten()`을 사용하여 벡터로부터 패턴을 만들기만 하면 됩니다:
 
 ```{r}
 str_c("\\b(", str_flatten(rgb, "|"), ")\\b")
 ```
 
-We could make this pattern more comprehensive if we had a good list of colors.
-One place we could start from is the list of built-in colors that R can use for plots:
+색상 목록이 충분하다면 이 패턴을 더 포괄적으로 만들 수 있습니다. R이 그래프에서 사용할 수 있는 내장 색상 목록에서 시작할 수 있습니다:
 
 ```{r}
 str_view(colors())
 ```
 
-But lets first eliminate the numbered variants:
+하지만 먼저 숫자가 포함된 변형들을 제거해 봅시다:
 
 ```{r}
 cols <- colors()
@@ -778,89 +758,87 @@ cols <- cols[!str_detect(cols, "\\d")]
 str_view(cols)
 ```
 
-Then we can turn this into one giant pattern.
-We won't show the pattern here because it's huge, but you can see it working:
+그런 다음 이를 하나의 거대한 패턴으로 변환할 수 있습니다. 패턴이 너무 커서 여기서는 보여주지 않겠지만, 작동하는 것을 확인할 수 있습니다:
 
 ```{r}
 pattern <- str_c("\\b(", str_flatten(cols, "|"), ")\\b")
 str_view(sentences, pattern)
 ```
 
-In this example, `cols` only contains numbers and letters so you don't need to worry about metacharacters.
-But in general, whenever you create patterns from existing strings it's wise to run them through `str_escape()` to ensure they match literally.
+이 예제에서 `cols`는 숫자와 문자만 포함하므로 메타 문자에 대해 걱정할 필요가 없습니다. 하지만 일반적으로 기존 문자열로부터 패턴을 만들 때는 리터럴로 일치하도록 `str_escape()`를 거치는 것이 현명합니다.
 
-### Exercises
+### 연습문제(Excerises)
 
-1.  For each of the following challenges, try solving it by using both a single regular expression, and a combination of multiple `str_detect()` calls.
+1.  다음 각 과제에 대해 단일 정규 표현식과 여러 개의 `str_detect()` 호출 조합을 모두 사용하여 해결해 보세요.
 
-    a.  Find all `words` that start or end with `x`.
-    b.  Find all `words` that start with a vowel and end with a consonant.
-    c.  Are there any `words` that contain at least one of each different vowel?
+    a.  "x"로 시작하거나 끝나는 모든 `words`를 찾으세요.
+    b.  모음으로 시작하고 자음으로 끝나는 모든 `words`를 찾으세요.
+    c.  서로 다른 모음을 각각 최소 하나씩 포함하는 `words`가 있나요?
 
-2.  Construct patterns to find evidence for and against the rule "i before e except after c"?
+2.  "c 다음이 아니라면 e 앞에 i가 온다(i before e except after c)"라는 규칙의 찬성 및 반대 증거를 찾기 위한 패턴을 구성해 보세요.
 
-3.  `colors()` contains a number of modifiers like "lightgray" and "darkblue".
-    How could you automatically identify these modifiers?
-    (Think about how you might detect and then remove the colors that are modified).
+3.  `colors()`에는 "lightgray" 및 "darkblue"와 같은 여러 수정자가 포함되어 있습니다.
+    이러한 수정자를 자동으로 식별하는 방법은 무엇일까요?
+    (수정된 색상을 감지한 다음 제거하는 방법을 생각해 보세요.)
 
-4.  Create a regular expression that finds any base R dataset.
-    You can get a list of these datasets via a special use of the `data()` function: `data(package = "datasets")$results[, "Item"]`.
-    Note that a number of old datasets are individual vectors; these contain the name of the grouping "data frame" in parentheses, so you'll need to strip those off.
+4.  모든 base R 데이터셋을 찾는 정규 표현식을 만드세요.
+    `data()` 함수의 특수한 사용법을 통해 이러한 데이터셋 목록을 얻을 수 있습니다: `data(package = "datasets")$results[, "Item"]`.
+    일부 오래된 데이터셋은 개별 벡터입니다. 이들은 괄호 안에 그룹화된 "데이터 프레임"의 이름을 포함하므로 이를 제거해야 합니다.
 
-## Regular expressions in other places
+## 다른 곳에서의 정규 표현식
 
-Just like in the stringr and tidyr functions, there are many other places in R where you can use regular expressions.
-The following sections describe some other useful functions in the wider tidyverse and base R.
+stringr과 tidyr 함수에서와 마찬가지로 R에는 정규 표현식을 사용할 수 있는 다른 많은 곳이 있습니다.
+다음 섹션에서는 더 넓은 tidyverse와 base R의 유용한 함수들을 설명합니다.
 
 ### tidyverse
 
-There are three other particularly useful places where you might want to use a regular expressions
+정규 표현식을 사용하고 싶을 만한 특히 유용한 다른 세 곳이 있습니다:
 
--   `matches(pattern)` will select all variables whose name matches the supplied pattern.
-    It's a "tidyselect" function that you can use anywhere in any tidyverse function that selects variables (e.g., `select()`, `rename_with()` and `across()`).
+-   `matches(pattern)`은 이름이 제공된 패턴과 일치하는 모든 변수를 선택합니다.
+    이는 `select()`, `rename_with()`, `across()`와 같이 변수를 선택하는 모든 tidyverse 함수 어디에서나 사용할 수 있는 "tidyselect" 함수입니다.
 
--   `pivot_longer()'s` `names_pattern` argument takes a vector of regular expressions, just like `separate_wider_regex()`.
-    It's useful when extracting data out of variable names with a complex structure
+-   `pivot_longer()`의 `names_pattern` 인자는 `separate_wider_regex()`와 마찬가지로 정규 표현식 벡터를 받습니다.
+    복잡한 구조를 가진 변수 이름에서 데이터를 추출할 때 유용합니다.
 
--   The `delim` argument in `separate_longer_delim()` and `separate_wider_delim()` usually matches a fixed string, but you can use `regex()` to make it match a pattern.
-    This is useful, for example, if you want to match a comma that is optionally followed by a space, i.e. `regex(", ?")`.
+-   `separate_longer_delim()` 및 `separate_wider_delim()`의 `delim` 인자는 보통 고정된 문자열과 일치하지만, `regex()`를 사용하여 패턴과 일치하게 만들 수 있습니다.
+    이는 예를 들어 쉼표 다음에 선택적으로 공백이 오는 경우, 즉 `regex(", ?")`와 일치시키고 싶을 때 유용합니다.
 
 ### Base R
 
-`apropos(pattern)` searches all objects available from the global environment that match the given pattern.
-This is useful if you can't quite remember the name of a function:
+`apropos(pattern)`은 전역 환경(global environment)에서 사용 가능한 객체 중 주어진 패턴과 일치하는 모든 객체를 검색합니다.
+함수의 이름이 잘 기억나지 않을 때 유용합니다:
 
 ```{r}
 apropos("replace")
 ```
 
-`list.files(path, pattern)` lists all files in `path` that match a regular expression `pattern`.
-For example, you can find all the R Markdown files in the current directory with:
+`list.files(path, pattern)`은 `path`에 있는 파일 중 정규 표현식 `pattern`과 일치하는 모든 파일을 나열합니다.
+예를 들어 현재 디렉터리에 있는 모든 R 마크다운 파일을 다음으로 찾을 수 있습니다:
 
 ```{r}
 head(list.files(pattern = "\\.Rmd$"))
 ```
 
-It's worth noting that the pattern language used by base R is very slightly different to that used by stringr.
-That's because stringr is built on top of the [stringi package](https://stringi.gagolewski.com), which is in turn built on top of the [ICU engine](https://unicode-org.github.io/icu/userguide/strings/regexp.html), whereas base R functions use either the [TRE engine](https://github.com/laurikari/tre) or the [PCRE engine](https://www.pcre.org), depending on whether or not you've set `perl = TRUE`.
-Fortunately, the basics of regular expressions are so well established that you'll encounter few variations when working with the patterns you'll learn in this book.
-You only need to be aware of the difference when you start to rely on advanced features like complex Unicode character ranges or special features that use the `(?…)` syntax.
+Base R에서 사용되는 패턴 언어는 stringr에서 사용되는 것과 아주 미세하게 다르다는 점에 유의할 필요가 있습니다.
+이는 stringr이 [stringi 패키지](https://stringi.gagolewski.com) 위에 구축되었고, stringi는 다시 [ICU 엔진](https://unicode-org.github.io/icu/userguide/strings/regexp.html) 위에 구축되었기 때문입니다. 반면 base R 함수는 `perl = TRUE` 설정 여부에 따라 [TRE 엔진](https://github.com/laurikari/tre) 또는 [PCRE 엔진](https://www.pcre.org)을 사용합니다.
+다행히 정규 표현식의 기초는 매우 확립되어 있어서 이 책에서 배울 패턴으로 작업할 때는 차이를 거의 느끼지 못할 것입니다.
+복잡한 유니코드 문자 범위나 `(?…)` 구문을 사용하는 특수 기능과 같은 고급 기능에 의존하기 시작할 때만 차이점을 인지하면 됩니다.
 
-## Summary
+## 요약
 
-With every punctuation character potentially overloaded with meaning, regular expressions are one of the most compact languages out there.
-They're definitely confusing at first but as you train your eyes to read them and your brain to understand them, you unlock a powerful skill that you can use in R and in many other places.
+모든 문장 부호가 잠재적으로 의미를 가질 수 있는 정규 표현식은 현존하는 가장 간결한 언어 중 하나입니다.
+처음에는 분명 혼란스럽겠지만 정규식을 읽는 눈과 이해하는 두뇌를 훈련함에 따라 R은 물론 다른 많은 곳에서 사용할 수 있는 강력한 기술을 갖게 될 것입니다.
 
-In this chapter, you've started your journey to become a regular expression master by learning the most useful stringr functions and the most important components of the regular expression language.
-And there are plenty of resources to learn more.
+이 챕터에서 여러분은 가장 유용한 stringr 함수와 정규 표현식 언어의 가장 중요한 구성 요소를 배우며 정규 표현식 마스터가 되기 위한 여정을 시작했습니다.
+더 배울 수 있는 자원도 풍부합니다.
 
-A good place to start is `vignette("regular-expressions", package = "stringr")`: it documents the full set of syntax supported by stringr.
-Another useful reference is [https://www.regular-expressions.info/](https://www.regular-expressions.info/tutorial.html).
-It's not R specific, but you can use it to learn about the most advanced features of regexes and how they work under the hood.
+시작하기 좋은 곳은 stringr에서 지원하는 전체 구문 세트를 문서화한 `vignette("regular-expressions", package = "stringr")`입니다.
+또 다른 유용한 참고 자료는 [https://www.regular-expressions.info/](https://www.regular-expressions.info/tutorial.html)입니다.
+R에 특화된 것은 아니지만 정규식의 가장 고급 기능과 정규식이 내부적으로 어떻게 작동하는지 배우는 데 사용할 수 있습니다.
 
-It's also good to know that stringr is implemented on top of the stringi package by Marek Gagolewski.
-If you're struggling to find a function that does what you need in stringr, don't be afraid to look in stringi.
-You'll find stringi very easy to pick up because it follows many of the the same conventions as stringr.
+또한 stringr이 Marek Gagolewski의 stringi 패키지 위에 구현되었다는 점을 알아두면 좋습니다.
+stringr에서 필요한 기능을 찾기 어렵다면 주저하지 말고 stringi를 찾아보세요.
+stringi도 stringr과 동일한 관례를 많이 따르기 때문에 매우 쉽게 익힐 수 있을 것입니다.
 
-In the next chapter, we'll talk about a data structure closely related to strings: factors.
-Factors are used to represent categorical data in R, i.e. data with a fixed and known set of possible values identified by a vector of strings.
+다음 챕터에서는 문자열과 밀접하게 관련된 데이터 구조인 범주형(factors)에 대해 이야기하겠습니다.
+범주형은 R에서 범주형 데이터를 표현하는 데 사용됩니다. 즉, 문자형 벡터로 식별되는 고정되고 알려진 가능한 값들의 집합을 가진 데이터를 의미합니다.

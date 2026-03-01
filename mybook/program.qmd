@@ -1,4 +1,4 @@
-# Program {#sec-program-intro .unnumbered}
+# 프로그래밍 {#sec-program-intro .unnumbered}
 
 ```{r}
 #| results: "asis"
@@ -6,46 +6,46 @@
 source("_common.R")
 ```
 
-In this part of the book, you'll improve your programming skills.
-Programming is a cross-cutting skill needed for all data science work: you must use a computer to do data science; you cannot do it in your head, or with pencil and paper.
+책의 이번 부분에서는 프로그래밍 기술을 향상하게 될 것입니다.
+프로그래밍은 모든 데이터 과학 작업에 필요한 범용적인 기술입니다. 데이터 과학을 하려면 컴퓨터를 사용해야 하기 때문입니다. 머릿속으로만 혹은 연필과 종이만으로는 데이터 과학을 할 수 없습니다.
 
 ```{r}
 #| label: fig-ds-program
 #| echo: false
 #| out.width: ~
 #| fig-cap: |
-#|   Programming is the water in which all the other components swim.
+#|   프로그래밍은 다른 모든 구성 요소들이 헤엄치는 물과 같습니다.
 #| fig-alt: |
-#|   Our model of the data science process with program (import, tidy,
-#|   transform, visualize, model, and communicate, i.e. everything) 
-#|   highlighted in blue.
+#|   데이터 과학 프로세스 모델에서 프로그래밍(불러오기, 정돈하기, 변형하기, 
+#|   시각화하기, 모델링하기, 소통하기, 즉 모든 것) 단계가 파란색으로 
+#|   강조된 다이어그램.
 knitr::include_graphics("diagrams/data-science/program.png", dpi = 270)
 ```
 
-Programming produces code, and code is a tool of communication.
-Obviously code tells the computer what you want it to do.
-But it also communicates meaning to other humans.
-Thinking about code as a vehicle for communication is important because every project you do is fundamentally collaborative.
-Even if you're not working with other people, you'll definitely be working with future-you!
-Writing clear code is important so that others (like future-you) can understand why you tackled an analysis in the way you did.
-That means getting better at programming also involves getting better at communicating.
-Over time, you want your code to become not just easier to write, but easier for others to read.
+프로그래밍은 코드를 만들어내고, 코드는 소통의 도구입니다.
+당연히 코드는 컴퓨터에 여러분이 원하는 바를 지시합니다.
+하지만 코드는 다른 사람에게 의미를 전달하기도 합니다.
+코드를 소통의 수단으로 생각하는 것은 매우 중요합니다. 여러분이 수행하는 모든 프로젝트는 근본적으로 협업이기 때문입니다.
+다른 사람과 함께 일하지 않더라도, 미래의 여러분과는 반드시 협업하게 될 것입니다!
+다른 사람들(예를 들어 미래의 여러분)이 왜 그런 방식으로 분석을 수행했는지 이해할 수 있도록 명확한 코드를 작성하는 것이 중요합니다.
+이는 프로그래밍 실력을 키우는 것이 곧 소통 능력을 키우는 것임을 의미합니다.
+시간이 지나면서 여러분의 코드는 단순히 작성하기 쉬워지는 것을 넘어, 다른 사람들이 읽기 쉬운 코드가 되어야 합니다.
 
-In the following three chapters, you'll learn skills to improve your programming skills:
+이어지는 세 개 챕터에서는 프로그래밍 실력을 향상하기 위한 기술들을 배우게 됩니다:
 
-1.  Copy-and-paste is a powerful tool, but you should avoid doing it more than twice.
-    Repeating yourself in code is dangerous because it can easily lead to errors and inconsistencies.
-    Instead, in @sec-functions, you'll learn how to write **functions** which let you extract out repeated tidyverse code so that it can be easily reused.
+1.  복사해서 붙여넣기는 강력한 도구이지만, 세 번 이상 반복하는 것은 피해야 합니다.
+    코드에서 자신을 반복하는 것은 위험합니다. 에러와 불일치가 발생하기 쉽기 때문입니다.
+    대신 @sec-functions 에서는 반복되는 tidyverse 코드를 추출하여 쉽게 재사용할 수 있게 해주는 **함수(functions)** 작성법을 배웁니다.
 
-2.  Functions extract out repeated code, but you often need to repeat the same actions on different inputs.
-    You need tools for **iteration** that let you do similar things again and again.
-    These tools include for loops and functional programming, which you'll learn about in @sec-iteration.
+2.  함수가 반복되는 코드를 추출해 준다면, 때로는 서로 다른 입력값에 대해 동일한 동작을 반복해야 할 때도 있습니다.
+    유사한 작업을 계속해서 수행할 수 있게 해주는 **반복(iteration)** 도구가 필요합니다.
+    이러한 도구에는 for 루프와 함수형 프로그래밍이 포함되며, @sec-iteration 에서 배우게 됩니다.
 
-3.  As you read more code written by others, you'll see more code that doesn't use the tidyverse.
-    In @sec-base-r, you'll learn some of the most important base R functions that you'll see in the wild.
+3.  다른 사람들이 작성한 코드를 더 많이 읽다 보면, tidyverse를 사용하지 않는 코드를 더 많이 보게 될 것입니다.
+    @sec-base-r 에서는 실제 환경에서 마주하게 될 가장 중요한 base R 함수들 중 일부를 배웁니다.
 
-The goal of these chapters is to teach you the minimum about programming that you need for data science.
-Once you have mastered the material here, we strongly recommend that you continue to invest in your programming skills.
-We've written two books that you might find helpful.
-[*Hands on Programming with R*](https://rstudio-education.github.io/hopr/), by Garrett Grolemund, is an introduction to R as a programming language and is a great place to start if R is your first programming language.
-[*Advanced R*](https://adv-r.hadley.nz/) by Hadley Wickham dives into the details of R the programming language; it's a great place to start if you have existing programming experience and a great next step once you've internalized the ideas in these chapters.
+이 챕터들의 목표는 데이터 과학에 필요한 최소한의 프로그래밍 지식을 가르쳐 드리는 것입니다.
+여기 있는 내용을 마스터하고 나면 프로그래밍 실력에 더 투자하시기를 강력히 권장합니다.
+여러분이 도움이 될만한 두 권의 책을 썼습니다.
+가렛 그롤문드(Garrett Grolemund)의 [*Hands on Programming with R*](https://rstudio-education.github.io/hopr/)은 프로그래밍 언어로서의 R에 대한 입문서이며, R이 여러분의 첫 프로그래밍 언어라면 시작하기 아주 좋은 책입니다.
+해들리 위컴(Hadley Wickham)의 [*Advanced R*](https://adv-r.hadley.nz/)은 프로그래밍 언어 R의 세부 사항을 깊이 있게 다룹니다. 이미 프로그래밍 경험이 있거나, 이 챕터들의 내용을 내면화한 후 다음 단계로 넘어가고 싶을 때 시작하기 아주 좋은 책입니다.

@@ -1,4 +1,4 @@
-# Whole game {#sec-whole-game-intro .unnumbered}
+# 전체 과정 {#sec-whole-game-intro .unnumbered}
 
 ```{r}
 #| results: "asis"
@@ -6,39 +6,38 @@
 source("_common.R")
 ```
 
-Our goal in this part of the book is to give you a rapid overview of the main tools of data science: **importing**, **tidying**, **transforming**, and **visualizing data**, as shown in @fig-ds-whole-game.
-We want to show you the "whole game" of data science giving you just enough of all the major pieces so that you can tackle real, if simple, datasets.
-The later parts of the book will hit each of these topics in more depth, increasing the range of data science challenges that you can tackle.
+이 책의 첫 번째 부분인 "전체 과정"의 목표는 @fig-ds-whole-game 에서 보여주듯이 데이터 과학의 주요 도구들인 **데이터 불러오기(importing)**, **정돈하기(tidying)**, **변형하기(transforming)**, 그리고 **시각화하기(visualizing)** 에 대한 개괄적인 내용을 빠르게 살펴보는 것입니다.
+간단한 데이터셋이라도 실제 데이터를 다룰 수 있도록 모든 주요 단계에 대해 충분한 내용을 안내하여 데이터 과학의 "전체 과정"을 보여드리고자 합니다.
+책의 뒷부분에서는 이러한 각 주제를 더 깊이 있게 다루어, 여러분이 해결할 수 있는 데이터 과학 과제의 범위를 넓혀나갈 것입니다.
 
 ```{r}
 #| label: fig-ds-whole-game 
 #| echo: false
 #| out.width: NULL
 #| fig-cap: |
-#|   In this section of the book, you'll learn how to import,
-#|   tidy, transform, and visualize data.
+#|   이 섹션에서는 데이터를 불러오고, 정돈하고, 변형하고, 시각화하는 방법을 배웁니다.
 #| fig-alt: |
-#|   A diagram displaying the data science cycle: Import -> Tidy ->
-#|   Understand  (which has the phases Transform -> Visualize -> Model in a
-#|   cycle) -> Communicate. Surrounding all of these is Program 
-#|   Import, Tidy, Transform, and Visualize is highlighted.
+#|   데이터 과학 사이클을 보여주는 다이어그램: 불러오기(Import) -> 정돈하기(Tidy) ->
+#|   이해하기 (변형(Transform) -> 시각화(Visualize) -> 모델링(Model)이 사이클을 
+#|   이루는 과정 포함) -> 소통하기(Communicate). 이 모든 과정을 프로그래밍(Program)이 
+#|   둘러싸고 있음. 불러오기, 정돈하기, 변형하기, 시각화하기 단계가 강조됨.
 knitr::include_graphics("diagrams/data-science/whole-game.png", dpi = 270)
 ```
 
-Four chapters focus on the tools of data science:
+네 가지 주요 챕터가 데이터 과학의 도구들에 집중합니다:
 
--   Visualization is a great place to start with R programming, because the payoff is so clear: you get to make elegant and informative plots that help you understand data.
-    In @sec-data-visualization you'll dive into visualization, learning the basic structure of a ggplot2 plot, and powerful techniques for turning data into plots.
+-   시각화는 R 프로그래밍을 시작하기에 아주 좋은 지점입니다. 그 보상이 매우 명확하기 때문입니다. 데이터를 이해하는 데 도움이 되는 우아하고 유익한 그래프를 만들 수 있습니다.
+    @sec-data-visualization 에서 여러분은 시각화의 세계로 뛰어들어 ggplot2 플롯의 기본 구조와 데이터를 그래프로 변환하는 강력한 기술들을 배우게 됩니다.
 
--   Visualization alone is typically not enough, so in @sec-data-transform, you'll learn the key verbs that allow you to select important variables, filter out key observations, create new variables, and compute summaries.
+-   시각화만으로는 부족할 때가 많으므로, @sec-data-transform 에서는 중요한 변수를 선택하고, 주요 관측값을 필터링하며, 새로운 변수를 생성하고 요약치를 계산할 수 있게 해주는 핵심 동사(함수)들을 배웁니다.
 
--   In @sec-data-tidy, you'll learn about tidy data, a consistent way of storing your data that makes transformation, visualization, and modelling easier.
-    You'll learn the underlying principles, and how to get your data into a tidy form.
+-   @sec-data-tidy 에서는 변형, 시각화 및 모델링을 더 쉽게 만들어 주는 일관된 데이터 저장 방식인 타이디 데이터(tidy data)에 대해 배웁니다.
+    기저의 원칙들과 데이터를 정돈된 형태로 만드는 방법을 배우게 될 것입니다.
 
--   Before you can transform and visualize your data, you need to first get your data into R.
-    In @sec-data-import you'll learn the basics of getting `.csv` files into R.
+-   데이터를 변형하고 시각화하기 전에, 먼저 데이터를 R로 가져와야 합니다.
+    @sec-data-import 에서는 `.csv` 파일을 R로 불러오는 기초를 배웁니다.
 
-Nestled among these chapters are four other chapters that focus on your R workflow.
-In @sec-workflow-basics, @sec-workflow-style, and @sec-workflow-scripts-projects you'll learn good workflow practices for writing and organizing your R code.
-These will set you up for success in the long run, as they'll give you the tools to stay organized when you tackle real projects.
-Finally, @sec-workflow-getting-help will teach you how to get help and keep learning.
+이 챕터들 사이에는 R 워크플로(workflow)에 집중하는 네 가지 다른 챕터들이 자리 잡고 있습니다.
+@sec-workflow-basics, @sec-workflow-style, 그리고 @sec-workflow-scripts-projects 에서 여러분은 R 코드를 작성하고 조직화하는 좋은 워크플로 관행들을 배우게 됩니다.
+이들은 실제 프로젝트를 다룰 때 여러분이 체계적으로 작업할 수 있는 도구를 제공하여, 장기적으로 성공적인 분석을 수행할 수 있는 토대가 될 것입니다.
+마지막으로, @sec-workflow-getting-help 에서는 도움을 얻고 지속적으로 학습하는 방법을 다룹니다.

@@ -1,39 +1,39 @@
-# Import {#sec-import .unnumbered}
+# 불러오기 {#sec-import .unnumbered}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-In this part of the book, you'll learn how to import a wider range of data into R, as well as how to get it into a form useful for analysis.
-Sometimes this is just a matter of calling a function from the appropriate data import package.
-But in more complex cases it might require both tidying and transformation in order to get to the tidy rectangle that you'd prefer to work with.
+책의 이번 부분에서는 더 광범위한 데이터를 R로 불러오는 방법과, 이를 분석에 유용한 형태로 만드는 방법을 배우게 됩니다.
+때로는 적절한 데이터 불러오기 패키지에서 함수를 호출하는 것만으로 충분할 때도 있습니다.
+하지만 더 복잡한 경우에는 여러분이 선호하는 정돈된 직사각형(tidy rectangle) 형태를 얻기 위해 정돈(tidying)과 변형(transformation) 과정이 모두 필요할 수도 있습니다.
 
 ```{r}
 #| label: fig-ds-import
 #| echo: false
 #| fig-cap: |
-#|   Data import is the beginning of the data science process; without
-#|   data you can't do data science!
+#|   데이터 불러오기는 데이터 과학 프로세스의 시작입니다. 데이터 없이는 
+#|   데이터 과학을 할 수 없습니다!
 #| fig-alt: |
-#|   Our data science model with import highlighted in blue.
+#|   데이터 과학 모델에서 불러오기(import) 단계가 파란색으로 강조된 다이어그램.
 #| out.width: NULL
 knitr::include_graphics("diagrams/data-science/import.png", dpi = 270)
 ```
 
-In this part of the book you'll learn how to access data stored in the following ways:
+책의 이 부분에서는 다음과 같은 방식으로 저장된 데이터에 접근하는 방법을 배웁니다:
 
--   In @sec-import-spreadsheets, you'll learn how to import data from Excel spreadsheets and Google Sheets.
+-   @sec-import-spreadsheets 에서는 Excel 스프레드시트와 Google Sheets에서 데이터를 불러오는 방법을 배웁니다.
 
--   In @sec-import-databases, you'll learn about getting data out of a database and into R (and you'll also learn a little about how to get data out of R and into a database).
+-   @sec-import-databases 에서는 데이터베이스에서 데이터를 R로 가져오는 방법(그리고 R에서 데이터베이스로 데이터를 내보내는 방법도 약간)을 배웁니다.
 
--   In @sec-arrow, you'll learn about Arrow, a powerful tool for working with out-of-memory data, particularly when it's stored in the parquet format.
+-   @sec-arrow 에서는 메모리 범위를 벗어나는(out-of-memory) 대용량 데이터, 특히 파케이(parquet) 형식으로 저장된 데이터를 다루기 위한 강력한 도구인 Arrow에 대해 배웁니다.
 
--   In @sec-rectangling, you'll learn how to work with hierarchical data, including the deeply nested lists produced by data stored in the JSON format.
+-   @sec-rectangling 에서는 JSON 형식 등으로 저장된 깊게 중첩된 리스트를 포함하여 계층형 데이터를 다루는 법을 배웁니다.
 
--   In @sec-scraping, you'll learn web "scraping", the art and science of extracting data from web pages.
+-   @sec-scraping 에서는 웹 페이지에서 데이터를 추출하는 기술인 웹 "스크래핑(scraping)"을 배웁니다.
 
-There are two important tidyverse packages that we don't discuss here: haven and xml2.
-If you're working with data from SPSS, Stata, and SAS files, check out the **haven** package, <https://haven.tidyverse.org>.
-If you're working with XML data, check out the **xml2** package, <https://xml2.r-lib.org>.
-Otherwise, you'll need to do some research to figure out which package you'll need to use; google is your friend here 😃.
+여기서 다루지 않는 두 가지 중요한 tidyverse 패키지가 있습니다: haven과 xml2입니다.
+SPSS, Stata, SAS 파일의 데이터를 다루신다면 **haven** 패키지(<https://haven.tidyverse.org>)를 확인해 보세요.
+XML 데이터를 다루신다면 **xml2** 패키지(<https://xml2.r-lib.org>)를 확인해 보세요.
+그 외의 경우에는 어떤 패키지를 사용해야 할지 조사가 필요할 것입니다. 구글은 여러분의 친구입니다 😃.

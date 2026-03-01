@@ -1,24 +1,24 @@
-# Logical vectors {#sec-logicals}
+# 논리형 벡터 {#sec-logicals}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-In this chapter, you'll learn tools for working with logical vectors.
-Logical vectors are the simplest type of vector because each element can only be one of three possible values: `TRUE`, `FALSE`, and `NA`.
-It's relatively rare to find logical vectors in your raw data, but you'll create and manipulate them in the course of almost every analysis.
+이 챕터에서는 논리형 벡터(logical vectors)를 다루는 도구들을 배웁니다.
+논리형 벡터는 각 요소가 `TRUE`, `FALSE`, `NA`라는 세 가지 가능한 값 중 하나만 가질 수 있기 때문에 가장 단순한 유형의 벡터입니다.
+원시 데이터에서 논리형 벡터를 발견하는 것은 상대적으로 드문 일이지만, 거의 모든 분석 과정에서 이를 생성하고 조작하게 될 것입니다.
 
-We'll begin by discussing the most common way of creating logical vectors: with numeric comparisons.
-Then you'll learn about how you can use Boolean algebra to combine different logical vectors, as well as some useful summaries.
-We'll finish off with `if_else()` and `case_when()`, two useful functions for making conditional changes powered by logical vectors.
+숫자 비교를 통해 논리형 벡터를 만드는 가장 일반적인 방법부터 시작하겠습니다.
+그다음 불리언 대수(Boolean algebra)를 사용하여 서로 다른 논리형 벡터를 결합하는 방법과 몇 가지 유용한 요약 통계량을 배웁니다.
+마지막으로 논리형 벡터를 기반으로 조건부 변경을 수행하는 두 가지 유용한 함수인 `if_else()`와 `case_when()`을 살펴보며 마무리하겠습니다.
 
-### Prerequisites
+### 사전 요구 사항
 
-Most of the functions you'll learn about in this chapter are provided by base R, so we don't need the tidyverse, but we'll still load it so we can use `mutate()`, `filter()`, and friends to work with data frames.
-We'll also continue to draw examples from the `nycflights13::flights` dataset.
+이 챕터에서 배울 대부분의 함수는 base R에서 제공하므로 tidyverse가 꼭 필요하지는 않지만, 데이터 프레임을 다루기 위해 `mutate()`, `filter()` 등을 사용할 수 있도록 여전히 tidyverse를 로드하겠습니다.
+또한 `nycflights13::flights` 데이터셋에서 계속해서 예제를 가져올 것입니다.
 
 ```{r}
 #| label: setup
@@ -27,16 +27,16 @@ library(tidyverse)
 library(nycflights13)
 ```
 
-However, as we start to cover more tools, there won't always be a perfect real example.
-So we'll start making up some dummy data with `c()`:
+하지만 더 많은 도구를 다루기 시작하면서 항상 완벽한 실제 예제가 있는 것은 아닙니다.
+따라서 `c()`를 사용하여 가상의 데이터를 만들어 보겠습니다:
 
 ```{r}
 x <- c(1, 2, 3, 5, 7, 11, 13)
 x * 2
 ```
 
-This makes it easier to explain individual functions at the cost of making it harder to see how it might apply to your data problems.
-Just remember that any manipulation we do to a free-floating vector, you can do to a variable inside a data frame with `mutate()` and friends.
+이렇게 하면 개별 함수를 설명하기는 쉬워지지만, 여러분의 데이터 문제에 어떻게 적용될지 확인하기는 조금 더 어려워질 수 있습니다.
+자유롭게 떠다니는 벡터에 대해 수행하는 모든 조작은 `mutate()` 등을 사용하여 데이터 프레임 내부의 변수에도 똑같이 할 수 있다는 점을 기억하세요.
 
 ```{r}
 df <- tibble(x)
@@ -44,18 +44,18 @@ df |>
   mutate(y = x * 2)
 ```
 
-## Comparisons
+## 비교
 
-A very common way to create a logical vector is via a numeric comparison with `<`, `<=`, `>`, `>=`, `!=`, and `==`.
-So far, we've mostly created logical variables transiently within `filter()` --- they are computed, used, and then thrown away.
-For example, the following filter finds all daytime departures that arrive roughly on time:
+논리형 벡터를 만드는 매우 일반적인 방법은 `<`, `<=`, `>`, `>=`, `!=`, `==`를 사용한 숫자 비교입니다.
+지금까지 우리는 주로 `filter()` 내에서 논리 변수를 일시적으로 생성해 왔습니다. 즉, 계산되고 사용된 뒤 바로 버려졌습니다.
+예를 들어, 다음 필터는 대략 제시간에 도착한 모든 주간 출발 항공편을 찾습니다:
 
 ```{r}
 flights |> 
   filter(dep_time > 600 & dep_time < 2000 & abs(arr_delay) < 20)
 ```
 
-It's useful to know that this is a shortcut and you can explicitly create the underlying logical variables with `mutate()`:
+이것이 단축 방식임을 아는 것이 유용하며, 다음과 같이 `mutate()`를 사용하여 기저의 논리 변수를 명시적으로 생성할 수도 있습니다:
 
 ```{r}
 flights |> 
@@ -66,9 +66,9 @@ flights |>
   )
 ```
 
-This is particularly useful for more complicated logic because naming the intermediate steps makes it easier to both read your code and check that each step has been computed correctly.
+이는 더 복잡한 로직을 다룰 때 특히 유용한데, 중간 단계에 이름을 붙이면 코드를 읽기도 쉬워지고 각 단계가 올바르게 계산되었는지 확인하기도 쉬워지기 때문입니다.
 
-All up, the initial filter is equivalent to:
+결론적으로, 처음의 필터는 다음과 동일합니다:
 
 ```{r}
 #| results: false
@@ -80,82 +80,82 @@ flights |>
   filter(daytime & approx_ontime)
 ```
 
-### Floating point comparison {#sec-fp-comparison}
+### 부동 소수점 비교 {#sec-fp-comparison}
 
-Beware of using `==` with numbers.
-For example, it looks like this vector contains the numbers 1 and 2:
+숫자들에 `==`를 사용할 때는 주의하세요.
+예를 들어, 이 벡터에는 숫자 1과 2가 포함된 것처럼 보입니다:
 
 ```{r}
 x <- c(1 / 49 * 49, sqrt(2) ^ 2)
 x
 ```
 
-But if you test them for equality, you get `FALSE`:
+하지만 이들이 같은지 테스트해 보면 `FALSE`가 나옵니다:
 
 ```{r}
 x == c(1, 2)
 ```
 
-What's going on?
-Computers store numbers with a fixed number of decimal places so there's no way to exactly represent 1/49 or `sqrt(2)` and subsequent computations will be very slightly off.
-We can see the exact values by calling `print()` with the `digits`[^logicals-1] argument:
+무슨 일이 일어나고 있는 걸까요?
+컴퓨터는 고정된 자릿수의 소수점으로 숫자를 저장하기 때문에 1/49 또는 `sqrt(2)`를 정확하게 표현할 방법이 없으며, 이후의 계산은 아주 미세하게 틀어집니다.
+`digits`[^logicals-1] 인자와 함께 `print()`를 호출하여 정확한 값을 확인할 수 있습니다:
 
-[^logicals-1]: R normally calls print for you (i.e. `x` is a shortcut for `print(x)`), but calling it explicitly is useful if you want to provide other arguments.
+[^logicals-1]: R은 보통 여러분을 위해 자동으로 print를 호출하지만(즉, `x`는 `print(x)`의 단축 방식입니다), 다른 인자를 제공하고 싶을 때는 명시적으로 호출하는 것이 유용합니다.
 
 ```{r}
 print(x, digits = 16)
 ```
 
-You can see why R defaults to rounding these numbers; they really are very close to what you expect.
+R이 왜 기본적으로 이 숫자들을 반올림하는지 알 수 있습니다. 실제로는 여러분이 기대하는 값과 정말 가깝기 때문입니다.
 
-Now that you've seen why `==` is failing, what can you do about it?
-One option is to use `dplyr::near()` which ignores small differences:
+이제 `==`가 왜 실패하는지 확인했으니, 어떻게 해야 할까요?
+한 가지 옵션은 미세한 차이를 무시하는 `dplyr::near()`를 사용하는 것입니다:
 
 ```{r}
 near(x, c(1, 2))
 ```
 
-### Missing values {#sec-na-comparison}
+### 결측값 {#sec-na-comparison}
 
-Missing values represent the unknown so they are "contagious": almost any operation involving an unknown value will also be unknown:
+결측값은 알 수 없는 상태(unknown)를 나타내므로 "전염성"이 있습니다. 즉, 알 수 없는 값이 포함된 거의 모든 연산 결과도 알 수 없게 됩니다:
 
 ```{r}
 NA > 5
 10 == NA
 ```
 
-The most confusing result is this one:
+가장 혼란스러운 결과는 다음과 같습니다:
 
 ```{r}
 NA == NA
 ```
 
-It's easiest to understand why this is true if we artificially supply a little more context:
+약간의 문맥을 인위적으로 제공하면 이것이 왜 참인지 이해하기 가장 쉽습니다:
 
 ```{r}
-# We don't know how old Mary is
+# Mary의 나이를 모릅니다.
 age_mary <- NA
 
-# We don't know how old John is
+# John의 나이를 모릅니다.
 age_john <- NA
 
-# Are Mary and John the same age?
+# Mary와 John의 나이가 같나요?
 age_mary == age_john
-# We don't know!
+# 모릅니다!
 ```
 
-So if you want to find all flights where `dep_time` is missing, the following code doesn't work because `dep_time == NA` will yield `NA` for every single row, and `filter()` automatically drops missing values:
+따라서 `dep_time`이 결측된 모든 항공편을 찾고 싶을 때, 다음 코드는 작동하지 않습니다. `dep_time == NA`가 모든 행에 대해 `NA`를 생성하고, `filter()`는 자동으로 결측값을 제거하기 때문입니다:
 
 ```{r}
 flights |> 
   filter(dep_time == NA)
 ```
 
-Instead we'll need a new tool: `is.na()`.
+대신 우리는 새로운 도구인 `is.na()`가 필요합니다.
 
 ### `is.na()`
 
-`is.na(x)` works with any type of vector and returns `TRUE` for missing values and `FALSE` for everything else:
+`is.na(x)`는 모든 유형의 벡터와 함께 작동하며 결측값에 대해 `TRUE`를, 그 외의 모든 것에 대해 `FALSE`를 반환합니다:
 
 ```{r}
 is.na(c(TRUE, NA, FALSE))
@@ -163,15 +163,15 @@ is.na(c(1, NA, 3))
 is.na(c("a", NA, "b"))
 ```
 
-We can use `is.na()` to find all the rows with a missing `dep_time`:
+`is.na()`를 사용하여 `dep_time`이 결측된 모든 행을 찾을 수 있습니다:
 
 ```{r}
 flights |> 
   filter(is.na(dep_time))
 ```
 
-`is.na()` can also be useful in `arrange()`.
-`arrange()` usually puts all the missing values at the end but you can override this default by first sorting by `is.na()`:
+`is.na()`는 `arrange()`에서도 유용할 수 있습니다.
+`arrange()`는 대개 모든 결측값을 마지막에 두지만, 먼저 `is.na()`로 정렬함으로써 이 기본값을 덮어쓸 수 있습니다:
 
 ```{r}
 flights |> 
@@ -183,50 +183,48 @@ flights |>
   arrange(desc(is.na(dep_time)), dep_time)
 ```
 
-We'll come back to cover missing values in more depth in @sec-missing-values.
+결측값에 대해서는 @sec-missing-values 에서 더 자세히 다루겠습니다.
 
-### Exercises
+### 연습문제
 
-1.  How does `dplyr::near()` work? Type `near` to see the source code. Is `sqrt(2)^2` near 2?
-2.  Use `mutate()`, `is.na()`, and `count()` together to describe how the missing values in `dep_time`, `sched_dep_time` and `dep_delay` are connected.
+1.  `dplyr::near()`는 어떻게 작동합니까? `near`를 입력하여 소스 코드를 확인하세요. `sqrt(2)^2`는 2와 가깝습니까?
+2.  `mutate()`, `is.na()`, `count()`를 함께 사용하여 `dep_time`, `sched_dep_time`, `dep_delay`의 결측값이 어떻게 연결되어 있는지 설명하세요.
 
-## Boolean algebra
+## 불리언 대수
 
-Once you have multiple logical vectors, you can combine them together using Boolean algebra.
-In R, `&` is "and", `|` is "or", `!` is "not", and `xor()` is exclusive or[^logicals-2].
-For example, `df |> filter(!is.na(x))` finds all rows where `x` is not missing and `df |> filter(x < -10 | x > 0)` finds all rows where `x` is smaller than -10 or bigger than 0.
-@fig-bool-ops shows examples of commonly used Boolean operations and how they work.
+여러 개의 논리형 벡터가 있다면 불리언 대수(Boolean algebra)를 사용하여 이들을 결합할 수 있습니다.
+R에서 `&`는 "and(그리고)", `|`는 "or(또는)", `!`는 "not(아님)", 그리고 `xor()`은 exclusive or(배타적 논리합)[^logicals-2]입니다.
+예를 들어 `df |> filter(!is.na(x))`는 `x`가 결측값이 아닌 모든 행을 찾고, `df |> filter(x < -10 | x > 0)`는 `x`가 -10보다 작거나 0보다 큰 모든 행을 찾습니다.
+@fig-bool-ops 는 자주 사용되는 불리언 연산의 예시와 작동 방식을 보여줍니다.
 
-[^logicals-2]: That is, `xor(x, y)` is true if x is true, or y is true, but not both.
-    This is how we usually use "or" In English.
-    "Both" is not usually an acceptable answer to the question "would you like ice cream or cake?".
+[^logicals-2]: 즉, `xor(x, y)`는 x가 참이거나 y가 참일 때 참이지만, 둘 다 참일 때는 아닙니다.
+    이것이 우리가 영어(또는 한국어)에서 보통 사용하는 "또는"의 방식입니다.
+    "아이스크림 또는 케이크를 드시겠습니까?"라는 질문에 "둘 다"는 보통 허용되는 대답이 아닙니다.
 
 ```{r}
 #| label: fig-bool-ops
 #| echo: false
 #| out-width: NULL
 #| fig-cap: | 
-#|    A set of commonly used Boolean operations. `x` is the left-hand
-#|    circle, `y` is the right-hand circle, and the shaded regions show 
-#|    which parts each operator selects.
+#|    자주 사용되는 불리언 연산들의 집합. `x`는 왼쪽 원이고 `y`는 오른쪽 원이며, 
+#|    색칠된 영역은 각 연산자가 선택하는 부문을 보여줍니다.
 #| fig-alt: |
-#|    Seven Venn diagrams, each explaining a given logical operator. The
-#|    circles (sets) in each of the Venn diagrams represent x and y. x &
-#|    !y is x but none of y; x & y is the intersection of x and y; !x & y is
-#|    y but none of x; x is all of x; xor(x, y) is everything
-#|    except the intersection of x and y; y is all of y; and 
-#|    x | y is everything.
+#|    각 논리 연산자를 설명하는 7개의 벤다이어그램. 각 벤다이어그램의 
+#|    원(집합)은 x와 y를 나타냄. x & !y는 x이지만 y는 아닌 부문; x & y는 
+#|    x와 y의 교집합; !x & y는 y이지만 x는 아닌 부문; x는 x의 전체; 
+#|    xor(x, y)는 x와 y의 교집합을 제외한 모든 부문; y는 y의 전체; 
+#|    그리고 x | y는 모든 부문임.
 knitr::include_graphics("diagrams/transform.png", dpi = 270)
 ```
 
-As well as `&` and `|`, R also has `&&` and `||`.
-Don't use them in dplyr functions!
-These are called short-circuiting operators and only ever return a single `TRUE` or `FALSE`.
-They're important for programming, not data science.
+`&`와 `|` 뿐만 아니라, R에는 `&&`와 `||`도 있습니다.
+dplyr 함수 내에서는 이들을 사용하지 마세요!
+이들은 단락 평가(short-circuiting) 연산자라고 불리며 오직 단일한 `TRUE` 또는 `FALSE`만을 반환합니다.
+이들은 데이터 과학이 아니라 프로그래밍에서 중요합니다.
 
-### Missing values {#sec-na-boolean}
+### 결측값 {#sec-na-boolean}
 
-The rules for missing values in Boolean algebra are a little tricky to explain because they seem inconsistent at first glance:
+불리언 대수에서 결측값에 대한 규칙은 언뜻 보기에 모순되어 보일 수 있어 설명하기가 조금 까다롭습니다:
 
 ```{r}
 df <- tibble(x = c(TRUE, FALSE, NA))
@@ -238,18 +236,18 @@ df |>
   )
 ```
 
-To understand what's going on, think about `NA | TRUE` (`NA` or `TRUE`).
-A missing value in a logical vector means that the value could either be `TRUE` or `FALSE`.
-`TRUE | TRUE` and `FALSE | TRUE` are both `TRUE` because at least one of them is `TRUE`.
-`NA | TRUE` must also be `TRUE` because `NA` can either be `TRUE` or `FALSE`.
-However, `NA | FALSE` is `NA` because we don't know if `NA` is `TRUE` or `FALSE`.
-Similar reasoning applies for `&` considering that both conditions must be fulfilled.
-Therefore `NA & TRUE` is `NA` because `NA` can either be `TRUE` or `FALSE` and `NA & FALSE` is `FALSE` because at least one of the conditions is `FALSE`.
+무슨 일이 일어나는지 이해하려면 `NA | TRUE`(`NA` 또는 `TRUE`)에 대해 생각해 보세요.
+논리형 벡터의 결측값은 그 값이 `TRUE`이거나 `FALSE`일 수 있음을 의미합니다.
+`TRUE | TRUE`와 `FALSE | TRUE`는 둘 중 적어도 하나가 `TRUE`이므로 모두 `TRUE`입니다.
+따라서 `NA | TRUE`도 반드시 `TRUE`여야 합니다. `NA`가 `TRUE`이든 `FALSE`이든 상관없기 때문입니다.
+하지만 `NA | FALSE`는 `NA`입니다. `NA`가 `TRUE`인지 `FALSE`인지 모르기 때문입니다.
+`&`의 경우 두 조건이 모두 충족되어야 함을 고려하면 유사한 추론이 적용됩니다.
+따라서 `NA & TRUE`는 `NA`입니다. `NA`가 `TRUE`일 수도 있고 `FALSE`일 수도 있기 때문입니다. 반면 `NA & FALSE`는 `FALSE`입니다. 적어도 하나의 조건이 `FALSE`임이 확실하기 때문입니다.
 
-### Order of operations {#sec-order-operations-boolean}
+### 연산 순서 {#sec-order-operations-boolean}
 
-Note that the order of operations doesn't work like English.
-Take the following code that finds all flights that departed in November or December:
+연산 순서가 일상 언어(영어/한국어)처럼 작동하지 않는다는 점에 유의하세요.
+11월 또는 12월에 출발한 모든 항공편을 찾는 다음 코드를 봅시다:
 
 ```{r}
 #| eval: false
@@ -257,18 +255,18 @@ flights |>
    filter(month == 11 | month == 12)
 ```
 
-You might be tempted to write it like you'd say in English: "Find all flights that departed in November or December.":
+여러분은 "11월 또는 12월에 출발한 모든 항공편을 찾아줘"라고 말하는 것처럼 다음과 같이 쓰고 싶을 수도 있습니다:
 
 ```{r}
 flights |> 
    filter(month == 11 | 12)
 ```
 
-This code doesn't error but it also doesn't seem to have worked.
-What's going on?
-Here, R first evaluates `month == 11` creating a logical vector, which we call `nov`.
-It computes `nov | 12`.
-When you use a number with a logical operator it converts everything apart from 0 to `TRUE`, so this is equivalent to `nov | TRUE` which will always be `TRUE`, so every row will be selected:
+이 코드는 에러가 발생하지는 않지만 결과가 올바르지 않은 것 같습니다.
+무슨 일이 일어난 걸까요?
+여기서 R은 먼저 `month == 11`을 평가하여 `nov`라고 부르는 논리형 벡터를 생성합니다.
+그다음 `nov | 12`를 계산합니다.
+숫자를 논리 연산자와 함께 사용하면 0을 제외한 모든 숫자를 `TRUE`로 변환하므로, 이는 `nov | TRUE`와 동일하며 항상 `TRUE`가 됩니다. 따라서 모든 행이 선택됩니다:
 
 ```{r}
 flights |> 
@@ -281,15 +279,15 @@ flights |>
 
 ### `%in%`
 
-An easy way to avoid the problem of getting your `==`s and `|`s in the right order is to use `%in%`.
-`x %in% y` returns a logical vector the same length as `x` that is `TRUE` whenever a value in `x` is anywhere in `y` .
+`==`와 `|`의 순서를 맞추는 문제를 피하는 쉬운 방법은 `%in%`를 사용하는 것입니다.
+`x %in% y`는 `x`의 값이 `y`의 어디든 포함되어 있을 때마다 `TRUE`인 `x`와 동일한 길이의 논리형 벡터를 반환합니다.
 
 ```{r}
 1:12 %in% c(1, 5, 11)
 letters[1:10] %in% c("a", "e", "i", "o", "u")
 ```
 
-So to find all flights in November and December we could write:
+따라서 11월과 12월의 모든 항공편을 찾기 위해 다음과 같이 쓸 수 있습니다:
 
 ```{r}
 #| eval: false
@@ -297,40 +295,40 @@ flights |>
   filter(month %in% c(11, 12))
 ```
 
-Note that `%in%` obeys different rules for `NA` to `==`, as `NA %in% NA` is `TRUE`.
+`%in%`는 `NA`에 대해 `==`와 다른 규칙을 따르는데, `NA %in% NA`는 `TRUE`라는 점에 유의하세요.
 
 ```{r}
 c(1, 2, NA) == NA
 c(1, 2, NA) %in% NA
 ```
 
-This can make for a useful shortcut:
+이를 유용한 단축 방식으로 활용할 수 있습니다:
 
 ```{r}
 flights |> 
   filter(dep_time %in% c(NA, 0800))
 ```
 
-### Exercises
+### 연습문제
 
-1.  Find all flights where `arr_delay` is missing but `dep_delay` is not. Find all flights where neither `arr_time` nor `sched_arr_time` are missing, but `arr_delay` is.
-2.  How many flights have a missing `dep_time`? What other variables are missing in these rows? What might these rows represent?
-3.  Assuming that a missing `dep_time` implies that a flight is cancelled, look at the number of cancelled flights per day. Is there a pattern? Is there a connection between the proportion of cancelled flights and the average delay of non-cancelled flights?
+1.  `arr_delay`는 결측되었지만 `dep_delay`는 그렇지 않은 모든 항공편을 찾으세요. `arr_time`과 `sched_arr_time`은 둘 다 결측되지 않았지만, `arr_delay`는 결측된 모든 항공편을 찾으세요.
+2.  `dep_time`이 결측된 항공편은 몇 개입니까? 이 행들에서 다른 어떤 변수들이 결측되어 있습니까? 이 행들은 무엇을 나타낼 수 있습니까?
+3.  결측된 `dep_time`이 항공편 취소를 의미한다고 가정하고, 일별 취소된 항공편 수를 살펴보세요. 어떤 패턴이 있습니까? 취소된 항공편의 비율과 취소되지 않은 항공편의 평균 지연 시간 사이에 연관성이 있습니까?
 
-## Summaries {#sec-logical-summaries}
+## 요약 통계량 {#sec-logical-summaries}
 
-The following sections describe some useful techniques for summarizing logical vectors.
-As well as functions that only work specifically with logical vectors, you can also use functions that work with numeric vectors.
+다음 섹션들은 논리형 벡터를 요약하는 유용한 기술들을 설명합니다.
+논리형 벡터와만 특정하게 작동하는 함수들뿐만 아니라 숫자형 벡터와 작동하는 함수들도 사용할 수 있습니다.
 
-### Logical summaries
+### 논리형 요약
 
-There are two main logical summaries: `any()` and `all()`.
-`any(x)` is the equivalent of `|`; it'll return `TRUE` if there are any `TRUE`'s in `x`.
-`all(x)` is equivalent of `&`; it'll return `TRUE` only if all values of `x` are `TRUE`'s.
-Like most summary functions, you can make the missing values go away with `na.rm = TRUE`.
+두 가지 주요 논리형 요약 함수가 있습니다: `any()`와 `all()`입니다.
+`any(x)`는 `|`와 동일합니다. `x`에 `TRUE`가 하나라도 있으면 `TRUE`를 반환합니다.
+`all(x)`는 `&`와 동일합니다. `x`의 모든 값이 `TRUE`일 때만 `TRUE`를 반환합니다.
+대부분의 요약 함수와 마찬가지로 `na.rm = TRUE`를 사용하여 결측값을 무시하게 할 수 있습니다.
 
-For example, we could use `all()` and `any()` to find out if every flight was delayed on departure by at most an hour or if any flights were delayed on arrival by five hours or more.
-And using `group_by()` allows us to do that by day:
+예를 들어, `all()`과 `any()`를 사용하여 모든 항공편이 출발 시 최대 1시간만 지연되었는지, 또는 도착 시 5시간 이상 지연된 항공편이 있는지 확인할 수 있습니다.
+또한 `group_by()`를 사용하면 이를 날짜별로 수행할 수 있습니다:
 
 ```{r}
 flights |> 
@@ -342,15 +340,15 @@ flights |>
   )
 ```
 
-In most cases, however, `any()` and `all()` are a little too crude, and it would be nice to be able to get a little more detail about how many values are `TRUE` or `FALSE`.
-That leads us to the numeric summaries.
+하지만 대부분의 경우 `any()`와 `all()`은 너무 투박하며, 얼마나 많은 값이 `TRUE` 또는 `FALSE`인지에 대해 조금 더 자세한 내용을 얻을 수 있으면 좋을 것입니다.
+이는 숫자형 요약으로 이어집니다.
 
-### Numeric summaries of logical vectors {#sec-numeric-summaries-of-logicals}
+### 논리형 벡터의 숫자형 요약 {#sec-numeric-summaries-of-logicals}
 
-When you use a logical vector in a numeric context, `TRUE` becomes 1 and `FALSE` becomes 0.
-This makes `sum()` and `mean()` very useful with logical vectors because `sum(x)` gives the number of `TRUE`s and `mean(x)` gives the proportion of `TRUE`s (because `mean()` is just `sum()` divided by `length()`).
+논리형 벡터를 숫자형 문맥에서 사용하면 `TRUE`는 1이 되고 `FALSE`는 0이 됩니다.
+덕분에 논리형 벡터와 함께 `sum()`과 `mean()`을 매우 유용하게 사용할 수 있습니다. `sum(x)`는 `TRUE`의 개수를 알려주고, `mean(x)`는 `TRUE`의 비율을 알려주기 때문입니다(`mean()`은 단지 `sum()`을 `length()`로 나눈 것입니다).
 
-That, for example, allows us to see the proportion of flights that were delayed on departure by at most an hour and the number of flights that were delayed on arrival by five hours or more:
+이를 통해 예를 들어 출발 시 최대 1시간만 지연된 항공편의 비율과 도착 시 5시간 이상 지연된 항공편의 수를 확인할 수 있습니다:
 
 ```{r}
 flights |> 
@@ -362,13 +360,13 @@ flights |>
   )
 ```
 
-### Logical subsetting
+### 논리형 서브셋팅
 
-There's one final use for logical vectors in summaries: you can use a logical vector to filter a single variable to a subset of interest.
-This makes use of the base `[` (pronounced subset) operator, which you'll learn more about in @sec-subset-many.
+요약 단계에서 논리형 벡터를 사용하는 마지막 방법이 있습니다. 논리형 벡터를 사용하여 단일 변수를 관심 있는 하위 집합(subset)으로 필터링하는 것입니다.
+이는 기본 `[` (서브셋이라고 읽음) 연산자를 사용하며, @sec-subset-many 에서 더 자세히 배울 것입니다.
 
-Imagine we wanted to look at the average delay just for flights that were actually delayed.
-One way to do so would be to first filter the flights and then calculate the average delay:
+실제로 지연된 항공편에 대해서만 평균 지연 시간을 확인하고 싶다고 가정해 봅시다.
+한 가지 방법은 먼저 항공편을 필터링한 다음 평균 지연 시간을 계산하는 것입니다:
 
 ```{r}
 flights |> 
@@ -381,13 +379,13 @@ flights |>
   )
 ```
 
-This works, but what if we wanted to also compute the average delay for flights that arrived early?
-We'd need to perform a separate filter step, and then figure out how to combine the two data frames together[^logicals-3].
-Instead you could use `[` to perform an inline filtering: `arr_delay[arr_delay > 0]` will yield only the positive arrival delays.
+이 방법도 작동하지만, 일찍 도착한 항공편의 평균 지연 시간도 함께 계산하고 싶다면 어떻게 될까요?
+별도의 필터 단계를 수행한 다음 두 데이터 프레임을 결합하는 방법을 알아내야 할 것입니다[^logicals-3].
+대신 `[` 를 사용하여 인라인 필터링을 수행할 수 있습니다. `arr_delay[arr_delay > 0]` 는 양수의 도착 지연 값들만 생성할 것입니다.
 
-[^logicals-3]: We'll cover this in @sec-joins.
+[^logicals-3]: 이에 대해서는 @sec-joins 에서 다루겠습니다.
 
-This leads to:
+이는 다음과 같이 이어집니다:
 
 ```{r}
 flights |> 
@@ -400,48 +398,48 @@ flights |>
   )
 ```
 
-Also note the difference in the group size: in the first chunk `n()` gives the number of delayed flights per day; in the second, `n()` gives the total number of flights.
+또한 그룹 크기의 차이에 주목하세요. 첫 번째 코드 블럭에서 `n()`은 날짜별 지연된 항공편의 수를 제공하고, 두 번째 코드 블럭에서 `n()`은 전체 항공편의 수를 제공합니다.
 
-### Exercises
+### 연습문제
 
-1.  What will `sum(is.na(x))` tell you? How about `mean(is.na(x))`?
-2.  What does `prod()` return when applied to a logical vector? What logical summary function is it equivalent to? What does `min()` return when applied to a logical vector? What logical summary function is it equivalent to? Read the documentation and perform a few experiments.
+1.  `sum(is.na(x))`는 무엇을 알려줍니까? `mean(is.na(x))`는 어떻습니까?
+2.  논리형 벡터에 적용되었을 때 `prod()`는 무엇을 반환합니까? 이는 어떤 논리 요약 함수와 동일합니까? 논리형 벡터에 적용되었을 때 `min()`은 무엇을 반환합니까? 이는 어떤 논리 요약 함수와 동일합니까? 문서(help)를 읽고 몇 가지 실험을 수행해 보세요.
 
-## Conditional transformations
+## 조건부 변형
 
-One of the most powerful features of logical vectors are their use for conditional transformations, i.e. doing one thing for condition x, and something different for condition y.
-There are two important tools for this: `if_else()` and `case_when()`.
+논리형 벡터의 가장 강력한 기능 중 하나는 조건부 변형(conditional transformations)에 사용된다는 것입니다. 즉, 조건 x에 대해 한 가지 일을 하고 조건 y에 대해 다른 일을 하는 것입니다.
+이를 위한 두 가지 중요한 도구가 있습니다: `if_else()`와 `case_when()`입니다.
 
 ### `if_else()`
 
-If you want to use one value when a condition is `TRUE` and another value when it's `FALSE`, you can use `dplyr::if_else()`[^logicals-4].
-You'll always use the first three arguments of `if_else()`. The first argument, `condition`, is a logical vector, the second, `true`, gives the output when the condition is true, and the third, `false`, gives the output if the condition is false.
+조건이 `TRUE`일 때 하나의 값을 사용하고 `FALSE`일 때 다른 값을 사용하고 싶다면 `dplyr::if_else()`를 사용할 수 있습니다[^logicals-4].
+여러분은 항상 `if_else()`의 처음 세 인자를 사용하게 될 것입니다. 첫 번째 인자 `condition`은 논리형 벡터이고, 두 번째 `true`는 조건이 참일 때의 출력을, 세 번째 `false`는 조건이 거짓일 때의 출력을 제공합니다.
 
-[^logicals-4]: dplyr's `if_else()` is very similar to base R's `ifelse()`.
-    There are two main advantages of `if_else()` over `ifelse()`: you can choose what should happen to missing values, and `if_else()` is much more likely to give you a meaningful error if your variables have incompatible types.
+[^logicals-4]: dplyr의 `if_else()`는 base R의 `ifelse()`와 매우 유사합니다.
+    `ifelse()`에 비해 `if_else()`가 갖는 두 가지 주요 장점이 있습니다. 결측값에 대해 어떤 일이 일어날지 선택할 수 있고, 변수들의 타입이 호환되지 않을 때 의미 있는 에러를 줄 가능성이 훨씬 높다는 점입니다.
 
-Let's begin with a simple example of labeling a numeric vector as either "+ve" (positive) or "-ve" (negative):
+숫자형 벡터를 "+ve"(양수) 또는 "-ve"(음수)로 레이블링하는 간단한 예제부터 시작해 봅시다:
 
 ```{r}
 x <- c(-3:3, NA)
 if_else(x > 0, "+ve", "-ve")
 ```
 
-There's an optional fourth argument, `missing` which will be used if the input is `NA`:
+입력이 `NA`일 때 사용될 선택적인 네 번째 인자 `missing`이 있습니다:
 
 ```{r}
 if_else(x > 0, "+ve", "-ve", "???")
 ```
 
-You can also use vectors for the `true` and `false` arguments.
-For example, this allows us to create a minimal implementation of `abs()`:
+`true`와 `false` 인자에 벡터를 사용할 수도 있습니다.
+예를 들어, 이를 통해 `abs()`의 최소 기능을 구현할 수 있습니다:
 
 ```{r}
 if_else(x < 0, -x, x)
 ```
 
-So far all the arguments have used the same vectors, but you can of course mix and match.
-For example, you could implement a simple version of `coalesce()` like this:
+지금까지 모든 인자는 동일한 벡터를 사용했지만, 물론 혼합하여 사용할 수도 있습니다.
+예를 들어 `coalesce()`의 간단한 버전을 다음과 같이 구현할 수 있습니다:
 
 ```{r}
 x1 <- c(NA, 1, 2, NA)
@@ -449,24 +447,23 @@ y1 <- c(3, NA, 4, 6)
 if_else(is.na(x1), y1, x1)
 ```
 
-You might have noticed a small infelicity in our labeling example above: zero is neither positive nor negative.
-We could resolve this by adding an additional `if_else()`:
+위의 레이블링 예제에서 약간의 부적절함을 느끼셨을 수도 있습니다. 0은 양수도 음수도 아니기 때문입니다.
+`if_else()`를 하나 더 추가하여 이를 해결할 수 있습니다:
 
 ```{r}
 if_else(x == 0, "0", if_else(x < 0, "-ve", "+ve"), "???")
 ```
 
-This is already a little hard to read, and you can imagine it would only get harder if you have more conditions.
-Instead, you can switch to `dplyr::case_when()`.
+이미 읽기가 조금 어려워졌으며, 조건이 더 많아진다면 더욱 어려워질 것이라고 짐작할 수 있습니다.
+대신 `dplyr::case_when()`으로 전환할 수 있습니다.
 
 ### `case_when()`
 
-dplyr's `case_when()` is inspired by SQL's `CASE` statement and provides a flexible way of performing different computations for different conditions.
-It has a special syntax that unfortunately looks like nothing else you'll use in the tidyverse.
-It takes pairs that look like `condition ~ output`.
-`condition` must be a logical vector; when it's `TRUE`, `output` will be used.
+dplyr의 `case_when()`은 SQL의 `CASE` 문에서 영감을 받았으며, 서로 다른 조건에 대해 서로 다른 계산을 수행하는 유연한 방법을 제공합니다.
+행별로 `condition ~ output` 형태의 쌍들을 인자로 받는데, 안타깝게도 이 구문은 tidyverse 내 다른 어떤 곳에서도 사용하지 않는 형식입니다.
+`condition`은 반드시 논리형 벡터여야 합니다. 이것이 `TRUE`일 때 `output`이 사용됩니다.
 
-This means we could recreate our previous nested `if_else()` as follows:
+이것은 우리가 이전의 중첩된 `if_else()`를 다음과 같이 다시 만들 수 있음을 의미합니다:
 
 ```{r}
 x <- c(-3:3, NA)
@@ -478,10 +475,10 @@ case_when(
 )
 ```
 
-This is more code, but it's also more explicit.
+코드는 더 길어졌지만, 더 명시적입니다.
 
-To explain how `case_when()` works, let's explore some simpler cases.
-If none of the cases match, the output gets an `NA`:
+`case_when()`의 작동 방식을 설명하기 위해 몇 가지 더 단순한 경우들을 살펴봅시다.
+어떤 사례도 일치하지 않으면 출력은 `NA`가 됩니다:
 
 ```{r}
 case_when(
@@ -490,7 +487,7 @@ case_when(
 )
 ```
 
-Use `.default` if you want to create a "default"/catch all value:
+"기본값"/나머지 모든 경우를 위한 값을 만들고 싶다면 `.default`를 사용하세요:
 
 ```{r}
 case_when(
@@ -500,7 +497,7 @@ case_when(
 )
 ```
 
-And note that if multiple conditions match, only the first will be used:
+또한 여러 조건이 일치하는 경우 첫 번째 것만 사용된다는 점에 유의하세요:
 
 ```{r}
 case_when(
@@ -509,8 +506,8 @@ case_when(
 )
 ```
 
-Just like with `if_else()` you can use variables on both sides of the `~` and you can mix and match variables as needed for your problem.
-For example, we could use `case_when()` to provide some human readable labels for the arrival delay:
+`if_else()`와 마찬가지로 `~`의 양쪽 모두에 변수를 사용할 수 있으며 문제에 필요한 대로 변수들을 혼합하여 사용할 수 있습니다.
+예를 들어, 도착 지연에 대해 사람이 읽기 쉬운 레이블을 제공하기 위해 `case_when()`을 사용할 수 있습니다:
 
 ```{r}
 flights |> 
@@ -527,12 +524,12 @@ flights |>
   )
 ```
 
-Be wary when writing this sort of complex `case_when()` statement; my first two attempts used a mix of `<` and `>` and I kept accidentally creating overlapping conditions.
+이런 종류의 복잡한 `case_when()` 문을 작성할 때는 주의하세요. 저의 처음 두 번의 시도는 `<`와 `>`를 혼용해서 썼고, 계속해서 실수로 겹치는 조건을 만들었습니다.
 
-### Compatible types
+### 호환되는 타입
 
-Note that both `if_else()` and `case_when()` require **compatible** types in the output.
-If they're not compatible, you'll see errors like this:
+`if_else()`와 `case_when()` 모두 출력에서 **호환되는(compatible)** 타입이 필요하다는 점에 유의하세요.
+호환되지 않는 경우 다음과 같은 에러를 보게 됩니다:
 
 ```{r}
 #| error: true
@@ -544,35 +541,35 @@ case_when(
 )
 ```
 
-Overall, relatively few types are compatible, because automatically converting one type of vector to another is a common source of errors.
-Here are the most important cases that are compatible:
+한 가지 유형의 벡터를 다른 벡터로 자동 변환하는 것은 에러의 흔한 원인이기 때문에, 전반적으로 상대적으로 적은 수의 타입만이 호환됩니다.
+호환되는 가장 중요한 사례들은 다음과 같습니다:
 
--   Numeric and logical vectors are compatible, as we discussed in @sec-numeric-summaries-of-logicals.
--   Strings and factors (@sec-factors) are compatible, because you can think of a factor as a string with a restricted set of values.
--   Dates and date-times, which we'll discuss in @sec-dates-and-times, are compatible because you can think of a date as a special case of date-time.
--   `NA`, which is technically a logical vector, is compatible with everything because every vector has some way of representing a missing value.
+-   @sec-numeric-summaries-of-logicals 에서 논의했듯이 숫자형과 논리형 벡터는 호환됩니다.
+-   문자열과 팩터(@sec-factors)는 호환됩니다. 팩터를 제한된 값의 집합을 가진 문자열로 생각할 수 있기 때문입니다.
+-   데이트와 데이트-타임은 호환됩니다. 데이트를 데이트-타임의 특수한 경우로 생각할 수 있기 때문입니다. 이에 대해서는 @sec-dates-and-times 에서 다루겠습니다.
+-   기술적으로 논리형 벡터인 `NA`는 모든 벡터가 결측값을 표현하는 방식이 있으므로 모든 것과 호환됩니다.
 
-We don't expect you to memorize these rules, but they should become second nature over time because they are applied consistently throughout the tidyverse.
+이러한 규칙들을 외울 필요는 없지만, tidyverse 전체에서 일관되게 적용되므로 시간이 흐르면서 자연스럽게 익숙해질 것입니다.
 
-### Exercises
+### 연습문제
 
-1.  A number is even if it's divisible by two, which in R you can find out with `x %% 2 == 0`.
-    Use this fact and `if_else()` to determine whether each number between 0 and 20 is even or odd.
+1.  어떤 숫자가 2로 나누어떨어지면 짝수이며, R에서는 `x %% 2 == 0`으로 확인할 수 있습니다.
+    이 사실과 `if_else()`를 사용하여 0에서 20 사이의 각 숫자가 짝수인지 홀수인지 판별하세요.
 
-2.  Given a vector of days like `x <- c("Monday", "Saturday", "Wednesday")`, use an `if_else()` statement to label them as weekends or weekdays.
+2.  `x <- c("Monday", "Saturday", "Wednesday")`와 같은 날짜 벡터가 주어졌을 때, `if_else()` 문을 사용하여 주말 또는 평일로 레이블링하세요.
 
-3.  Use `if_else()` to compute the absolute value of a numeric vector called `x`.
+3.  `if_else()`를 사용하여 `x`라는 숫자형 벡터의 절대값을 계산하세요.
 
-4.  Write a `case_when()` statement that uses the `month` and `day` columns from `flights` to label a selection of important US holidays (e.g., New Years Day, 4th of July, Thanksgiving, and Christmas).
-    First create a logical column that is either `TRUE` or `FALSE`, and then create a character column that either gives the name of the holiday or is `NA`.
+4.  `flights`의 `month`와 `day` 열을 사용하여 주요 미국 공휴일(예: 신정, 독립기념일, 추수감사절, 크리스마스)을 레이블링하는 `case_when()` 문을 작성하세요.
+    먼저 `TRUE` 또는 `FALSE`인 논리형 열을 만든 다음, 공휴일의 이름을 제공하거나 `NA`인 캐릭터형 열을 만드세요.
 
-## Summary
+## 요약
 
-The definition of a logical vector is simple because each value must be either `TRUE`, `FALSE`, or `NA`.
-But logical vectors provide a huge amount of power.
-In this chapter, you learned how to create logical vectors with `>`, `<`, `<=`, `>=`, `==`, `!=`, and `is.na()`, how to combine them with `!`, `&`, and `|`, and how to summarize them with `any()`, `all()`, `sum()`, and `mean()`.
-You also learned the powerful `if_else()` and `case_when()` functions that allow you to return values depending on the value of a logical vector.
+논리형 벡터의 정의는 각 값이 `TRUE`, `FALSE`, `NA` 중 하나여야 하기 때문에 간단합니다.
+하지만 논리형 벡터는 엄청난 힘을 제공합니다.
+이 챕터에서 여러분은 `>`, `<`, `<=`, `>=`, `==`, `!=`, 그리고 `is.na()`를 사용하여 논리형 벡터를 만드는 방법, `!`, `&`, `|`를 사용하여 이들을 결합하는 방법, 그리고 `any()`, `all()`, `sum()`, `mean()`을 사용하여 요약하는 방법을 배웠습니다.
+또한 논리형 벡터의 값에 따라 값을 반환할 수 있게 해주는 강력한 `if_else()`와 `case_when()` 함수도 배웠습니다.
 
-We'll see logical vectors again and again in the following chapters.
-For example in @sec-strings you'll learn about `str_detect(x, pattern)` which returns a logical vector that's `TRUE` for the elements of `x` that match the `pattern`, and in @sec-dates-and-times you'll create logical vectors from the comparison of dates and times.
-But for now, we're going to move onto the next most important type of vector: numeric vectors.
+우리는 이어지는 챕터들에서 논리형 벡터를 계속해서 마주하게 될 것입니다.
+예를 들어 @sec-strings 에서는 패턴이 일치하는 `x` 요소에 대해 `TRUE`를 반환하는 `str_detect(x, pattern)`에 대해 배울 것이며, @sec-dates-and-times 에서는 날짜와 시간의 비교를 통해 논리형 벡터를 생성하게 될 것입니다.
+하지만 이제 다음으로 중요한 벡터 유형인 숫자형 벡터로 넘어가 보겠습니다.

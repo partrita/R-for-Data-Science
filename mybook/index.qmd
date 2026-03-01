@@ -1,30 +1,30 @@
-# Welcome {.unnumbered}
+# 환영합니다 {.unnumbered}
 
-This is the website for the 2nd edition of **"R for Data Science"**.
-This book will teach you how to do data science with R: You'll learn how to get your data into R, get it into the most useful structure, transform it and visualize.
+이곳은 **"R for Data Science"** 2판을 위한 웹사이트입니다.
+이 책은 R을 이용한 데이터 과학 수행 방법을 알려줍니다. 데이터를 R로 불러오는 방법부터 가장 유용한 구조로 만드는 방법, 그리고 데이터를 변형하고 시각화하는 방법까지 배우게 됩니다.
 
-In this book, you will find a practicum of skills for data science.
-Just as a chemist learns how to clean test tubes and stock a lab, you'll learn how to clean data and draw plots---and many other things besides.
-These are the skills that allow data science to happen, and here you will find the best practices for doing each of these things with R.
-You'll learn how to use the grammar of graphics, literate programming, and reproducible research to save time.
-You'll also learn how to manage cognitive resources to facilitate discoveries when wrangling, visualizing, and exploring data.
+이 책에서는 데이터 과학을 위한 실천적인 기술들을 다룹니다.
+화학자가 시험관을 닦고 실험실 재고를 관리하는 법을 배우는 것처럼, 여러분은 데이터를 정제하고 그래프를 그리는 법, 그리고 그 외의 많은 것들을 배우게 될 것입니다.
+이러한 기술들은 데이터 과학이 가능하게 하는 토대이며, 여기에서 R을 사용하여 각 작업을 수행하는 최선의 방법들을 찾을 수 있습니다.
+또한 그래픽 문법(grammar of graphics), 문학적 프로그래밍(literate programming), 재현 가능한 연구(reproducible research) 등을 활용해 시간을 절약하는 방법도 배우게 됩니다.
+데이터를 다루고(wrangling), 시각화하고, 탐색할 때 발견을 돕기 위해 인지 자원을 관리하는 방법도 익히게 될 것입니다.
 
-This website is and will always be free, licensed under the [CC BY-NC-ND 3.0](https://creativecommons.org/licenses/by-nc-nd/3.0/us/) License.
-If you'd like a physical copy of the book, you can order it on [Amazon](https://www.amazon.com/dp/1492097403?&tag=hadlwick-20).
-If you appreciate reading the book for free and would like to give back, please make a donation to [Kākāpō Recovery](https://www.doc.govt.nz/kakapo-donate): the [kākāpō](https://www.youtube.com/watch?v=9T1vfsHYiKY) (which appears on the cover of R4DS) is a critically endangered parrot native to New Zealand; there are only 244 left.
+이 웹사이트는 [CC BY-NC-ND 3.0](https://creativecommons.org/licenses/by-nc-nd/3.0/us/) 라이선스에 따라 항상 무료로 제공됩니다.
+종이책을 원하신다면 [Amazon](https://www.amazon.com/dp/1492097403?&tag=hadlwick-20)에서 주문하실 수 있습니다.
+책을 무료로 읽고 보답하고 싶다면 [Kākāpō Recovery](https://www.doc.govt.nz/kakapo-donate)에 기부해 주세요. R4DS 표지에 등장하는 [카카포](https://www.youtube.com/watch?v=9T1vfsHYiKY)는 뉴질랜드 고유종인 멸종 위기 앵무새로, 현재 단 244마리만 남아 있습니다.
 
-If you speak another language, you might be interested in the freely available translations of the 1st edition:
+다른 언어를 사용하신다면, 1판의 무료 번역본에도 관심이 있으실 것입니다:
 
--   [Spanish](http://es.r4ds.hadley.nz)
--   [Italian](https://it.r4ds.hadley.nz)
--   [Turkish](https://tr.r4ds.hadley.nz)
--   [Portuguese](https://pt.r4ds.hadley.nz)
+-   [스페인어](http://es.r4ds.hadley.nz)
+-   [이탈리아어](https://it.r4ds.hadley.nz)
+-   [터키어](https://tr.r4ds.hadley.nz)
+-   [포르투갈어](https://pt.r4ds.hadley.nz)
 
-and 2nd edition
+그리고 2판 번역본:
 
--   [Spanish](https://davidrsch.github.io/r4ds-es/)
+-   [스페인어](https://davidrsch.github.io/r4ds-es/)
 
-You can find suggested answers to exercises in the book at <https://mine-cetinkaya-rundel.github.io/r4ds-solutions>.
+책에 수록된 연습문제의 권장 풀이는 <https://mine-cetinkaya-rundel.github.io/r4ds-solutions>에서 확인하실 수 있습니다.
 
-Please note that R4DS uses a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html).
-By contributing to this book, you agree to abide by its terms.
+R4DS 프로젝트는 [기여자 행동 강령(Contributor Code of Conduct)](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html)을 준수합니다.
+이 책에 기여함으로써 여러분은 그 약관을 준수하는 데 동의하게 됩니다.

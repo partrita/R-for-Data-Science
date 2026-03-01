@@ -1,35 +1,26 @@
-# Exploratory data analysis {#sec-exploratory-data-analysis}
+# 탐색적 데이터 분석 {#sec-exploratory-data-analysis}
 
 ```{r}
 #| echo: false
 source("_common.R")
 ```
 
-## Introduction
+## 서론
 
-This chapter will show you how to use visualization and transformation to explore your data in a systematic way, a task that statisticians call exploratory data analysis, or EDA for short.
-EDA is an iterative cycle.
-You:
+이 챕터에서는 시각화와 변환을 사용하여 체계적으로 데이터를 탐색하는 방법을 보여줄 것입니다. 통계학자들은 이 작업을 탐색적 데이터 분석, 줄여서 EDA(Exploratory Data Analysis)라고 부릅니다.
+EDA는 반복적인 주기입니다. 여러분은 다음과 같이 합니다:
 
-1.  Generate questions about your data.
+1.  데이터에 대한 질문을 생성합니다.
+2.  데이터를 시각화, 변환 및 모델링하여 답을 찾습니다.
+3.  배운 내용을 사용하여 질문을 다듬거나 새로운 질문을 생성합니다.
 
-2.  Search for answers by visualizing, transforming, and modelling your data.
+EDA는 엄격한 규칙 세트가 있는 공식적인 프로세스가 아닙니다. 무엇보다도 EDA는 마음가짐(state of mind)입니다. EDA의 초기 단계에서는 떠오르는 모든 아이디어를 자유롭게 조사해야 합니다. 이러한 아이디어 중 일부는 결실을 거둘 것이고, 일부는 막다른 골목일 것입니다. 탐색이 계속됨에 따라, 결국 기록하고 다른 사람들과 소통하게 될 몇 가지 특히 생산적인 통찰력에 집중하게 될 것입니다.
 
-3.  Use what you learn to refine your questions and/or generate new questions.
+EDA는 설령 주요 연구 질문이 여러분에게 주어졌더라도 모든 데이터 분석의 중요한 부분입니다. 왜냐하면 항상 데이터의 품질을 조사해야 하기 때문입니다. 데이터 정제(Data cleaning)는 EDA의 한 가지 응용일 뿐입니다. 데이터가 여러분의 기대에 부합하는지 아닌지에 대해 질문을 던지는 것이죠. 데이터 정제를 하려면 시각화, 변환, 모델링이라는 EDA의 모든 도구를 동원해야 할 것입니다.
 
-EDA is not a formal process with a strict set of rules.
-More than anything, EDA is a state of mind.
-During the initial phases of EDA you should feel free to investigate every idea that occurs to you.
-Some of these ideas will pan out, and some will be dead ends.
-As your exploration continues, you will home in on a few particularly productive insights that you'll eventually write up and communicate to others.
+### 사전 요구 사항
 
-EDA is an important part of any data analysis, even if the primary research questions are handed to you on a platter, because you always need to investigate the quality of your data.
-Data cleaning is just one application of EDA: you ask questions about whether your data meets your expectations or not.
-To do data cleaning, you'll need to deploy all the tools of EDA: visualization, transformation, and modelling.
-
-### Prerequisites
-
-In this chapter we'll combine what you've learned about dplyr and ggplot2 to interactively ask questions, answer them with data, and then ask new questions.
+이 챕터에서는 dplyr과 ggplot2에 대해 배운 내용을 결합하여 대화식으로 질문을 던지고, 데이터로 답을 구한 다음, 다시 새로운 질문을 던져 보겠습니다.
 
 ```{r}
 #| label: setup
@@ -37,88 +28,58 @@ In this chapter we'll combine what you've learned about dplyr and ggplot2 to int
 library(tidyverse)
 ```
 
-## Questions
+## 질문
 
-> "There are no routine statistical questions, only questionable statistical routines." --- Sir David Cox
+> "정형화된 통계적 질문이란 존재하지 않는다. 오직 의구심이 드는 통계적 정형성만이 있을 뿐이다." --- 데이비드 콕스 경 (Sir David Cox)
 
-> "Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise." --- John Tukey
+> "항상 정밀하게 만들 수 있는 잘못된 질문에 대한 정확한 답보다는, 종종 모호하더라도 옳은 질문에 대한 대략적인 답이 훨씬 낫다." --- 존 투키 (John Tukey)
 
-Your goal during EDA is to develop an understanding of your data.
-The easiest way to do this is to use questions as tools to guide your investigation.
-When you ask a question, the question focuses your attention on a specific part of your dataset and helps you decide which graphs, models, or transformations to make.
+EDA 중 여러분의 목표는 데이터에 대한 이해를 발전시키는 것입니다. 이를 수행하는 가장 쉬운 방법은 질문을 조사를 안내하는 도구로 사용하는 것입니다. 질문을 던지면, 그 질문은 여러분의 주의를 데이터셋의 특정 부분에 집중시키고 어떤 그래프, 모델 또는 변환을 만들어야 할지 결정하는 데 도움을 줍니다.
 
-EDA is fundamentally a creative process.
-And like most creative processes, the key to asking *quality* questions is to generate a large *quantity* of questions.
-It is difficult to ask revealing questions at the start of your analysis because you do not know what insights can be gleaned from your dataset.
-On the other hand, each new question that you ask will expose you to a new aspect of your data and increase your chance of making a discovery.
-You can quickly drill down into the most interesting parts of your data---and develop a set of thought-provoking questions---if you follow up each question with a new question based on what you find.
+EDA는 근본적으로 창의적인 프로세스입니다. 그리고 대부분의 창의적인 프로세스와 마찬가지로, *질 좋은* 질문을 던지는 열쇠는 많은 *양*의 질문을 생성하는 것입니다. 분석을 시작할 때 드러나는 질문을 던지기는 어렵습니다. 왜냐하면 데이터셋에서 어떤 통찰을 얻을 수 있는지 아직 모르기 때문입니다. 반면에, 여러분이 던지는 매 새로운 질문은 데이터의 새로운 측면을 노출시키고 발견을 할 기회를 높여줄 것입니다. 발견한 내용을 바탕으로 각 질문에 이어 새로운 질문을 던진다면 데이터의 가장 흥미로운 부분으로 빠르게 파고들어 생각할 거리를 주는 질문들을 발전시킬 수 있습니다.
 
-There is no rule about which questions you should ask to guide your research.
-However, two types of questions will always be useful for making discoveries within your data.
-You can loosely word these questions as:
+연구를 안내하기 위해 어떤 질문을 던져야 한다는 규칙은 없습니다. 그러나 데이터 내에서 발견을 하는 데 항상 유용한 두 가지 유형의 질문이 있습니다. 이 질문들을 대략 다음과 같이 표현할 수 있습니다:
 
-1.  What type of variation occurs within my variables?
+1.  내 변수들 내에서는 어떤 유형의 **변이(variation)**가 발생하는가?
+2.  내 변수들 사이에서는 어떤 유형의 **공변이(covariation)**가 발생하는가?
 
-2.  What type of covariation occurs between my variables?
+이 챕터의 나머지 부분에서는 이 두 질문을 살펴볼 것입니다. 변이와 공변이가 무엇인지 설명하고, 각 질문에 답하는 여러 가지 방법을 보여드리겠습니다.
 
-The rest of this chapter will look at these two questions.
-We'll explain what variation and covariation are, and we'll show you several ways to answer each question.
+## 변이
 
-## Variation
+**변이(variation)**는 측정할 때마다 변수 값이 변하는 경향입니다. 실생활에서 변이를 쉽게 볼 수 있습니다. 연속형 변수를 두 번 측정하면 서로 다른 두 가지 결과를 얻게 될 것입니다. 이는 빛의 속도와 같이 일정한 물리량을 측정할 때도 마찬가지입니다. 여러분이 측정한 각 값에는 측정할 때마다 달라지는 적은 양의 오차가 포함될 것입니다. 변수는 또한 서로 다른 대상(예: 서로 다른 사람들의 눈 색깔)을 측정하거나 서로 다른 시간(예: 서로 다른 순간의 전자 에너지 레벨)에 측정할 때도 변할 수 있습니다. 모든 변수는 자신만의 변이 패턴을 가지고 있으며, 이는 동일한 관측치 내의 측정값들 사이뿐만 아니라 관측치들 전체에서 어떻게 변하는지에 대한 흥미로운 정보를 드러낼 수 있습니다. 그 패턴을 이해하는 가장 좋은 방법은 변수 값의 분포를 시각화하는 것이며, 이에 대해서는 @sec-data-visualization에서 배웠습니다.
 
-**Variation** is the tendency of the values of a variable to change from measurement to measurement.
-You can see variation easily in real life; if you measure any continuous variable twice, you will get two different results.
-This is true even if you measure quantities that are constant, like the speed of light.
-Each of your measurements will include a small amount of error that varies from measurement to measurement.
-Variables can also vary if you measure across different subjects (e.g., the eye colors of different people) or at different times (e.g., the energy levels of an electron at different moments).
-Every variable has its own pattern of variation, which can reveal interesting information about how it varies between measurements on the same observation as well as across observations.
-The best way to understand that pattern is to visualize the distribution of the variable's values, which you've learned about in @sec-data-visualization.
-
-We'll start our exploration by visualizing the distribution of weights (`carat`) of \~54,000 diamonds from the `diamonds` dataset.
-Since `carat` is a numerical variable, we can use a histogram:
+`diamonds` 데이터셋에 있는 약 54,000개 다이아몬드의 무게(`carat`) 분포를 시각화하는 것으로 탐색을 시작하겠습니다. `carat`은 수치형 변수이므로 히스토그램을 사용할 수 있습니다.
 
 ```{r}
 #| fig-alt: |
-#|   A histogram of carats of diamonds, with the x-axis ranging from 0 to 4.5 
-#|   and the y-axis ranging from 0 to 30000. The distribution is right skewed 
-#|   with very few diamonds in the bin centered at 0, almost 30000 diamonds in 
-#|   the bin centered at 0.5, approximately 15000 diamonds in the bin centered 
-#|   at 1, and much fewer, approximately 5000 diamonds in the bin centered at 
-#|   1.5. Beyond this, there's a trailing tail.
+#|   다이아몬드 캐럿의 히스토그램으로, x축은 0에서 4.5까지, y축은 0에서 
+#|   30,000까지임. 분포는 오른쪽으로 치우쳐 있으며, 0에 중심이 있는 빈에는 
+#|   다이아몬드가 거의 없고, 0.5에 중심이 있는 빈에는 거의 30,000개, 
+#|   1에 중심이 있는 빈에는 약 15,000개, 1.5에 중심이 있는 빈에는 훨씬 적은 
+#|   약 5,000개의 다이아몬드가 있음. 그 너머로는 길게 꼬리가 이어짐.
 ggplot(diamonds, aes(x = carat)) +
   geom_histogram(binwidth = 0.5)
 ```
 
-Now that you can visualize variation, what should you look for in your plots?
-And what type of follow-up questions should you ask?
-We've put together a list below of the most useful types of information that you will find in your graphs, along with some follow-up questions for each type of information.
-The key to asking good follow-up questions will be to rely on your curiosity (What do you want to learn more about?) as well as your skepticism (How could this be misleading?).
+이제 변이를 시각화할 수 있게 되었으니, 플롯에서 무엇을 찾아야 할까요? 그리고 어떤 유형의 후속 질문을 던져야 할까요? 그래프에서 찾을 수 있는 가장 유용한 정보 유형들과 각 정보 유형에 대한 몇 가지 후속 질문을 아래에 정리했습니다. 좋은 후속 질문을 던지는 열쇠는 여러분의 호기심(무엇에 대해 더 배우고 싶은가?)뿐만 아니라 회의론(이것이 어떻게 오해를 불러올 수 있는가?)에 의존하는 것입니다.
 
-### Typical values
+### 전형적인 값
 
-In both bar charts and histograms, tall bars show the common values of a variable, and shorter bars show less-common values.
-Places that do not have bars reveal values that were not seen in your data.
-To turn this information into useful questions, look for anything unexpected:
+막대 차트와 히스토그램 모두에서 긴 막대는 변수의 흔한 값을 보여주고, 짧은 막대는 덜 흔한 값을 보여줍니다. 막대가 없는 곳은 데이터에서 관찰되지 않은 값을 드러냅니다. 이 정보를 유용한 질문으로 바꾸려면, 예상치 못한 모든 것을 찾아보세요:
 
--   Which values are the most common?
-    Why?
+-   어떤 값이 가장 흔한가? 왜인가?
+-   어떤 값이 드문가? 왜인가? 그것이 여러분의 예상과 일치하는가?
+-   비정상적인 패턴이 보이는가? 무엇이 그것을 설명할 수 있을까?
 
--   Which values are rare?
-    Why?
-    Does that match your expectations?
-
--   Can you see any unusual patterns?
-    What might explain them?
-
-Let's take a look at the distribution of `carat` for smaller diamonds.
+더 작은 다이아몬드들에 대해 `carat`의 분포를 살펴봅시다.
 
 ```{r}
 #| fig-alt: |
-#|   A histogram of carats of diamonds, with the x-axis ranging from 0 to 3 and 
-#|   the y-axis ranging from 0 to roughly 2500. The binwidth is quite narrow 
-#|   (0.01), resulting in a very large number of skinny bars. The distribution 
-#|   is right skewed, with many peaks followed by bars in decreasing heights, 
-#|   until a sharp increase at the next peak.
+#|   다이아몬드 캐럿의 히스토그램으로, x축은 0에서 3까지, y축은 0에서 약 
+#|   2,500까지임. 빈 너비(binwidth)가 0.01로 매우 좁아 아주 많은 수의 얇은 
+#|   막대들이 생김. 분포는 오른쪽으로 치우쳐 있으며, 많은 봉우리가 나타난 뒤 
+#|   높이가 낮아지다가 다음 봉우리에서 다시 급격히 증가함.
 smaller <- diamonds |> 
   filter(carat < 3)
 
@@ -126,64 +87,49 @@ ggplot(smaller, aes(x = carat)) +
   geom_histogram(binwidth = 0.01)
 ```
 
-This histogram suggests several interesting questions:
+이 히스토그램은 몇 가지 흥미로운 질문을 제기합니다:
 
--   Why are there more diamonds at whole carats and common fractions of carats?
+-   왜 정수 캐럿과 흔한 분수 단위 캐럿에 다이아몬드가 더 많은가?
+-   왜 각 봉우리의 바로 왼쪽보다 바로 오른쪽에 다이아몬드가 더 많은가?
 
--   Why are there more diamonds slightly to the right of each peak than there are slightly to the left of each peak?
+시각화는 또한 데이터에 하위 그룹이 존재함을 시사하는 클러스터(clusters)를 드러낼 수도 있습니다. 하위 그룹을 이해하려면 다음과 같이 질문하세요:
 
-Visualizations can also reveal clusters, which suggest that subgroups exist in your data.
-To understand the subgroups, ask:
+-   각 하위 그룹 내의 관측값들은 서로 어떻게 유사한가?
+-   서로 다른 클러스터에 있는 관측값들은 서로 어떻게 다른가?
+-   클러스터들을 어떻게 설명하거나 서술할 수 있는가?
+-   클러스터의 모습이 왜 오해를 불러일으킬 수 있는가?
 
--   How are the observations within each subgroup similar to each other?
+이러한 질문 중 일부는 데이터로 답할 수 있는 반면, 일부는 데이터에 대한 도메인 전문 지식을 필요로 할 것입니다. 많은 질문이 변수 *사이의* 관계를 탐색하도록 유도할 것입니다. 예를 들어, 한 변수의 값이 다른 변수의 동작을 설명할 수 있는지 확인하는 것입니다. 곧 그 내용을 다루겠습니다.
 
--   How are the observations in separate clusters different from each other?
+### 이례적인 값
 
--   How can you explain or describe the clusters?
-
--   Why might the appearance of clusters be misleading?
-
-Some of these questions can be answered with the data while some will require domain expertise about the data.
-Many of them will prompt you to explore a relationship *between* variables, for example, to see if the values of one variable can explain the behavior of another variable.
-We'll get to that shortly.
-
-### Unusual values
-
-Outliers are observations that are unusual; data points that don't seem to fit the pattern.
-Sometimes outliers are data entry errors, sometimes they are simply values at the extremes that happened to be observed in this data collection, and other times they suggest important new discoveries.
-When you have a lot of data, outliers are sometimes difficult to see in a histogram.
-For example, take the distribution of the `y` variable from the diamonds dataset.
-The only evidence of outliers is the unusually wide limits on the x-axis.
+이상값(outliers)은 비정상적인 관측값, 즉 패턴에 맞지 않는 데이터 포인트입니다. 때로는 이상값이 데이터 입력 오류일 수도 있고, 때로는 단순히 이 데이터 수집 과정에서 관찰된 극단적인 값일 때도 있으며, 또 다른 경우에는 중요한 새로운 발견을 시사하기도 합니다. 데이터가 많을 때 히스토그램에서는 이상값을 보기가 어려울 때가 있습니다. 예를 들어, diamonds 데이터셋에서 `y` 변수의 분포를 봅시다. 이상값이 있다는 유일한 증거는 x축의 비정상적으로 넓은 범위뿐입니다.
 
 ```{r}
 #| fig-alt: |
-#|   A histogram of lengths of diamonds. The x-axis ranges from 0 to 60 and 
-#|   the y-axis ranges from 0 to 12000. There is a peak around 5, and the 
-#|   data appear to be completely clustered around the peak.
+#|   다이아몬드 길이의 히스토그램. x축은 0에서 60까지, y축은 0에서 
+#|   12,000까지임. 5 근처에 봉우리가 있으며, 데이터가 봉우리 주위에 완전히 
+#|   밀집되어 있는 것으로 보임.
 ggplot(diamonds, aes(x = y)) + 
   geom_histogram(binwidth = 0.5)
 ```
 
-There are so many observations in the common bins that the rare bins are very short, making it very difficult to see them (although maybe if you stare intently at 0 you'll spot something).
-To make it easy to see the unusual values, we need to zoom to small values of the y-axis with `coord_cartesian()`:
+흔한 빈(bins)에 관측값이 너무 많아서 드문 빈들은 매우 낮게 나타나 이를 보기가 매우 어렵습니다 (0 근처를 뚫어지게 쳐다보면 무언가를 발견할 수도 있겠지만요). 이례적인 값을 쉽게 보려면, `coord_cartesian()`을 사용하여 y축의 작은 값들로 줌(zoom)을 해야 합니다:
 
 ```{r}
 #| fig-alt: |
-#|   A histogram of lengths of diamonds. The x-axis ranges from 0 to 60 and the 
-#|   y-axis ranges from 0 to 50. There is a peak around 5, and the data 
-#|   appear to be completely clustered around the peak. Other than those data, 
-#|   there is one bin at 0 with a height of about 8, one a little over 30 with 
-#|   a height of 1 and another one a little below 60 with a height of 1.
+#|   다이아몬드 길이의 히스토그램. x축은 0에서 60까지, y축은 0에서 50까지임. 
+#|   5 근처에 봉우리가 있으며 데이터가 봉우리 주위에 완전히 밀집되어 있는 
+#|   것으로 보임. 그 외에는 0 근처에 높이가 약 8인 빈이 하나 있고, 
+#|   30을 조금 넘는 곳에 높이가 1인 빈, 60 근처에 높이가 1인 빈이 하나 있음.
 ggplot(diamonds, aes(x = y)) + 
   geom_histogram(binwidth = 0.5) +
   coord_cartesian(ylim = c(0, 50))
 ```
 
-`coord_cartesian()` also has an `xlim()` argument for when you need to zoom into the x-axis.
-ggplot2 also has `xlim()` and `ylim()` functions that work slightly differently: they throw away the data outside the limits.
+`coord_cartesian()`은 x축을 줌해야 할 때를 위한 `xlim()` 인자도 가지고 있습니다. ggplot2에는 이와 약간 다르게 작동하는 `xlim()` 및 `ylim()` 함수도 있는데, 이들은 범위 밖의 데이터를 버려버립니다.
 
-This allows us to see that there are three unusual values: 0, \~30, and \~60.
-We pluck them out with dplyr:
+이를 통해 세 개의 이례적인 값인 0, 약 30, 약 60이 있음을 알 수 있습니다. dplyr로 이들을 뽑아내 봅시다:
 
 ```{r}
 #| include: false
@@ -203,40 +149,25 @@ unusual
 options(old)
 ```
 
-The `y` variable measures one of the three dimensions of these diamonds, in mm.
-We know that diamonds can't have a width of 0mm, so these values must be incorrect.
-By doing EDA, we have discovered missing data that was coded as 0, which we never would have found by simply searching for `NA`s.
-Going forward we might choose to re-code these values as `NA`s in order to prevent misleading calculations.
-We might also suspect that measurements of 32mm and 59mm are implausible: those diamonds are over an inch long, but don't cost hundreds of thousands of dollars!
+`y` 변수는 이 다이아몬드들의 세 가지 차원 중 하나를 mm 단위로 측정한 것입니다. 다이아몬드의 너비가 0mm일 수는 없으므로, 이 값들은 잘못된 것임에 틀림없습니다. EDA를 수행함으로써, 우리는 단순히 `NA`를 검색해서는 절대 찾지 못했을 0으로 코딩된 결측 데이터를 발견했습니다. 앞으로는 오해의 소지가 있는 계산을 방지하기 위해 이 값들을 `NA`로 다시 코딩하기로 선택할 수 있습니다. 또한 32mm와 59mm라는 측정값도 믿기 어려워 보입니다. 이 다이아몬드들은 길이가 1인치가 넘는데 가격은 수십만 달러가 아니니까요!
 
-It's good practice to repeat your analysis with and without the outliers.
-If they have minimal effect on the results, and you can't figure out why they're there, it's reasonable to omit them, and move on.
-However, if they have a substantial effect on your results, you shouldn't drop them without justification.
-You'll need to figure out what caused them (e.g., a data entry error) and disclose that you removed them in your write-up.
+이상값이 있는 경우와 없는 경우로 분석을 반복해 보는 것이 좋은 습관입니다. 결과에 미치는 영향이 미미하고 왜 거기에 있는지 파악할 수 없다면, 빼버리고 계속 진행하는 것도 합리적입니다. 그러나 결과에 상당한 영향을 미친다면 정당한 사유 없이 제외해서는 안 됩니다. 무엇이 그것을 유발했는지(예: 데이터 입력 오류) 파악해야 하며 기록 시 그것을 제거했음을 밝혀야 합니다.
 
-### Exercises
+### 연습문제
 
-1.  Explore the distribution of each of the `x`, `y`, and `z` variables in `diamonds`.
-    What do you learn?
-    Think about a diamond and how you might decide which dimension is the length, width, and depth.
+1.  `diamonds`에 있는 `x`, `y`, `z` 각 변수의 분포를 탐색해 보세요. 무엇을 배웠나요? 다이아몬드를 생각하며 어느 차원을 길이, 너비, 깊이로 결정할지 생각해 보세요.
 
-2.  Explore the distribution of `price`.
-    Do you discover anything unusual or surprising?
-    (Hint: Carefully think about the `binwidth` and make sure you try a wide range of values.)
+2.  `price`의 분포를 탐색해 보세요. 비정상적이거나 놀라운 점을 발견했나요? (힌트: `binwidth`를 신중하게 생각하고 넓은 범위의 값을 시도해 보세요.)
 
-3.  How many diamonds are 0.99 carat?
-    How many are 1 carat?
-    What do you think is the cause of the difference?
+3.  0.99 캐럿인 다이아몬드는 몇 개인가요? 1 캐럿인 다이아몬드는 몇 개인가요? 그 차이의 원인이 무엇이라고 생각하시나요?
 
-4.  Compare and contrast `coord_cartesian()` vs. `xlim()` or `ylim()` when zooming in on a histogram.
-    What happens if you leave `binwidth` unset?
-    What happens if you try and zoom so only half a bar shows?
+4.  히스토그램을 줌할 때 `coord_cartesian()` 대 `xlim()` 또는 `ylim()`을 비교하고 대조해 보세요. `binwidth`를 설정하지 않은 채 두면 어떻게 되나요? 막대의 절반만 보이도록 줌을 시도하면 어떻게 되나요?
+    
+## 이례적인 값 {#sec-unusual-values-eda}
 
-## Unusual values {#sec-unusual-values-eda}
+데이터셋에서 이례적인 값을 발견했고 단순히 분석의 나머지 과정으로 넘어가고 싶다면, 두 가지 옵션이 있습니다.
 
-If you've encountered unusual values in your dataset, and simply want to move on to the rest of your analysis, you have two options.
-
-1.  Drop the entire row with the strange values:
+1.  이상한 값이 있는 행 전체를 삭제합니다:
 
     ```{r}
     #| eval: false
@@ -244,32 +175,28 @@ If you've encountered unusual values in your dataset, and simply want to move on
       filter(between(y, 3, 20))
     ```
 
-    We don't recommend this option because one invalid value doesn't imply that all the other values for that observation are also invalid.
-    Additionally, if you have low quality data, by the time that you've applied this approach to every variable you might find that you don't have any data left!
+    우리는 이 옵션을 권장하지 않습니다. 왜냐하면 하나의 유효하지 않은 값이 해당 관측치의 다른 모든 값도 유효하지 않음을 의미하지는 않기 때문입니다. 게다가 데이터 품질이 좋지 않다면, 모든 변수에 이 접근 방식을 적용했을 때 남는 데이터가 하나도 없을 수도 있습니다!
 
-2.  Instead, we recommend replacing the unusual values with missing values.
-    The easiest way to do this is to use `mutate()` to replace the variable with a modified copy.
-    You can use the `if_else()` function to replace unusual values with `NA`:
+2.  대신, 이례적인 값을 결측값으로 바꾸는 것을 권장합니다. 이를 수행하는 가장 쉬운 방법은 `mutate()`를 사용하여 변수를 수정된 복사본으로 바꾸는 것입니다. `if_else()` 함수를 사용하여 이례적인 값을 `NA`로 바꿀 수 있습니다:
 
     ```{r}
     diamonds2 <- diamonds |> 
       mutate(y = if_else(y < 3 | y > 20, NA, y))
     ```
 
-It's not obvious where you should plot missing values, so ggplot2 doesn't include them in the plot, but it does warn that they've been removed:
+결측값을 어디에 플롯해야 할지 명확하지 않기 때문에, ggplot2는 플롯에 결측값을 포함하지 않지만 이들이 제거되었다는 경고를 표시합니다:
 
 ```{r}
 #| dev: "png"
 #| fig-alt: |
-#|   A scatterplot of widths vs. lengths of diamonds. There is a strong, 
-#|   linear association between the two variables. All but one of the diamonds 
-#|   has length greater than 3. The one outlier has a length of 0 and a width 
-#|   of about 6.5. 
+#|   다이아몬드의 너비 대 길이 산점도로, 두 변수 사이에 강한 선형적 관계가 듬. 
+#|   하나를 제외한 모든 다이아몬드의 길이는 3보다 큼. 하나의 이상값은 
+#|   길이가 0이고 너비가 약 6.5임.
 ggplot(diamonds2, aes(x = x, y = y)) + 
   geom_point()
 ```
 
-To suppress that warning, set `na.rm = TRUE`:
+그 경고를 숨기려면, `na.rm = TRUE`를 설정하세요:
 
 ```{r}
 #| eval: false
@@ -277,19 +204,15 @@ ggplot(diamonds2, aes(x = x, y = y)) +
   geom_point(na.rm = TRUE)
 ```
 
-Other times you want to understand what makes observations with missing values different to observations with recorded values.
-For example, in `nycflights13::flights`[^eda-1], missing values in the `dep_time` variable indicate that the flight was cancelled.
-So you might want to compare the scheduled departure times for cancelled and non-cancelled times.
-You can do this by making a new variable, using `is.na()` to check if `dep_time` is missing.
+다른 경우에는 결측값이 있는 관측치와 값이 기록된 관측치를 구분하는 것이 무엇인지 이해하고 싶을 때도 있습니다. 예를 들어, `nycflights13::flights`[^eda-1]에서 `dep_time` 변수의 결측값은 항공편이 취소되었음을 나타냅니다. 따라서 취소된 시간과 취소되지 않은 시간의 예정된 출발 시간을 비교하고 싶을 수 있습니다. `is.na()`를 사용하여 `dep_time`이 결측인지 확인하는 새로운 변수를 만들어 이를 수행할 수 있습니다.
 
-[^eda-1]: Remember that when we need to be explicit about where a function (or dataset) comes from, we'll use the special form `package::function()` or `package::dataset`.
+[^eda-1]: 함수(또는 데이터셋)가 어디에서 왔는지 명시적으로 밝혀야 할 때는 `package::function()` 또는 `package::dataset`와 같은 특수한 형태를 사용함을 기억하세요.
 
 ```{r}
 #| fig-alt: |
-#|   A frequency polygon of scheduled departure times of flights. Two lines 
-#|   represent flights that are cancelled and not cancelled. The x-axis ranges 
-#|   from 0 to 25 minutes and the y-axis ranges from 0 to 10000. The number of 
-#|   flights not cancelled are much higher than those cancelled.
+#|   항공편의 예정 출발 시간에 대한 빈도 다각형. 취소된 항공편과 취소되지 
+#|   않은 항공편을 두 개의 선으로 나타냄. x축은 0분에서 25시까지, y축은 
+#|   0에서 10,000까지임. 취소되지 않은 항공편 수가 취소된 항공편보다 훨씬 많음.
 nycflights13::flights |> 
   mutate(
     cancelled = is.na(dep_time),
@@ -301,252 +224,202 @@ nycflights13::flights |>
   geom_freqpoly(aes(color = cancelled), binwidth = 1/4)
 ```
 
-However this plot isn't great because there are many more non-cancelled flights than cancelled flights.
-In the next section we'll explore some techniques for improving this comparison.
+그러나 이 플롯은 취소되지 않은 항공편이 취소된 항공편보다 훨씬 많기 때문에 좋지 않습니다. 다음 섹션에서 이 비교를 개선하기 위한 몇 가지 기술을 탐구해 보겠습니다.
 
-### Exercises
+### 연습문제
 
-1.  What happens to missing values in a histogram?
-    What happens to missing values in a bar chart?
-    Why is there a difference in how missing values are handled in histograms and bar charts?
+1.  히스토그램에서 결측값은 어떻게 되나요? 막대 차트에서 결측값은 어떻게 되나요? 히스토그램과 막대 차트에서 결측값을 처리하는 방식에 왜 차이가 있을까요?
 
-2.  What does `na.rm = TRUE` do in `mean()` and `sum()`?
+2.  `mean()`과 `sum()`에서 `na.rm = TRUE`는 무엇을 하나요?
 
-3.  Recreate the frequency plot of `scheduled_dep_time` colored by whether the flight was cancelled or not.
-    Also facet by the `cancelled` variable.
-    Experiment with different values of the `scales` variable in the faceting function to mitigate the effect of more non-cancelled flights than cancelled flights.
+3.  항공편이 취소되었는지 여부에 따라 색칠된 `scheduled_dep_time`의 빈도 플롯을 다시 만들어 보세요. 또한 `cancelled` 변수로 파세팅도 해보세요. 취소되지 않은 항공편이 취소된 항공편보다 훨씬 많은 영향을 완화하기 위해 파세팅 함수에서 `scales` 변수의 다양한 값들로 실험해 보세요.
 
-## Covariation
+## 공변이
 
-If variation describes the behavior *within* a variable, covariation describes the behavior *between* variables.
-**Covariation** is the tendency for the values of two or more variables to vary together in a related way.
-The best way to spot covariation is to visualize the relationship between two or more variables.
+변이가 변수 *내*의 동작을 설명한다면, 공변이는 변수 *사이*의 동작을 설명합니다. **공변이(covariation)**는 둘 이상의 변수 값이 연관된 방식으로 함께 변하는 경향입니다. 공변이를 파악하는 가장 좋은 방법은 둘 이상의 변수 사이의 관계를 시각화하는 것입니다.
 
-### A categorical and a numerical variable {#sec-cat-num}
+### 범주형 변수와 수치형 변수 {#sec-cat-num}
 
-For example, let's explore how the price of a diamond varies with its quality (measured by `cut`) using `geom_freqpoly()`:
+예를 들어, `geom_freqpoly()`를 사용하여 다이아몬드의 품질(컷팅에 의해 측정됨)에 따라 가격이 어떻게 변하는지 탐색해 봅시다.
 
 ```{r}
 #| fig-alt: |
-#|   A frequency polygon of prices of diamonds where each cut of carat (Fair, 
-#|   Good, Very Good, Premium, and Ideal) is represented with a different color 
-#|   line. The x-axis ranges from 0 to 30000 and the y-axis ranges from 0 to 
-#|   5000. The lines overlap a great deal, suggesting similar frequency 
-#|   distributions of prices of diamonds. One notable feature is that 
-#|   Ideal diamonds have the highest peak around 1500.
+#|   다이아몬드 가격의 빈도 다각형으로, 컷팅의 각 레벨(Fair, Good, Very 
+#|   Good, Premium, Ideal)이 서로 다른 색상의 선으로 표현됨. x축은 0에서 
+#|   30,000까지, y축은 0에서 5,000까지임. 선들이 상당히 많이 겹쳐 있으며, 
+#|   이는 다이아몬드 가격의 빈도 분포가 유사함을 시사함. 한 가지 주목할 
+#|   특징은 Ideal 다이아몬드가 1,500 근처에서 가장 높은 봉우리를 가진다는 것임.
 ggplot(diamonds, aes(x = price)) + 
   geom_freqpoly(aes(color = cut), binwidth = 500, linewidth = 0.75)
 ```
 
-Note that ggplot2 uses an ordered color scale for `cut` because it's defined as an ordered factor variable in the data.
-You'll learn more about these in @sec-ordered-factors.
+ggplot2는 데이터에서 `cut`이 순서형 요인(ordered factor) 변수로 정의되어 있기 때문에 `cut`에 대해 순서가 있는 색상 스케일을 사용합니다. 이에 대해서는 @sec-ordered-factors에서 더 자세히 배울 것입니다.
 
-The default appearance of `geom_freqpoly()` is not that useful here because the height, determined by the overall count, differs so much across `cut`s, making it hard to see the differences in the shapes of their distributions.
+전체 개수에 의해 결정되는 높이가 `cut`에 따라 너무 많이 다르기 때문에, 기본 `geom_freqpoly()`의 모습은 여기서 그리 유용하지 않습니다. 이로 인해 분포의 형태 차이를 보기가 어렵습니다.
 
-To make the comparison easier we need to swap what is displayed on the y-axis.
-Instead of displaying count, we'll display the **density**, which is the count standardized so that the area under each frequency polygon is one.
+비교를 쉽게 하려면 y축에 표시되는 내용을 바꿔야 합니다. 개수를 표시하는 대신, 각 빈도 다각형 아래의 면적이 1이 되도록 표준화된 개수인 **밀도(density)**를 표시하겠습니다.
 
 ```{r}
 #| fig-alt: |
-#|   A frequency polygon of densities of prices of diamonds where each cut of 
-#|   carat (Fair, Good, Very Good, Premium, and Ideal) is represented with a 
-#|   different color line. The x-axis ranges from 0 to 20000. The lines overlap 
-#|   a great deal, suggesting similar density distributions of prices of 
-#|   diamonds. One notable feature is that all but Fair diamonds have high peaks 
-#|   around a price of 1500 and Fair diamonds have a higher mean than others.
+#|   다이아몬드 가격 밀도의 빈도 다각형으로, 컷팅의 각 레벨(Fair, Good, 
+#|   Very Good, Premium, Ideal)이 서로 다른 색상의 선으로 표현됨. x축은 0에서 
+#|   20,000까지임. 선들이 상당히 많이 겹쳐 있어 다이아몬드 가격의 밀도 
+#|   분포가 유사함을 시사함. 주목할 점은 Fair 다이아몬드를 제외한 모든 컷이 
+#|   가격 1,500 근처에서 높은 봉우리를 가지며, Fair 다이아몬드가 다른 
+#|   것들보다 평균이 더 높다는 것임.
 ggplot(diamonds, aes(x = price, y = after_stat(density))) + 
   geom_freqpoly(aes(color = cut), binwidth = 500, linewidth = 0.75)
 ```
 
-Note that we're mapping the density to `y`, but since `density` is not a variable in the `diamonds` dataset, we need to first calculate it.
-We use the `after_stat()` function to do so.
+우리는 밀도를 `y`에 매핑하고 있지만, `density`는 `diamonds` 데이터셋의 변수가 아니므로 먼저 이를 계산해야 합니다. 이를 위해 `after_stat()` 함수를 사용합니다.
 
-There's something rather surprising about this plot - it appears that fair diamonds (the lowest quality) have the highest average price!
-But maybe that's because frequency polygons are a little hard to interpret - there's a lot going on in this plot.
+이 플롯에는 다소 놀라운 점이 있습니다. 가장 품질이 낮은 Fair 다이아몬드의 평균 가격이 가장 높은 것으로 보입니다! 하지만 빈도 다각형은 해석하기가 조금 어려울 수도 있습니다. 이 플롯에는 너무 많은 것이 일어나고 있으니까요.
 
-A visually simpler plot for exploring this relationship is using side-by-side boxplots.
+이 관계를 탐색하기 위해 시각적으로 더 간단한 플롯은 나란히 놓인 박스 플롯(side-by-side boxplots)을 사용하는 것입니다.
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side boxplots of prices of diamonds by cut. The distribution of 
-#|   prices is right skewed for each cut (Fair, Good, Very Good, Premium, and 
-#|   Ideal). The medians are close to each other, with the median for Ideal 
-#|   diamonds lowest and that for Fair highest.
+#|   컷팅별 다이아몬드 가격의 나란히 놓인 박스 플롯. 가격 분포는 각 컷(Fair, 
+#|   Good, Very Good, Premium, Ideal)에 대해 오른쪽으로 치우쳐 있음. 
+#|   중앙값들은 서로 가깝지만, Ideal 다이아몬드의 중앙값이 가장 낮고 
+#|   Fair가 가장 높음.
 ggplot(diamonds, aes(x = cut, y = price)) +
   geom_boxplot()
 ```
 
-We see much less information about the distribution, but the boxplots are much more compact so we can more easily compare them (and fit more on one plot).
-It supports the counter-intuitive finding that better quality diamonds are typically cheaper!
-In the exercises, you'll be challenged to figure out why.
+분포에 대한 정보는 훨씬 적게 보이지만, 박스 플롯은 훨씬 더 간결하므로 더 쉽게 비교할 수 있습니다 (하나의 플롯에 더 많이 넣을 수도 있습니다). 더 좋은 품질의 다이아몬드가 일반적으로 더 저렴하다는 직관에 반하는 발견을 뒷받침합니다! 연습문제에서 여러분은 그 이유를 파악하는 도전을 하게 될 것입니다.
 
-`cut` is an ordered factor: fair is worse than good, which is worse than very good and so on.
-Many categorical variables don't have such an intrinsic order, so you might want to reorder them to make a more informative display.
-One way to do that is with `fct_reorder()`.
-You'll learn more about that function in @sec-modifying-factor-order, but we want to give you a quick preview here because it's so useful.
-For example, take the `class` variable in the `mpg` dataset.
-You might be interested to know how highway mileage varies across classes:
+`cut`은 순서형 요인입니다. Fair는 Good보다 나쁘고, Good은 Very Good보다 나쁜 식입니다. 많은 범주형 변수는 이러한 고유한 순서가 없으므로, 더 유익한 디스플레이를 위해 순서를 재조정하고 싶을 수 있습니다. 그렇게 하는 한 가지 방법은 `fct_reorder()`를 사용하는 것입니다. 그 함수에 대해서는 @sec-modifying-factor-order에서 자세히 배우겠지만, 여기서 유용하므로 잠깐 미리 보여드리겠습니다. 예를 들어, `mpg` 데이터셋의 `class` 변수를 봅시다. 여러분은 클래스에 따라 고속도로 연비가 어떻게 변하는지 궁금할 수 있습니다:
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side boxplots of highway mileages of cars by class. Classes are 
-#|   on the x-axis (2seaters, compact, midsize, minivan, pickup, subcompact, 
-#|   and suv).
+#|   자동차 클래스별 고속도로 연비의 나란히 놓인 박스 플롯. 클래스가 
+#|   x축에 있음(2seaters, compact, midsize, minivan, pickup, subcompact, 
+#|   suv).
 ggplot(mpg, aes(x = class, y = hwy)) +
   geom_boxplot()
 ```
 
-To make the trend easier to see, we can reorder `class` based on the median value of `hwy`:
+경향을 더 쉽게 볼 수 있도록, `hwy`의 중앙값을 기준으로 `class`의 순서를 재조정할 수 있습니다:
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side boxplots of highway mileages of cars by class. Classes are 
-#|   on the x-axis and ordered by increasing median highway mileage (pickup, 
-#|   suv, minivan, 2seater, subcompact, compact, and midsize).
+#|   자동차 클래스별 고속도로 연비의 나란히 놓인 박스 플롯. 클래스가 
+#|   x축에 있으며 중앙값 고속도로 연비가 증가하는 순서대로 정렬됨(pickup, 
+#|   suv, minivan, 2seater, subcompact, compact, midsize).
 ggplot(mpg, aes(x = fct_reorder(class, hwy, median), y = hwy)) +
   geom_boxplot()
 ```
 
-If you have long variable names, `geom_boxplot()` will work better if you flip it 90°.
-You can do that by exchanging the x and y aesthetic mappings.
+변수 이름이 길다면 x축과 y축 매핑을 서로 바꾸어 `geom_boxplot()`을 90도 회전시키는 것이 더 효과적일 것입니다.
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side boxplots of highway mileages of cars by class. Classes are 
-#|   on the y-axis and ordered by increasing median highway mileage.
+#|   자동차 클래스별 고속도로 연비의 나란히 놓인 박스 플롯. 클래스가 
+#|   y축에 있으며 중앙값 고속도로 연비가 증가하는 순서대로 정렬됨.
 ggplot(mpg, aes(x = hwy, y = fct_reorder(class, hwy, median))) +
   geom_boxplot()
 ```
 
-#### Exercises
+#### 연습문제
 
-1.  Use what you've learned to improve the visualization of the departure times of cancelled vs. non-cancelled flights.
+1.  배운 내용을 사용하여 취소된 항공편과 취소되지 않은 항공편의 출발 시간 시각화를 개선해 보세요.
 
-2.  Based on EDA, what variable in the diamonds dataset appears to be most important for predicting the price of a diamond?
-    How is that variable correlated with cut?
-    Why does the combination of those two relationships lead to lower quality diamonds being more expensive?
+2.  EDA를 바탕으로, 다이아몬드 가격을 예측하는 데 가장 중요한 변수는 무엇으로 보이나요? 그 변수는 컷팅과 어떤 상관관계가 있나요? 왜 그 두 관계의 결합이 품질이 낮은 다이아몬드를 더 비싸게 만들까요?
 
-3.  Instead of exchanging the x and y variables, add `coord_flip()` as a new layer to the vertical boxplot to create a horizontal one.
-    How does this compare to exchanging the variables?
+3.  x 변수와 y 변수를 바꾸는 대신, 수직 박스 플롯에 새로운 레이어로 `coord_flip()`을 추가하여 수평 박스 플롯을 만들어 보세요. 변수를 바꾸는 것과 어떻게 비교되나요?
 
-4.  One problem with boxplots is that they were developed in an era of much smaller datasets and tend to display a prohibitively large number of "outlying values".
-    One approach to remedy this problem is the letter value plot.
-    Install the lvplot package, and try using `geom_lv()` to display the distribution of price vs. cut.
-    What do you learn?
-    How do you interpret the plots?
+4.  박스 플롯의 한 가지 문제는 훨씬 작은 데이터셋을 사용하던 시대에 개발되었으며, 금지될 정도로 많은 수의 "이상값"을 표시하는 경향이 있다는 점입니다. 이 문제를 해결하기 위한 한 가지 접근 방식은 레터 값 플롯(letter value plot)입니다. lvplot 패키지를 설치하고, `geom_lv()`를 사용하여 가격 대 컷팅 분포를 표시해 보세요. 무엇을 배웠나요? 플롯을 어떻게 해석하시겠나요?
 
-5.  Create a visualization of diamond prices vs. a categorical variable from the `diamonds` dataset using `geom_violin()`, then a faceted `geom_histogram()`, then a colored `geom_freqpoly()`, and then a colored `geom_density()`.
-    Compare and contrast the four plots.
-    What are the pros and cons of each method of visualizing the distribution of a numerical variable based on the levels of a categorical variable?
+5.  `geom_violin()`, 파세팅된 `geom_histogram()`, 색칠된 `geom_freqpoly()`, 그리고 색칠된 `geom_density()`를 사용하여 `diamonds` 데이터셋의 범주형 변수에 따른 다이아몬드 가격 시각화를 만들어 보세요. 네 가지 플롯을 비교하고 대조해 보세요. 범주형 변수의 레벨에 따라 수치형 변수의 분포를 시각화하는 각 방법의 장단점은 무엇인가요?
 
-6.  If you have a small dataset, it's sometimes useful to use `geom_jitter()` to avoid overplotting to more easily see the relationship between a continuous and categorical variable.
-    The ggbeeswarm package provides a number of methods similar to `geom_jitter()`.
-    List them and briefly describe what each one does.
+6.  데이터셋이 작으면 공변이(overplotting) 문제를 피하고 연속형 변수와 범주형 변수 사이의 관계를 더 쉽게 보기 위해 `geom_jitter()`를 사용하는 것이 유용할 때가 있습니다. ggbeeswarm 패키지는 `geom_jitter()`와 유사한 여러 가지 방법을 제공합니다. 그것들을 나열하고 각각이 무엇을 하는지 간단히 설명해 보세요.
 
-### Two categorical variables
+### 두 개의 범주형 변수
 
-To visualize the covariation between categorical variables, you'll need to count the number of observations for each combination of levels of these categorical variables.
-One way to do that is to rely on the built-in `geom_count()`:
+범주형 변수 사이의 공변이를 시각화하려면, 이 범주형 변수들의 레벨 조합마다 관측값의 수를 세어야 합니다. 이를 수행하는 한 가지 방법은 내장된 `geom_count()`를 사용하는 것입니다:
 
 ```{r}
 #| fig-alt: |
-#|   A scatterplot of color vs. cut of diamonds. There is one point for each
-#|   combination of levels of cut (Fair, Good, Very Good, Premium, and Ideal) 
-#|   and color (D, E, F, G, G, I, and J). The sizes of the points represent 
-#|   the number of observations for that combination. The legend indicates 
-#|   that these sizes range between 1000 and 4000.
+#|   다이아몬드 색상 대 컷팅의 산점도. 컷팅(Fair, Good, Very Good, 
+#|   Premium, Ideal)과 색상(D, E, F, G, H, I, J)의 각 레벨 조합마다 하나의 
+#|   점이 있음. 점들의 크기는 해당 조합의 관측값 수를 나타냄. 범례는 이 
+#|   크기가 1,000에서 4,000 사이임을 나타냄.
 ggplot(diamonds, aes(x = cut, y = color)) +
   geom_count()
 ```
 
-The size of each circle in the plot displays how many observations occurred at each combination of values.
-Covariation will appear as a strong correlation between specific x values and specific y values.
+플롯에 있는 각 원의 크기는 각 값 조합에서 얼마나 많은 관측치가 발생했는지를 나타냅니다. 공변이는 특정 x 값과 특정 y 값 사이의 강한 상관관계로 나타날 것입니다.
 
-Another approach for exploring the relationship between these variables is computing the counts with dplyr:
+이 변수들 사이의 관계를 탐색하는 또 다른 접근 방식은 dplyr로 개수를 계산하는 것입니다:
 
 ```{r}
 diamonds |> 
   count(color, cut)
 ```
 
-Then visualize with `geom_tile()` and the fill aesthetic:
+그런 다음 `geom_tile()`과 채우기(fill) 심미적 요소로 시각화합니다:
 
 ```{r}
 #| fig-alt: |
-#|   A tile plot of cut vs. color of diamonds. Each tile represents a 
-#|   cut/color combination and tiles are colored according to the number of 
-#|   observations in each tile. There are more Ideal diamonds than other cuts, 
-#|   with the highest number being Ideal diamonds with color G. Fair diamonds 
-#|   and diamonds with color I are the lowest in frequency.
+#|   다이아몬드 컷팅 대 색상의 타일 플롯. 각 타일은 컷/색상 조합을 나타내며 
+#|   타일은 각 타일의 관측값 수에 따라 색칠됨. Ideal 다이아몬드가 다른 
+#|   컷보다 많으며, 가장 높은 수는 색상이 G인 Ideal 다이아몬드임. Fair 
+#|   다이아몬드와 색상이 I인 다이아몬드가 빈도가 가장 낮음.
 diamonds |> 
   count(color, cut) |>  
   ggplot(aes(x = color, y = cut)) +
   geom_tile(aes(fill = n))
 ```
 
-If the categorical variables are unordered, you might want to use the seriation package to simultaneously reorder the rows and columns in order to more clearly reveal interesting patterns.
-For larger plots, you might want to try the heatmaply package, which creates interactive plots.
+범주형 변수의 순서가 정해져 있지 않다면, 행과 열을 동시에 재조정하여 흥미로운 패턴을 더 명확하게 드러내기 위해 seriation 패키지를 사용하고 싶을 수도 있습니다. 더 큰 플롯의 경우 대화형 플롯을 생성하는 heatmaply 패키지를 시도해 볼 수 있습니다.
 
-#### Exercises
+#### 연습문제
 
-1.  How could you rescale the count dataset above to more clearly show the distribution of cut within color, or color within cut?
+1.  위의 개수 데이터셋을 색상 내에서의 컷팅 분포 또는 컷팅 내에서의 색상 분포를 더 명확하게 보여주도록 어떻게 스케일을 재조정할 수 있을까요?
 
-2.  What different data insights do you get with a segmented bar chart if color is mapped to the `x` aesthetic and `cut` is mapped to the `fill` aesthetic?
-    Calculate the counts that fall into each of the segments.
+2.  분할 막대 차트에서 색상이 `x` 심미적 요소에 매핑되고 `cut`이 `fill` 심미적 요소에 매핑되는 경우 어떤 다른 데이터 통찰을 얻을 수 있나요? 각 세그먼트에 해당하는 개수를 계산해 보세요.
 
-3.  Use `geom_tile()` together with dplyr to explore how average flight departure delays vary by destination and month of year.
-    What makes the plot difficult to read?
-    How could you improve it?
+3.  `geom_tile()`을 dplyr과 함께 사용하여 목적지와 월별 평균 비행 출발 지연 시간이 어떻게 변하는지 탐색해 보세요. 무엇이 플롯을 읽기 어렵게 만드나요? 어떻게 개선할 수 있을까요?
 
-### Two numerical variables
+### 두 개의 수치형 변수
 
-You've already seen one great way to visualize the covariation between two numerical variables: draw a scatterplot with `geom_point()`.
-You can see covariation as a pattern in the points.
-For example, you can see a positive relationship between the carat size and price of a diamond: diamonds with more carats have a higher price.
-The relationship is exponential.
+여러분은 이미 두 수치형 변수 사이의 공변이를 시각화하는 훌륭한 방법 하나를 보았습니다. 바로 `geom_point()`를 사용하여 산점도를 그리는 것입니다. 점들의 패턴으로 공변이를 볼 수 있습니다. 예를 들어, 다이아몬드의 캐럿 크기와 가격 사이에는 양의 상관관계가 있음을 알 수 있습니다. 캐럿이 많은 다이아몬드가 가격이 더 높습니다. 이 관계는 기하급수적입니다.
 
 ```{r}
 #| dev: "png"
 #| fig-alt: |
-#|   A scatterplot of price vs. carat. The relationship is positive, somewhat 
-#|   strong, and exponential.
+#|   가격 대 캐럿의 산점도. 관계는 양의 상관관계이며 다소 강하고 
+#|   기하급수적임.
 ggplot(smaller, aes(x = carat, y = price)) +
   geom_point()
 ```
 
-(In this section we'll use the `smaller` dataset to stay focused on the bulk of the diamonds that are smaller than 3 carats)
+(이 섹션에서는 3캐럿보다 작은 대다수의 다이아몬드에 집중하기 위해 `smaller` 데이터셋을 사용할 것입니다.)
 
-Scatterplots become less useful as the size of your dataset grows, because points begin to overplot, and pile up into areas of uniform black, making it hard to judge differences in the density of the data across the 2-dimensional space as well as making it hard to spot the trend.
-You've already seen one way to fix the problem: using the `alpha` aesthetic to add transparency.
+데이터셋의 크기가 커짐에 따라 산점도는 덜 유용해지는데, 점들이 겹쳐 찍히기(overplot) 시작하고 균일한 검은색 영역으로 쌓이기 때문입니다. 이로 인해 2차원 공간 전체에서 데이터의 밀도 차이를 판단하기 어려워지고 경향을 파악하기도 어렵습니다. 이 문제를 해결하는 한 가지 방법을 이미 보았습니다. 바로 투명도를 추가하기 위해 `alpha` 심미적 요소를 사용하는 것입니다.
 
 ```{r}
 #| dev: "png"
 #| fig-alt: |
-#|   A scatterplot of price vs. carat. The relationship is positive, somewhat 
-#|   strong, and exponential. The points are transparent, showing clusters where 
-#|   the number of points is higher than other areas, The most obvious clusters 
-#|   are for diamonds with 1, 1.5, and 2 carats.
+#|   가격 대 캐럿의 산점도. 관계는 양의 상관관계이며 다소 강하고 
+#|   기하급수적임. 점들이 투명하여 점의 수가 다른 영역보다 높은 클러스터를 
+#|   보여줌. 가장 뚜렷한 클러스터는 1, 1.5, 2캐럿 다이아몬드들임.
 ggplot(smaller, aes(x = carat, y = price)) + 
   geom_point(alpha = 1 / 100)
 ```
 
-But using transparency can be challenging for very large datasets.
-Another solution is to use bin.
-Previously you used `geom_histogram()` and `geom_freqpoly()` to bin in one dimension.
-Now you'll learn how to use `geom_bin2d()` and `geom_hex()` to bin in two dimensions.
+그러나 매우 큰 데이터셋의 경우 투명도를 사용하는 것도 어려울 수 있습니다. 또 다른 해결책은 빈(bin)을 사용하는 것입니다. 이전에 1차원에서 빈을 만들기 위해 `geom_histogram()`과 `geom_freqpoly()`를 사용했습니다. 이제 2차원에서 빈을 만들기 위해 `geom_bin2d()`와 `geom_hex()`를 사용하는 방법을 배울 것입니다.
 
-`geom_bin2d()` and `geom_hex()` divide the coordinate plane into 2d bins and then use a fill color to display how many points fall into each bin.
-`geom_bin2d()` creates rectangular bins.
-`geom_hex()` creates hexagonal bins.
-You will need to install the hexbin package to use `geom_hex()`.
+`geom_bin2d()`와 `geom_hex()`는 좌표 평면을 2D 빈으로 나눈 다음, 각 빈에 몇 개의 점이 들어가는지를 채우기 색상으로 표시합니다. `geom_bin2d()`는 직사각형 빈을 만들고, `geom_hex()`는 육각형 빈을 만듭니다. `geom_hex()`를 사용하려면 hexbin 패키지를 설치해야 합니다.
 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 3
 #| fig-alt: |
-#|   Plot 1: A binned density plot of price vs. carat. Plot 2: A hexagonal bin 
-#|   plot of price vs. carat. Both plots show that the highest density of 
-#|   diamonds have low carats and low prices.
+#|   플롯 1: 가격 대 캐럿의 빈 밀도 플롯. 플롯 2: 가격 대 캐럿의 육각형 
+#|   빈 플롯. 두 플롯 모두 밀도가 가장 높은 다이아몬드들이 낮은 캐럿과 
+#|   낮은 가격을 가짐을 보여줌.
 ggplot(smaller, aes(x = carat, y = price)) +
   geom_bin2d()
 
@@ -555,43 +428,34 @@ ggplot(smaller, aes(x = carat, y = price)) +
   geom_hex()
 ```
 
-Another option is to bin one continuous variable so it acts like a categorical variable.
-Then you can use one of the techniques for visualizing the combination of a categorical and a continuous variable that you learned about.
-For example, you could bin `carat` and then for each group, display a boxplot:
+또 다른 옵션은 하나의 연속형 변수를 범주형 변수처럼 작동하도록 빈으로 나누는 것입니다. 그런 다음 배운 내용 중 범주형 변수와 연속형 변수의 조합을 시각화하는 기술 중 하나를 사용할 수 있습니다. 예를 들어, `carat`을 빈으로 나눈 다음 각 그룹에 대해 박스 플롯을 표시할 수 있습니다:
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side box plots of price by carat. Each box plot represents diamonds 
-#|   that are 0.1 carats apart in weight. The box plots show that as carat 
-#|   increases the median price increases as well. Additionally, diamonds with 
-#|   1.5 carats or lower have right skewed price distributions, 1.5 to 2 have 
-#|   roughly symmetric price distributions, and diamonds that weigh more have 
-#|   left skewed distributions. Cheaper, smaller diamonds have outliers on the 
-#|   higher end, more expensive, bigger diamonds have outliers on the lower end.
+#|   캐럿별 가격의 나란히 놓인 박스 플롯. 각 박스 플롯은 무게가 0.1캐럿씩 
+#|   떨어져 있는 다이아몬드들을 나타냄. 박스 플롯은 캐럿이 증가함에 따라 
+#|   중앙값 가격도 증가함을 보여줌. 또한 1.5캐럿 이하의 다이아몬드는 
+#|   가격 분포가 오른쪽으로 치우쳐 있고, 1.5에서 2 사이는 대략 대칭적인 
+#|   가격 분포를 가지며, 그보다 더 무거운 다이아몬드는 왼쪽으로 치우친 
+#|   분포를 가짐. 저렴하고 작은 다이아몬드는 높은 쪽으로 이상값이 있고, 
+#|   비싸고 큰 다이아몬드는 낮은 쪽으로 이상값이 있음.
 ggplot(smaller, aes(x = carat, y = price)) + 
   geom_boxplot(aes(group = cut_width(carat, 0.1)))
 ```
 
-`cut_width(x, width)`, as used above, divides `x` into bins of width `width`.
-By default, boxplots look roughly the same (apart from number of outliers) regardless of how many observations there are, so it's difficult to tell that each boxplot summarizes a different number of points.
-One way to show that is to make the width of the boxplot proportional to the number of points with `varwidth = TRUE`.
+위에서 사용된 `cut_width(x, width)`는 `x`를 너비 `width`인 빈으로 나눕니다. 기본적으로 박스 플롯은 관측값이 몇 개인지와 상관없이 (이상값의 수를 제외하고) 거의 동일하게 보이므로, 각 박스 플롯이 서로 다른 수의 점을 요약하고 있다는 것을 알기 어렵습니다. 이를 보여주는 한 가지 방법은 `varwidth = TRUE`를 사용하여 박스 플롯의 너비를 점의 수에 비례하게 만드는 것입니다.
 
-#### Exercises
+#### 연습문제
 
-1.  Instead of summarizing the conditional distribution with a boxplot, you could use a frequency polygon.
-    What do you need to consider when using `cut_width()` vs. `cut_number()`?
-    How does that impact a visualization of the 2d distribution of `carat` and `price`?
+1.  박스 플롯으로 조건부 분포를 요약하는 대신, 빈도 다각형을 사용할 수 있습니다. `cut_width()` 대 `cut_number()`를 사용할 때 무엇을 고려해야 하나요? 그것이 `carat`과 `price`의 2D 분포 시각화에 어떤 영향을 미치나요?
 
-2.  Visualize the distribution of `carat`, partitioned by `price`.
+2.  `price`에 따라 분할된 `carat`의 분포를 시각화해 보세요.
 
-3.  How does the price distribution of very large diamonds compare to small diamonds?
-    Is it as you expect, or does it surprise you?
+3.  매우 큰 다이아몬드의 가격 분포는 작은 다이아몬드와 어떻게 비교되나요? 여러분이 예상한 대로인가요, 아니면 놀라운가요?
 
-4.  Combine two of the techniques you've learned to visualize the combined distribution of cut, carat, and price.
+4.  배운 기술 중 두 가지를 결합하여 컷팅, 캐럿, 가격의 결합 분포를 시각화해 보세요.
 
-5.  Two dimensional plots reveal outliers that are not visible in one dimensional plots.
-    For example, some points in the following plot have an unusual combination of `x` and `y` values, which makes the points outliers even though their `x` and `y` values appear normal when examined separately.
-    Why is a scatterplot a better display than a binned plot for this case?
+5.  2차원 플롯은 1차원 플롯에서는 보이지 않는 이상값을 드러냅니다. 예를 들어, 다음 플롯의 일부 점들은 비정상적인 `x`와 `y` 값의 조합을 가지고 있어, `x`와 `y` 값을 따로 조사했을 때는 정상으로 보임에도 불구하고 이상값이 됩니다. 왜 이 경우에는 binned 플롯보다 산점도가 더 좋은 디스플레이일까요?
 
     ```{r}
     #| eval: false
@@ -602,8 +466,7 @@ One way to show that is to make the width of the boxplot proportional to the num
       coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
     ```
 
-6.  Instead of creating boxes of equal width with `cut_width()`, we could create boxes that contain roughly equal number of points with `cut_number()`.
-    What are the advantages and disadvantages of this approach?
+6.  `cut_width()`를 사용하여 동일한 너비의 박스를 만드는 대신, `cut_number()`를 사용하여 대략 동일한 수의 점을 포함하는 박스를 만들 수 있습니다. 이 접근 방식의 장단점은 무엇인가요?
 
     ```{r}
     #| eval: false
@@ -611,43 +474,28 @@ One way to show that is to make the width of the boxplot proportional to the num
       geom_boxplot(aes(group = cut_number(carat, 20)))
     ```
 
-## Patterns and models
+## 패턴과 모델
 
-If a systematic relationship exists between two variables it will appear as a pattern in the data.
-If you spot a pattern, ask yourself:
+두 변수 사이에 체계적인 관계가 존재한다면 데이터에서 패턴으로 나타날 것입니다. 패턴을 발견했다면 스스로에게 질문해 보세요:
 
--   Could this pattern be due to coincidence (i.e. random chance)?
+-   이 패턴이 우연(즉, 무작위 확률) 때문일 수 있을까?
+-   패턴이 암시하는 관계를 어떻게 설명할 수 있을까?
+-   패턴이 암시하는 관계는 얼마나 강한가?
+-   다른 어떤 변수가 관계에 영향을 미칠 수 있을까?
+-   데이터의 개별 하위 그룹을 살펴보아도 관계가 변하지 않는가?
 
--   How can you describe the relationship implied by the pattern?
+데이터의 패턴은 관계에 대한 단서를 제공합니다. 즉, 공변이를 드러냅니다. 변이를 불확실성을 창출하는 현상으로 생각한다면, 공변이는 이를 줄여주는 현상입니다. 두 변수가 공변한다면, 한 변수의 값을 사용하여 두 번째 변수의 값에 대해 더 나은 예측을 할 수 있습니다. 공변이가 (특별한 경우인) 인과 관계 때문이라면, 한 변수의 값을 사용하여 두 번째 변수의 값을 제어할 수 있습니다.
 
--   How strong is the relationship implied by the pattern?
-
--   What other variables might affect the relationship?
-
--   Does the relationship change if you look at individual subgroups of the data?
-
-Patterns in your data provide clues about relationships, i.e., they reveal covariation.
-If you think of variation as a phenomenon that creates uncertainty, covariation is a phenomenon that reduces it.
-If two variables covary, you can use the values of one variable to make better predictions about the values of the second.
-If the covariation is due to a causal relationship (a special case), then you can use the value of one variable to control the value of the second.
-
-Models are a tool for extracting patterns out of data.
-For example, consider the diamonds data.
-It's hard to understand the relationship between cut and price, because cut and carat, and carat and price are tightly related.
-It's possible to use a model to remove the very strong relationship between price and carat so we can explore the subtleties that remain.
-The following code fits a model that predicts `price` from `carat` and then computes the residuals (the difference between the predicted value and the actual value).
-The residuals give us a view of the price of the diamond, once the effect of carat has been removed.
-Note that instead of using the raw values of `price` and `carat`, we log transform them first, and fit a model to the log-transformed values.
-Then, we exponentiate the residuals to put them back in the scale of raw prices.
+모델은 데이터에서 패턴을 추출하는 도구입니다. 예를 들어 다이아몬드 데이터를 생각해 보세요. 컷팅과 가격 사이의 관계를 이해하기 어렵습니다. 컷팅과 캐럿, 그리고 캐럿과 가격이 밀접하게 연관되어 있기 때문입니다. 모델을 사용하여 가격과 캐럿 사이의 매우 강력한 관계를 제거함으로써 남아 있는 미묘한 차이를 탐색할 수 있습니다. 다음 코드는 `carat`으로부터 `price`를 예측하는 모델을 적합시킨 다음 잔차( residuals, 예측값과 실제 값의 차이)를 계산합니다. 잔차는 캐럿의 영향이 제거된 다이아몬드의 가격에 대한 관점을 제공합니다. `price`와 `carat`의 원시 값을 사용하는 대신 먼저 로그 변환을 하고, 로그 변환된 값들에 모델을 적합시킨다는 점에 유의하세요. 그런 다음 잔차를 지수화하여 다시 원시 가격 스케일로 돌려놓습니다.
 
 ```{r}
 #| message: false
 #| dev: "png"
 #| fig-alt: |
-#|   A scatterplot of residuals vs. carat of diamonds. The x-axis ranges from 0 
-#|   to 5, the y-axis ranges from 0 to almost 4. Much of the data are clustered 
-#|   around low values of carat and residuals. There is a clear, curved pattern 
-#|   showing decrease in residuals as carat increases.
+#|   다이아몬드의 잔차 대 캐럿의 산점도. x축은 0에서 5까지, y축은 0에서 
+#|   거의 4까지임. 대부분의 데이터가 낮은 캐럿과 낮은 잔차 값 주위에 
+#|   밀집되어 있음. 캐럿이 증가함에 따라 잔차가 감소하는 명확한 곡선 
+#|   패턴이 보임.
 library(tidymodels)
 
 diamonds <- diamonds |>
@@ -666,24 +514,22 @@ ggplot(diamonds_aug, aes(x = carat, y = .resid)) +
   geom_point()
 ```
 
-Once you've removed the strong relationship between carat and price, you can see what you expect in the relationship between cut and price: relative to their size, better quality diamonds are more expensive.
+캐럿과 가격 사이의 강한 관계를 제거하고 나면, 컷팅과 가격 사이의 관계에서 예상했던 것을 볼 수 있습니다. 즉, 크기에 비해 더 좋은 품질의 다이아몬드가 더 비싸다는 점입니다.
 
 ```{r}
 #| fig-alt: |
-#|   Side-by-side box plots of residuals by cut. The x-axis displays the various 
-#|   cuts (Fair to Ideal), the y-axis ranges from 0 to almost 5. The medians are 
-#|   quite similar, between roughly 0.75 to 1.25. Each of the distributions of 
-#|   residuals is right skewed, with many outliers on the higher end.
+#|   컷팅별 잔차의 나란히 놓인 박스 플롯. x축은 다양한 컷(Fair에서 
+#|   Ideal까지)을 표시하고, y축은 0에서 
+#|   거의 5까지임. 중앙값들은 대략 0.75에서 1.25 사이로 매우 유사함. 잔차의 각 분포는 오른쪽으로 치우쳐 
+#|   있고 높은 쪽에 많은 이상값이 있음.
 ggplot(diamonds_aug, aes(x = cut, y = .resid)) + 
   geom_boxplot()
 ```
 
-We're not discussing modelling in this book because understanding what models are and how they work is easiest once you have tools of data wrangling and programming in hand.
+우리는 이 책에서 모델링을 다루지 않는데, 모델이 무엇이고 어떻게 작동하는지 이해하는 것은 데이터 랭글링과 프로그래밍 도구를 손에 넣은 뒤가 가장 쉽기 때문입니다.
 
-## Summary
+## 요약
 
-In this chapter you've learned a variety of tools to help you understand the variation within your data.
-You've seen techniques that work with a single variable at a time and with a pair of variables.
-This might seem painfully restrictive if you have tens or hundreds of variables in your data, but they're the foundation upon which all other techniques are built.
+이 챕터에서 여러분은 데이터 내의 변이를 이해하는 데 도움이 되는 다양한 도구를 배웠습니다. 한 번에 하나의 변수를 다루는 기술과 한 쌍의 변수를 다루는 기술을 살펴보았습니다. 데이터에 수십 개 또는 수백 개의 변수가 있는 경우 이것이 고통스러울 정도로 제한적으로 보일 수 있지만, 이것들이 다른 모든 기술이 구축되는 기초입니다.
 
-In the next chapter, we'll focus on the tools we can use to communicate our results.
+다음 챕터에서는 우리의 결과를 전달하는 데 사용할 수 있는 도구들에 집중할 것입니다.

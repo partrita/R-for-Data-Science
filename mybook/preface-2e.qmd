@@ -1,31 +1,31 @@
-# Preface to the second edition {.unnumbered}
+# 2판 머리말 {.unnumbered}
 
-Welcome to the second edition of "R for Data Science"!
-This is a major reworking of the first edition, removing material we no longer think is useful, adding material we wish we included in the first edition, and generally updating the text and code to reflect changes in best practices.
-We're also very excited to welcome a new co-author: Mine Çetinkaya-Rundel, a noted data science educator and one of our colleagues at Posit (the company formerly known as RStudio).
+"R for Data Science" 2판에 오신 것을 환영합니다!
+이번 에디션은 1판의 대대적인 개정판입니다. 더 이상 유용하지 않다고 판단되는 자료는 제거하고, 1판에 포함하고 싶었던 새로운 내용을 추가했으며, 최신 관행 변화를 반영하여 텍스트와 코드를 전반적으로 업데이트했습니다.
+또한 저명한 데이터 과학 교육자이자 Posit(구 RStudio)의 동료인 마인 체틴카야-룬델(Mine Çetinkaya-Rundel)이 새로운 공동 저자로 합류하게 되어 매우 기쁩니다.
 
-A brief summary of the biggest changes follows:
+가장 큰 변화를 간략히 요약하면 다음과 같습니다:
 
--   The first part of the book has been renamed to "Whole game".
-    The goal of this section is to give you the rough details of the "whole game" of data science before we dive into the details.
+-   책의 첫 번째 부분 이름이 "전체 과정(Whole game)"으로 변경되었습니다.
+    이 섹션의 목표는 세부적인 내용에 들어가기 전에 데이터 과학의 "전체 과정"에 대한 개략적인 내용을 설명하는 것입니다.
 
--   The second part of the book is "Visualize".
-    This part gives data visualization tools and best practices a more thorough coverage compared to the first edition.
-    The best place to get all the details is still the [ggplot2 book](http://ggplot2-book.org/), but now R4DS covers more of the most important techniques.
+-   두 번째 부분은 "시각화(Visualize)"입니다.
+    이 부분에서는 1판에 비해 데이터 시각화 도구와 모범 사례를 더욱 철저하게 다룹니다.
+    여전히 모든 세부 사항을 파악하기에 가장 좋은 자료는 [ggplot2 book](http://ggplot2-book.org/)이지만, 이제 R4DS에서도 가장 중요한 기술들을 더 많이 다루게 되었습니다.
 
--   The third part of the book is now called "Transform" and gains new chapters on numbers, logical vectors, and missing values.
-    These were previously parts of the data transformation chapter, but needed much more room to cover all the details.
+-   세 번째 부분은 "변형(Transform)"으로 불리며, 숫자, 논리 벡터 및 결측값에 대한 새로운 챕터가 추가되었습니다.
+    이전에는 데이터 변형 챕터의 일부였으나, 모든 세부 사항을 다루기 위해 더 많은 공간이 필요해졌습니다.
 
--   The fourth part of the book is called "Import".
-    It's a new set of chapters that goes beyond reading flat text files to working with spreadsheets, getting data out of databases, working with big data, rectangling hierarchical data, and scraping data from web sites.
+-   네 번째 부분은 "데이터 불러오기(Import)"입니다.
+    단순 텍스트 파일을 읽는 것을 넘어 스프레드시트 작업, 데이터베이스에서 데이터 가져오기, 빅데이터 작업, 계층형 데이터의 정형화(rectangling), 웹사이트 데이터 스크래핑 등을 다루는 새로운 챕터들로 구성되었습니다.
 
--   The "Program" part remains, but has been rewritten from top-to-bottom to focus on the most important parts of function writing and iteration.
-    Function writing now includes details on how to wrap tidyverse functions (dealing with the challenges of tidy evaluation), since this has become much easier and more important over the last few years.
-    We've added a new chapter on important base R functions that you're likely to see in wild-caught R code.
+-   "프로그래밍(Program)" 부분은 그대로 유지되지만, 함수 작성과 반복문의 가장 중요한 부분에 집중하도록 처음부터 끝까지 다시 작성되었습니다.
+    특히 지난 몇 년 동안 훨씬 쉬워지고 중요해진 tidyverse 함수 래핑 방법(tidy evaluation의 어려움 해결 등)에 대한 세부 사항이 포함되었습니다.
+    또한 실무 R 코드에서 자주 접하게 될 중요한 base R 함수들에 대한 새로운 챕터도 추가되었습니다.
 
--   The modeling part has been removed.
-    We never had enough room to fully do modelling justice, and there are now much better resources available.
-    We generally recommend using the [tidymodels](https://www.tidymodels.org/) packages and reading [Tidy Modeling with R](https://www.tmwr.org/) by Max Kuhn and Julia Silge.
+-   모델링 부분은 삭제되었습니다.
+    모델링을 충분히 다루기에 지면이 항상 부족했고, 현재는 더 좋은 자료들이 많이 나와 있습니다.
+    일반적으로 [tidymodels](https://www.tidymodels.org/) 패키지를 사용하고 맥스 쿤(Max Kuhn)과 줄리아 실게(Julia Silge)가 쓴 [Tidy Modeling with R](https://www.tmwr.org/)을 읽는 것을 추천합니다.
 
--   The "Communicate" part remains, but has been thoroughly updated to feature [Quarto](https://quarto.org/) instead of R Markdown.
-    This edition of the book has been written in Quarto, and it's clearly the tool of the future.
+-   "소통(Communicate)" 부분은 그대로 유지되지만, R Markdown 대신 [Quarto](https://quarto.org/)를 사용하도록 대폭 업데이트되었습니다.
+    이번 에디션 역시 Quarto로 작성되었으며, 이는 명백히 미래의 도구입니다.
