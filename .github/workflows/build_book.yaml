@@ -1,8 +1,8 @@
 on:
   push:
-    branches: main
+    branches: [main, quarto-book]
   pull_request:
-    branches: main
+    branches: [main, quarto-book]
   workflow_dispatch:
 
 name: Deploy Quarto Book

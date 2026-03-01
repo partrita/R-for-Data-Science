@@ -2,10 +2,35 @@
 authors = ["fkt <deepthought@postech.ac.kr>"]
 channels = ["conda-forge"]
 name = "R-for-Data-Science"
-platforms = ["osx-arm64", "linux-64"]
+platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
 
 [dependencies]
 quarto = ">=1.8.27,<2"
+r-base = ">=4.2.0"
+r-tidyverse = ">=2.0.0"
+r-arrow = "*"
+r-babynames = "*"
+r-curl = ">=5.0.0"
+r-duckdb = "*"
+r-gapminder = "*"
+r-ggrepel = "*"
+r-ggridges = "*"
+r-ggthemes = "*"
+r-hexbin = "*"
+r-janitor = "*"
+r-lahman = "*"
+r-leaflet = "*"
+r-maps = "*"
+r-nycflights13 = "*"
+r-openxlsx = "*"
+r-palmerpenguins = "*"
+r-repurrrsive = ">=1.1.0"
+r-tidymodels = "*"
+r-writexl = "*"
+r-downlit = "*"
+r-jpeg = "*"
+r-knitr = "*"
+r-sessioninfo = "*"
