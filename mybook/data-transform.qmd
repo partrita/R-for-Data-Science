@@ -484,7 +484,7 @@ arrange(flights3, desc(speed))
 #|   `|>`를 삽입하려면 "Use native pipe operator" 옵션이 체크되어 있는지 확인하세요.
 #| fig-alt: | 
 #|   "Code" 옵션의 "Editing" 패널에 있는 "Use native pipe operator" 옵션 스크린샷.
-#| knitr::include_graphics("screenshots/rstudio-pipe-options.png")
+knitr::include_graphics("screenshots/rstudio-pipe-options.png")
 ```
 
 ::: callout-note
