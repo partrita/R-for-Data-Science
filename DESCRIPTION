@@ -34,7 +34,8 @@ Suggests:
     downlit,
     jpeg,
     knitr,
-    sessioninfo
+    sessioninfo,
+    testthat
 Remotes: tidyverse/dplyr
 Encoding: UTF-8
 License: CC NC ND 3.0
