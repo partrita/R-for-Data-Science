@@ -502,7 +502,6 @@ This package is non-core tidyverse as well, you need to load it explicitly.
 
 ```{r}
 library(googlesheets4)
-library(tidyverse)
 ```
 
 A quick note about the name of the package: googlesheets4 uses v4 of the [Sheets API v4](https://developers.google.com/sheets/api/) to provide an R interface to Google Sheets, hence the name.
