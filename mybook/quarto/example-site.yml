@@ -2,12 +2,12 @@ project:
   type: website
 
 website:
-  title: "A website on color scales"
+  title: "색상 스케일에 관한 웹사이트"
   navbar:
     left:
       - href: index.qmd
-        text: Home
+        text: 홈
       - href: viridis-colors.qmd
-        text: Viridis colors
+        text: Viridis 색상
       - href: terrain-colors.qmd
-        text: Terrain colors
+        text: 지형 색상

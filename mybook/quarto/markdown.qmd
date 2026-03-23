@@ -1,45 +1,45 @@
-## Text formatting
+## 텍스트 서식
 
-*italic* **bold** ~~strikeout~~ `code`
+*기울임꼴* **굵게** ~~취소선~~ `코드`
 
-superscript^2^ subscript~2~
+위첨자^2^ 아래첨자~2~
 
-[underline]{.underline} [small caps]{.smallcaps}
+[밑줄]{.underline} [작은 대문자]{.smallcaps}
 
-## Headings
+## 제목
 
-# 1st Level Header
+# 1단계 제목
 
-## 2nd Level Header
+## 2단계 제목
 
-### 3rd Level Header
+### 3단계 제목
 
-## Lists
+## 목록
 
--   Bulleted list item 1
+-   글머리 기호 목록 항목 1
 
--   Item 2
+-   항목 2
 
-    -   Item 2a
+    -   항목 2a
 
-    -   Item 2b
+    -   항목 2b
 
-1.  Numbered list item 1
+1.  번호 매기기 목록 항목 1
 
-2.  Item 2.
-    The numbers are incremented automatically in the output.
+2.  항목 2.
+    출력 시 숫자가 자동으로 증가합니다.
 
-## Links and images
+## 링크 및 이미지
 
 <http://example.com>
 
-[linked phrase](http://example.com)
+[링크된 문구](http://example.com)
 
-![optional caption text](quarto.png){fig-alt="Quarto logo and the word quarto spelled in small case letters"}
+![선택적 캡션 텍스트](quarto.png){fig-alt="Quarto 로고와 소문자로 쓰여진 quarto라는 단어"}
 
-## Tables
+## 표
 
-| First Header | Second Header |
+| 첫 번째 헤더 | 두 번째 헤더  |
 |--------------|---------------|
-| Content Cell | Content Cell  |
-| Content Cell | Content Cell  |
+| 내용 셀      | 내용 셀       |
+| 내용 셀      | 내용 셀       |

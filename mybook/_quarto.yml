@@ -8,10 +8,10 @@ book:
 
   page-footer:
     left: |
-      R for Data Science (2e) was written by Hadley Wickham, Mine
-      Çetinkaya-Rundel, and Garrett Grolemund.
+      R for Data Science (2e)는 Hadley Wickham, Mine
+      Çetinkaya-Rundel, 그리고 Garrett Grolemund가 작성했습니다.
     right: |
-      This book was built with <a href="https://quarto.org/">Quarto</a>.
+      이 책은 <a href="https://quarto.org/">Quarto</a>를 사용하여 제작되었습니다.
   cover-image: cover.jpg
   favicon: cover.jpg
   repo-branch: main

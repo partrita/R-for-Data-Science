@@ -1,19 +1,19 @@
-# Contributing {#sec-contributing}
+# 기여하기 {#sec-contributing}
 
-This book has been developed in the open, and it wouldn't be nearly as good without your contributions.
-There are a number of ways you can help make the book even better:
+이 책은 공개적으로 개발되었으며, 여러분의 기여 없이는 지금처럼 훌륭해질 수 없었을 것입니다.
+이 책을 더 나은 책으로 만드는 데 도움을 주실 수 있는 여러 가지 방법이 있습니다:
 
--   If you don't understand something, please [let me know](mailto:h.wickham@gmail.com).
-    Your feedback on what is confusing or hard to understand is valuable.
+-   이해가 되지 않는 부분이 있다면 [알려주세요](mailto:h.wickham@gmail.com).
+    어떤 부분이 혼란스럽거나 이해하기 어려운지에 대한 피드백은 매우 가치 있습니다.
 
--   If you spot a typo, feel free to edit the underlying page and send a pull request.
-    If you've never done this before, the process is very easy:
+-   오타를 발견하셨다면 언제든지 해당 페이지를 수정하여 풀 리퀘스트(pull request)를 보내주세요.
+    이전에 해보신 적이 없다면, 과정은 매우 간단합니다:
 
-    -   Click the edit this page on the sidebar.
+    -   사이드바에서 '이 페이지 편집하기(edit this page)'를 클릭하세요.
 
-    -   Make the changes using GitHub's in-page editor and save.
+    -   GitHub의 페이지 내 에디터를 사용하여 변경 사항을 만들고 저장하세요.
 
-    -   Submit a pull request and include a brief description of your changes.
-        "Fixing typos" is perfectly adequate.
+    -   풀 리퀘스트를 제출하고 변경 사항에 대한 간단한 설명을 포함하세요.
+        "오타 수정(Fixing typos)" 정도면 충분합니다.
 
-    -   If you make significant changes, include the phrase "I assign the copyright of this contribution to Hadley Wickham" - I need this so I can publish the printed book.
+    -   중요한 변경 사항을 만드시는 경우 "I assign the copyright of this contribution to Hadley Wickham"이라는 문구를 포함해 주세요. 종이책 출판을 위해 필요합니다.

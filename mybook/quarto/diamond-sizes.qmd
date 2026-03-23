@@ -1,5 +1,5 @@
 ---
-title: "Diamond sizes"
+title: "다이아몬드 크기"
 date: 2022-09-12
 format: html
 ---
@@ -14,9 +14,9 @@ smaller <- diamonds |>
   filter(carat <= 2.5)
 ```
 
-We have data about `r nrow(diamonds)` diamonds.
-Only `r nrow(diamonds) - nrow(smaller)` are larger than 2.5 carats.
-The distribution of the remainder is shown below:
+우리는 `r nrow(diamonds)`개의 다이아몬드 데이터를 가지고 있습니다.
+그중 `r nrow(diamonds) - nrow(smaller)`개만이 2.5캐럿보다 큽니다.
+나머지의 분포는 아래와 같습니다:
 
 ```{r}
 #| label: plot-smaller-diamonds

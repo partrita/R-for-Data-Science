@@ -29,11 +29,11 @@ ggplot2::theme_set(ggplot2::theme_gray(12))
 status <- function(type) {
   status <- switch(
     type,
-    polishing = "should be readable but is currently undergoing final polishing",
-    restructuring = "is undergoing heavy restructuring and may be confusing or incomplete",
-    drafting = "is currently a dumping ground for ideas, and we don't recommend reading it",
-    complete = "is largely complete and just needs final proof reading",
-    stop("Invalid `type`", call. = FALSE)
+    polishing = "읽을 수 있어야 하지만 현재 최종 다듬기 과정을 거치고 있습니다",
+    restructuring = "대대적인 구조 조정을 겪고 있어 혼란스럽거나 불완전할 수 있습니다",
+    drafting = "현재 아이디어를 모아두는 곳이며, 아직 읽는 것을 권장하지 않습니다",
+    complete = "대부분 완료되었으며 최종 교정만 남겨두고 있습니다",
+    stop("유효하지 않은 `type`입니다", call. = FALSE)
   )
 
   class <- switch(
@@ -50,11 +50,11 @@ status <- function(type) {
     "::: callout-",
     class,
     " \n",
-    "You are reading the work-in-progress second edition of R for Data Science. ",
-    "This chapter ",
+    "여러분은 현재 R for Data Science 2판의 작업 중인 버전을 읽고 계십니다. ",
+    "이 챕터는 ",
     status,
     ". ",
-    "You can find the complete first edition at <https://r4ds.had.co.nz>.\n",
+    "완성된 1판은 <https://r4ds.had.co.nz>에서 확인하실 수 있습니다.\n",
     ":::\n",
     "::::\n"
   ))

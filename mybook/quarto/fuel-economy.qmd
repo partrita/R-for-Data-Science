@@ -13,7 +13,7 @@ library(tidyverse)
 class <- mpg |> filter(class == params$my_class)
 ```
 
-# Fuel economy for `r params$my_class`s
+# `r params$my_class`의 연비
 
 ```{r}
 #| message: false

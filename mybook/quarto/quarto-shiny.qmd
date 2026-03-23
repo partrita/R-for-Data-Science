@@ -6,8 +6,8 @@ server: shiny
 ```{r}
 library(shiny)
 
-textInput("name", "What is your name?")
-numericInput("age", "How old are you?", NA, min = 0, max = 150) 
+textInput("name", "이름이 무엇입니까?")
+numericInput("age", "몇 살입니까?", NA, min = 0, max = 150) 
 ```
 
 ```{r}

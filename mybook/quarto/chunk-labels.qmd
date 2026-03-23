@@ -1,5 +1,5 @@
 ---
-title: "Code chunks"
+title: "코드 청크"
 editor: visual
 ---
 
@@ -13,7 +13,7 @@ editor: visual
 #| label: cars
 ```
 
-# Including plots
+# 플롯 포함하기
 
 ```{r}
 #| label: pressure
